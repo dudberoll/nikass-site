@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-/figma-mcp-rust/
 
 # Build outputs
 dist/
@@ -12,7 +11,6 @@ playwright-report/
 test-results/
 webapp/e2e/.artifacts/
 website/e2e/.artifacts/
-website-old/e2e/.artifacts/
 mobile/.expo/
 mobile/.maestro/reports/
 mobile/expo-env.d.ts
