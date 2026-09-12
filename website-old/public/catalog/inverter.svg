@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" role="img" aria-labelledby="title">
+  <title id="title">Инвертор NIKASS</title>
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#d7dce5"/><stop offset="1" stop-color="#aeb8c8"/></linearGradient></defs>
+  <rect width="720" height="480" rx="28" fill="url(#bg)"/>
+  <rect x="178" y="116" width="364" height="238" rx="18" fill="#252d35"/>
+  <rect x="220" y="156" width="124" height="64" rx="9" fill="#dcefe0"/>
+  <text x="282" y="198" text-anchor="middle" fill="#236638" font-family="Arial" font-size="25" font-weight="700">230V</text>
+  <path d="M394 157v62M424 157v62M454 157v62M484 157v62" stroke="#718078" stroke-width="10" stroke-linecap="round"/>
+  <path d="M220 276h274" stroke="#718078" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="229" cy="318" r="12" fill="#e35d3e"/><circle cx="272" cy="318" r="12" fill="#dcefe0"/>
+</svg>

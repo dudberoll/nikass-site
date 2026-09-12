@@ -1,0 +1,27 @@
+---
+interface Props {
+  currentPage: number
+  pageCount: number
+}
+
+const { currentPage, pageCount } = Astro.props
+const hrefForPage = (page: number) => page === 1 ? '/catalog' : `/catalog/page/${page}`
+---
+
+{pageCount > 1 && (
+  <nav class="catalog-pagination" aria-label="Страницы каталога">
+    <span class="catalog-pagination__label">HTML-версия каталога</span>
+    <ol class="catalog-pagination__list">
+      {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
+        <li>
+          <a
+            href={hrefForPage(page)}
+            aria-current={page === currentPage ? 'page' : undefined}
+          >
+            {page}
+          </a>
+        </li>
+      ))}
+    </ol>
+  </nav>
+)}

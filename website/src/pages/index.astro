@@ -1,0 +1,330 @@
+---
+import "../styles/global.css";
+import MessageScrollerDemo from "../components/MessageScrollerDemo";
+import { formatPrice, products } from "../data/catalog";
+
+const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+
+const bikes = [
+  { id: "stations", title: "Зарядные станции", body: "Энергия в пути", cta: "Смотреть решения", image: "wild-tr.webp" },
+  { id: "inverters", title: "Инверторы", body: "Стабильное питание", cta: "Выбрать инвертор", image: "oiz.webp" },
+  { id: "panels", title: "Солнечные панели", body: "Зарядка от солнца", cta: "Выбрать панель", image: "carpe.webp" },
+  { id: "batteries", title: "AGM-аккумуляторы", body: "Запас автономности", cta: "Выбрать аккумулятор", image: "orca-aero.webp" },
+];
+
+const directions = [
+  { id: "home", title: "Для дома", body: "Резервное питание, когда оно действительно нужно", image: "road.webp", mobileImage: "road-mobile.webp" },
+  { id: "travel", title: "Для дороги", body: "Заряжайте технику и оставайтесь на связи в пути", image: "mountain.webp", mobileImage: "mountain-mobile.webp" },
+  { id: "work", title: "Для автономной работы", body: "Тихая энергия для мастерской, дачи и выездных задач", image: "urban.webp", mobileImage: "urban-mobile.webp" },
+];
+
+const stories = [
+  { date: "Сегодня", tag: "Практика", title: "Энергия на даче", image: "story-pisgah.jpg" },
+  { date: "23 июля 2026", title: "Зарядка в дороге", image: "story-beyond.jpg" },
+  { date: "30 июня 2026", title: "Как собрать автономную систему", image: "story-experience.webp" },
+  { date: "23 июня 2026", tag: "NIKASS", title: "Резерв для работы", image: "story-rebound.jpg" },
+  { date: "12 мая 2026", title: "Солнце в системе", image: "story-moving-forward.jpg" },
+  { date: "19 февраля 2026", title: "Больше автономности, меньше зависимости", image: "story-doing-things-differently.jpg" },
+];
+
+const footerGroups = [
+  { title: "О NIKASS", links: ["О компании", "Наши решения", "Партнёры", "Контакты", "Доставка", "Гарантия"] },
+  { title: "Поддержка", links: ["Помощь", "Связаться с нами", "Сервис", "Оплата", "Возврат", "Условия заказа"] },
+];
+
+const bestSellers = products.slice(0, 4);
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="NIKASS — автономная энергия для дома, дороги и работы." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>NIKASS | Автономная энергия</title>
+  </head>
+  <body>
+    <div class="orbea-page">
+      <header class="orbea-header" data-header>
+        <div class="orbea-header-inner">
+          <button class="orbea-mobile-menu-button" type="button" aria-label="Открыть меню" data-open-menu>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16" /></svg>
+          </button>
+          <nav class="orbea-desktop-nav" aria-label="Основная навигация">
+            <button type="button" data-open-menu="Bikes">Товары</button>
+            <button type="button" data-open-menu="Gear">Каталог</button>
+            <a href="#custom">Как выбрать</a>
+            <button type="button" data-open-menu="Commitment">О NIKASS</button>
+          </nav>
+          <a class="orbea-logo" href="/" aria-label="NIKASS — главная"><span class="orbea-wordmark">NIKASS</span></a>
+          <div class="orbea-actions">
+            <button class="orbea-icon-button" type="button" aria-label="Поиск" data-search-open>
+              <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+            </button>
+            <a class="orbea-icon-button orbea-account" href="#footer" aria-label="Профиль">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4" /><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2" /></svg>
+            </a>
+            <a class="orbea-icon-button" href="/cart" aria-label="Корзина">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 8h12l1 13H5L6 8Z" /><path d="M9 8V5a3 3 0 0 1 6 0v3" /></svg>
+              <span class="orbea-cart-count" data-cart-count>0</span>
+            </a>
+          </div>
+        </div>
+        <div class="orbea-search-panel" hidden data-search-panel>
+          <label for="orbea-search">Найти товар</label>
+          <div><input id="orbea-search" placeholder="Найти товар…" /><button type="button" aria-label="Закрыть поиск" data-search-close>×</button></div>
+        </div>
+      </header>
+
+      <div class="orbea-menu-backdrop" hidden data-menu-backdrop>
+        <aside class="orbea-menu-panel" aria-label="Навигация NIKASS">
+          <div class="orbea-menu-header">
+            <button class="orbea-menu-back" type="button" hidden data-menu-back>← <span>Назад</span></button>
+            <strong class="orbea-menu-title">NIKASS</strong>
+            <button class="orbea-icon-button" type="button" aria-label="Закрыть" data-menu-close>×</button>
+          </div>
+          <div class="orbea-menu-root" data-menu-root>
+            <button class="orbea-menu-root-link" type="button" data-menu-section="Bikes">Товары <span>›</span></button>
+            <button class="orbea-menu-root-link" type="button" data-menu-section="Gear">Каталог <span>›</span></button>
+            <a class="orbea-menu-root-link" href="#custom" data-menu-anchor>Как выбрать</a>
+            <button class="orbea-menu-root-link" type="button" data-menu-section="Commitment">О NIKASS <span>›</span></button>
+          </div>
+          <div class="orbea-menu-detail" hidden data-menu-detail>
+            <div class="orbea-menu-list" data-menu-list></div>
+            <div class="orbea-menu-promo" hidden data-menu-promo>
+              <img src="/assets/images/gear-menu.webp" alt="Оборудование NIKASS" />
+              <div><span>Система, а не отдельные детали.</span><strong>Соберите своё решение</strong><a href="/catalog" data-menu-anchor>Открыть каталог</a></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <main>
+        <section class="orbea-hero">
+          <picture class="orbea-hero-picture">
+            <source media="(max-width: 767px)" srcset="/assets/images/hero-nikass.webp" />
+            <img src="/assets/images/hero-nikass.webp" alt="Автономная энергия NIKASS в горах" fetchpriority="high" />
+          </picture>
+          <div class="orbea-hero-overlay"></div>
+          <div class="orbea-hero-copy">
+            <h1>Энергия без привязки</h1>
+            <p>Надёжные решения для дома, дороги и работы — там, где нужна свобода от розетки.</p>
+            <div class="orbea-hero-actions">
+              <a class="orbea-button" href="/catalog"><span>↗</span> Смотреть каталог</a>
+              <a class="orbea-button orbea-button-dark" href="#stories">Подобрать решение</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="orbea-bestsellers" id="bestsellers">
+          <div class="orbea-bestsellers-intro">
+            <div>
+              <p class="orbea-section-kicker">NIKASS / ВЫБОР ПОКУПАТЕЛЕЙ</p>
+              <h2>Хиты продаж</h2>
+            </div>
+            <a class="orbea-button orbea-button-dark" href="/catalog">Смотреть весь каталог</a>
+          </div>
+          <div class="orbea-bestsellers-grid">
+            {bestSellers.map((product) => (
+              <a class="orbea-bestseller-card" href={`/catalog/${product.slug}`}>
+                <div class="orbea-bestseller-image"><img src={product.image} alt={product.name} loading="lazy" /></div>
+                <div class="orbea-bestseller-copy">
+                  <p>{product.category}</p>
+                  <h3>{product.name}</h3>
+                  <div><strong>{formatPrice(product.price)}</strong>{product.oldPrice && <del>{formatPrice(product.oldPrice)}</del>}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section class="orbea-section-intro"><h2>Выберите свой источник энергии</h2></section>
+        <section class="orbea-bike-grid">
+          {bikes.map((bike) => (
+            <article class="orbea-bike-card" id={bike.id}>
+              <img src={`/assets/images/${bike.image}`} alt="" />
+              <div class="orbea-bike-shade"></div>
+              <div class="orbea-bike-copy"><h3>{bike.title}</h3><strong>{bike.body}</strong><a class="orbea-button" href="/catalog">{bike.cta}</a></div>
+            </article>
+          ))}
+        </section>
+
+        <section class="orbea-video-section orbea-custom-video" id="custom">
+          <video class="orbea-video orbea-video-desktop" autoplay loop muted playsinline><source src="/assets/videos/custom-desktop.webm" type="video/webm" /></video>
+          <video class="orbea-video orbea-video-mobile" autoplay loop muted playsinline><source src="/assets/videos/custom-mobile.webm" type="video/webm" /></video>
+          <div class="orbea-video-overlay"></div>
+          <div class="orbea-video-copy">
+            <h2>Соберите свою систему автономности</h2>
+            <p>Выберите станцию, панель и аккумулятор под свой сценарий — для спокойствия дома, поездок и рабочих задач.</p>
+            <div class="orbea-video-actions">
+              <a class="orbea-button" href="/catalog">Перейти в каталог</a>
+              <button class="orbea-button" type="button" aria-controls="nikass-chat-widget" aria-expanded="false" data-chat-open>Получить консультацию</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="orbea-section-intro orbea-directions-intro"><h2>Что нужно именно вам?</h2></section>
+        <section class="orbea-directions">
+          <div class="orbea-directions-viewport">
+            <div class="orbea-directions-track" data-directions-track>
+              {directions.map((direction) => (
+                <article class="orbea-direction-card" id={direction.id}>
+                  <picture><source media="(max-width: 767px)" srcset={`/assets/images/${direction.mobileImage}`} /><img src={`/assets/images/${direction.image}`} alt="" /></picture>
+                  <div class="orbea-direction-shade"></div>
+                  <div class="orbea-direction-copy"><h3>{direction.title}: {direction.body}</h3><a class="orbea-button" href="/catalog">Смотреть решения</a></div>
+                </article>
+              ))}
+            </div>
+          </div>
+          <div class="orbea-direction-dots" role="group" aria-label="Direction slides">
+            {directions.map((_, index) => <button class:list={{ "is-active": index === 0 }} type="button" aria-label={`${index + 1}`} aria-pressed={index === 0 ? "true" : "false"} data-direction-index={index}></button>)}
+          </div>
+        </section>
+
+        <section class="orbea-stories" id="stories">
+          <div class="orbea-stories-intro">
+            <h2>Практика автономной жизни</h2>
+            <p>Разбираем реальные сценарии: как пережить отключение, зарядить технику в дороге и собрать систему под свои задачи.</p>
+            <a class="orbea-button orbea-button-dark" href="/catalog"><span>↗</span> Все решения</a>
+          </div>
+          <div class="orbea-story-row">
+            {stories.map((story) => (
+              <a class="orbea-story-card" href="#stories" style={`background-image:url('/assets/images/${story.image}')`}>
+                <div class="orbea-story-shade"></div>
+                <div class="orbea-story-meta"><span>{story.date}</span>{story.tag && <span>{story.tag}</span>}</div>
+                <h3>{story.title}</h3>
+              </a>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <footer class="orbea-footer" id="footer">
+        <div class="orbea-newsletter">
+          <h3>Будьте в курсе NIKASS</h3>
+          <p>Новости, полезные советы и новые решения для автономной жизни.</p>
+          <label for="orbea-email">Электронная почта</label><input id="orbea-email" placeholder="Электронная почта" type="email" />
+        </div>
+        <div class="orbea-footer-links">
+          {footerGroups.map((group) => <div><h3>{group.title}</h3><ul>{group.links.map((link) => <li><a href="#footer">{link}</a></li>)}</ul></div>)}
+        </div>
+        <div class="orbea-footer-bottom">
+          <div class="orbea-footer-location"><span>◎ Россия</span><div class="orbea-socials"><a href="#footer" aria-label="Telegram">tg</a><a href="#footer" aria-label="VK">vk</a><a href="#footer" aria-label="YouTube">▶</a></div></div>
+          <a class="orbea-kide" href="/catalog">Каталог NIKASS</a>
+        </div>
+        <div class="orbea-legal"><span>2026 NIKASS. Россия</span><div>{["Политика конфиденциальности", "Условия заказа", "Доставка и возврат", "Гарантия"].map((link) => <a href="#footer">{link}</a>)}</div></div>
+      </footer>
+
+      <button class="orbea-pause-button" type="button" aria-label="Поставить видео на паузу" data-video-toggle>Ⅱ</button>
+    </div>
+
+    <aside id="nikass-chat-widget" class="orbea-chat-widget" hidden data-chat-widget role="dialog" aria-label="Консультант NIKASS">
+      <button class="orbea-chat-widget-close" type="button" aria-label="Закрыть консультанта" data-chat-close>×</button>
+      <MessageScrollerDemo apiBase={apiBase} client:load />
+    </aside>
+
+    <script is:inline>
+      const header = document.querySelector("[data-header]");
+      const menuBackdrop = document.querySelector("[data-menu-backdrop]");
+      const menuPanel = menuBackdrop.querySelector(".orbea-menu-panel");
+      const menuRoot = document.querySelector("[data-menu-root]");
+      const menuDetail = document.querySelector("[data-menu-detail]");
+      const menuList = document.querySelector("[data-menu-list]");
+      const menuPromo = document.querySelector("[data-menu-promo]");
+      const menuBack = document.querySelector("[data-menu-back]");
+      const menuTitle = document.querySelector(".orbea-menu-title");
+      const mobileMenuButton = document.querySelector(".orbea-mobile-menu-button");
+      const searchPanel = document.querySelector("[data-search-panel]");
+      const searchInput = document.querySelector("#orbea-search");
+      const chatWidget = document.querySelector("[data-chat-widget]");
+      const chatClose = chatWidget?.querySelector("[data-chat-close]");
+      const chatOpenButtons = [...document.querySelectorAll("[data-chat-open]")];
+      let lastChatTrigger;
+
+      const menuData = {
+        Bikes: ["Зарядные станции", "Инверторы", "Солнечные панели", "AGM-аккумуляторы"],
+        Gear: ["Зарядные станции", "Инверторы", "Солнечные панели", "AGM-аккумуляторы"],
+        Commitment: ["О компании", "Поддержка", "Доставка и возврат"],
+      };
+      const menuLabels = { Bikes: "Товары", Gear: "Каталог", Commitment: "О NIKASS" };
+
+      const syncOverflow = () => { document.body.style.overflow = !menuBackdrop.hidden || !searchPanel.hidden ? "hidden" : ""; };
+      const showMenuRoot = () => {
+        menuTitle.textContent = "NIKASS";
+        menuBack.hidden = true;
+        menuRoot.hidden = false;
+        menuDetail.hidden = true;
+      };
+      const showMenuSection = (section) => {
+        menuTitle.textContent = menuLabels[section] || section;
+        menuBack.hidden = false;
+        menuRoot.hidden = true;
+        menuDetail.hidden = false;
+        menuPromo.hidden = section !== "Gear";
+        menuList.innerHTML = menuData[section].map((item) => `<button class="orbea-menu-detail-link" type="button" data-menu-leaf><span>${item}</span><span>›</span></button>`).join("");
+        menuList.querySelectorAll("[data-menu-leaf]").forEach((button) => button.addEventListener("click", () => {
+          location.href = section === "Commitment" ? "/#footer" : "/catalog";
+          closeMenu();
+        }));
+      };
+      const openMenu = (section) => {
+        menuBackdrop.hidden = false;
+        mobileMenuButton.setAttribute("aria-label", "Закрыть меню");
+        section ? showMenuSection(section) : showMenuRoot();
+        syncOverflow();
+      };
+      const closeMenu = () => { menuBackdrop.hidden = true; mobileMenuButton.setAttribute("aria-label", "Открыть меню"); showMenuRoot(); syncOverflow(); };
+
+      const setChatOpen = (open) => {
+        if (!chatWidget) return;
+        chatWidget.hidden = !open;
+        chatOpenButtons.forEach((button) => button.setAttribute("aria-expanded", String(open)));
+        if (open) {
+          lastChatTrigger = document.activeElement;
+          requestAnimationFrame(() => chatClose?.focus());
+        } else if (lastChatTrigger instanceof HTMLElement) {
+          lastChatTrigger.focus();
+        }
+      };
+      chatOpenButtons.forEach((button) => button.addEventListener("click", () => setChatOpen(true)));
+      chatClose?.addEventListener("click", () => setChatOpen(false));
+
+      document.querySelectorAll("[data-open-menu]").forEach((button) => button.addEventListener("click", () => openMenu(button.dataset.openMenu || "")));
+      document.querySelectorAll("[data-menu-section]").forEach((button) => button.addEventListener("click", () => showMenuSection(button.dataset.menuSection)));
+      document.querySelectorAll("[data-menu-anchor]").forEach((link) => link.addEventListener("click", closeMenu));
+      document.querySelector("[data-menu-close]").addEventListener("click", closeMenu);
+      menuBack.addEventListener("click", showMenuRoot);
+      menuBackdrop.addEventListener("click", closeMenu);
+      menuPanel.addEventListener("click", (event) => event.stopPropagation());
+
+      document.querySelector("[data-search-open]").addEventListener("click", () => { searchPanel.hidden = !searchPanel.hidden; syncOverflow(); if (!searchPanel.hidden) searchInput.focus(); });
+      document.querySelector("[data-search-close]").addEventListener("click", () => { searchPanel.hidden = true; syncOverflow(); });
+      document.addEventListener("keydown", (event) => { if (event.key === "Escape") { setChatOpen(false); closeMenu(); searchPanel.hidden = true; syncOverflow(); } });
+      const updateHeader = () => header.classList.toggle("is-scrolled", scrollY > 24);
+      addEventListener("scroll", updateHeader, { passive: true });
+      updateHeader();
+
+      const directionTrack = document.querySelector("[data-directions-track]");
+      document.querySelectorAll("[data-direction-index]").forEach((button) => button.addEventListener("click", () => {
+        directionTrack.style.setProperty("--direction-index", button.dataset.directionIndex);
+        document.querySelectorAll("[data-direction-index]").forEach((dot) => { const active = dot === button; dot.classList.toggle("is-active", active); dot.setAttribute("aria-pressed", String(active)); });
+      }));
+
+      let paused = false;
+      const videoToggle = document.querySelector("[data-video-toggle]");
+      videoToggle.addEventListener("click", () => {
+        paused = !paused;
+        document.querySelectorAll("video").forEach((video) => paused ? video.pause() : video.play().catch(() => {}));
+        videoToggle.textContent = paused ? "▶" : "Ⅱ";
+        videoToggle.setAttribute("aria-label", paused ? "Включить видео" : "Поставить видео на паузу");
+      });
+    </script>
+    <script>
+      import { getCartCount, readCart, subscribeToCart } from "../lib/cart";
+      const updateCart = () => document.querySelectorAll("[data-cart-count]").forEach((node) => { node.textContent = String(getCartCount(readCart().items)); });
+      subscribeToCart(updateCart);
+      updateCart();
+    </script>
+  </body>
+</html>

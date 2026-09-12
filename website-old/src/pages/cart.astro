@@ -1,0 +1,26 @@
+---
+import CartView from '@/features/cart/CartView'
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import NikassFooter from '@/components/catalog/NikassFooter.astro'
+import NikassHeader from '@/components/catalog/NikassHeader.astro'
+import '@/styles/catalog.css'
+import '@/styles/storefront.css'
+
+const websiteUrl = import.meta.env.PUBLIC_WEBSITE_URL
+const canonicalUrl = websiteUrl ? new URL(Astro.url.pathname, websiteUrl).toString() : undefined
+---
+
+<BaseLayout
+  lang="ru"
+  title="Корзина — NIKASS"
+  description="Локальная корзина NIKASS с товарами из демонстрационного каталога."
+  canonicalUrl={canonicalUrl}
+>
+  <div class="catalog-page">
+    <NikassHeader active="cart" />
+    <main id="main-content">
+      <CartView client:load />
+    </main>
+    <NikassFooter />
+  </div>
+</BaseLayout>

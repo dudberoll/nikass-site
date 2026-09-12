@@ -1,0 +1,56 @@
+---
+type ActivePage = 'home' | 'catalog' | 'cart' | ''
+
+interface Props {
+  active?: ActivePage
+}
+
+const { active = '' } = Astro.props
+const activeClass = (page: ActivePage) => (active === page ? 'is-active' : undefined)
+const currentPage = (page: ActivePage): 'page' | undefined => (active === page ? 'page' : undefined)
+---
+
+<header class="catalog-header">
+  <div class="catalog-container catalog-header__inner">
+    <a class="catalog-brand" href="/" aria-label="NIKASS — на главную">NIKASS<span>•</span></a>
+    <nav class="catalog-nav" aria-label="Основная навигация">
+      <a href="/" class={activeClass('home')} aria-current={currentPage('home')}>Главная</a>
+      <a href="/catalog" class={activeClass('catalog')} aria-current={currentPage('catalog')}>Каталог</a>
+    </nav>
+    <a
+      class={`catalog-header__cart${active === 'cart' ? ' is-active' : ''}`}
+      href="/cart"
+      aria-current={currentPage('cart')}
+    >
+      Корзина <span class="catalog-cart-count" data-cart-count aria-live="polite" aria-label="0 товаров в корзине">0</span>
+    </a>
+  </div>
+</header>
+
+<script>
+  import { getCartCount, readCart, subscribeToCart } from '@/lib/cart'
+
+  const updateCartCount = (state: Awaited<ReturnType<typeof readCart>>) => {
+    const count = state.error ? null : getCartCount(state.items)
+    document.querySelectorAll<HTMLElement>('[data-cart-count]').forEach((element) => {
+      element.textContent = count === null ? '—' : String(count)
+      element.setAttribute('aria-label', count === null ? 'Корзина недоступна' : `${count} товаров в корзине`)
+      element.toggleAttribute('data-cart-storage-error', count === null)
+    })
+  }
+
+  let unsubscribe: () => void = () => undefined
+  const connectCart = () => {
+    unsubscribe()
+    updateCartCount(readCart())
+    unsubscribe = subscribeToCart(updateCartCount)
+  }
+  const disconnectCart = () => {
+    unsubscribe()
+    unsubscribe = () => undefined
+  }
+
+  connectCart()
+  window.addEventListener('pageshow', connectCart)
+  window.addEventListener('pagehide', disconnectCart)
+</script>

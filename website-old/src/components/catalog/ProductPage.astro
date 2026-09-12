@@ -1,0 +1,155 @@
+---
+import { CATEGORIES, CatalogGrid, PRODUCTS, ProductVariantSelector, type Product } from '@/features/catalog'
+
+interface Props {
+  product: Product
+}
+
+const { product } = Astro.props
+const category = CATEGORIES.find(({ slug }) => slug === product.category)
+
+if (!category) {
+  throw new Error(`Unknown category: ${product.category}`)
+}
+
+const sameCategoryProducts = PRODUCTS.filter(
+  (item) => item.category === product.category && item.slug !== product.slug,
+)
+const relatedSlugs = [...product.relatedProductSlugs, ...sameCategoryProducts.map((item) => item.slug)]
+const relatedProducts = relatedSlugs
+  .map((slug) => PRODUCTS.find((item) => item.slug === slug))
+  .filter((item): item is Product => Boolean(item && item.slug !== product.slug))
+  .filter((item) => item.category === product.category)
+  .filter((item, index, items) => items.findIndex(({ slug }) => slug === item.slug) === index)
+  .slice(0, 3)
+const productPath = `/catalog/${product.slug}`
+---
+
+<main id="main-content" class="product-page">
+  <section class="product-page__intro catalog-container" aria-labelledby="product-title">
+    <a class="product-page__back" href="/catalog">← Вернуться в каталог</a>
+
+    <div class="product-page__hero">
+      <div class="product-page__gallery" aria-label={`Галерея ${product.name}`}>
+        <div class="product-page__images">
+          {product.images.map((image, index) => (
+            <figure class="product-page__image" id={`product-image-${index}`}>
+              <img src={image} alt={`${product.name}, изображение ${index + 1}`} loading={index === 0 ? undefined : 'lazy'} />
+            </figure>
+          ))}
+        </div>
+        {product.images.length > 1 && (
+          <nav class="product-page__thumbnails" aria-label="Выбор изображения">
+            {product.images.map((image, index) => (
+              <a href={`#product-image-${index}`} aria-label={`Показать изображение ${index + 1}`}>
+                <img src={image} alt="" loading="lazy" />
+              </a>
+            ))}
+          </nav>
+        )}
+      </div>
+
+      <div class="product-page__summary">
+        <p class="catalog-eyebrow">{category.name}</p>
+        <h1 id="product-title">{product.name}</h1>
+        <p class="product-page__short-description">{product.shortDescription}</p>
+        <ProductVariantSelector product={product} client:load />
+      </div>
+    </div>
+  </section>
+
+  <section class="product-page__section product-page__details" aria-labelledby="details-title">
+    <div class="catalog-container product-page__split">
+      <article>
+        <p class="catalog-eyebrow">О ТОВАРЕ</p>
+        <h2 id="details-title">Энергия, рассчитанная на ваш сценарий.</h2>
+        <p>{product.description}</p>
+      </article>
+
+      <div>
+        <p class="catalog-eyebrow">ХАРАКТЕРИСТИКИ</p>
+        <h2>Главное о модели</h2>
+        <dl class="product-page__characteristics">
+          {Object.entries(product.characteristics).map(([label, value]) => (
+            <div>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="product-page__section product-page__package" aria-labelledby="package-title">
+    <div class="catalog-container product-page__split">
+      <div>
+        <p class="catalog-eyebrow">КОМПЛЕКТАЦИЯ</p>
+        <h2 id="package-title">Всё нужное уже внутри.</h2>
+        <ul class="product-page__list">
+          {product.packageContents.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+      <div class="product-page__warranty">
+        <p class="catalog-eyebrow">ПОДДЕРЖКА</p>
+        <strong>Гарантия {product.warrantyMonths} месяцев</strong>
+        <p>Поможем разобраться с подключением и использованием оборудования.</p>
+      </div>
+    </div>
+  </section>
+
+  {product.source !== 'woocommerce' && <section id="documents" class="product-page__section product-page__documents" aria-labelledby="documents-title">
+    <div class="catalog-container">
+      <p class="catalog-eyebrow">ДОКУМЕНТЫ</p>
+      <h2 id="documents-title">Документы для спокойного выбора.</h2>
+      <div class="product-page__document-links">
+        <a href={`${productPath}#instruction`}>
+          <strong>PDF-инструкция</strong>
+          <small>Mock-ссылка · открыть описание</small>
+          <span aria-hidden="true">↗</span>
+        </a>
+        <a href={`${productPath}#certificate`}>
+          <strong>Сертификат соответствия</strong>
+          <small>Mock-ссылка · открыть описание</small>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+      <div class="product-page__document-notes">
+        <p id="instruction"><strong>Инструкция:</strong> локальная демонстрационная ссылка, PDF подключается на следующем этапе.</p>
+        <p id="certificate"><strong>Сертификат:</strong> локальная демонстрационная ссылка, документ подключается на следующем этапе.</p>
+      </div>
+    </div>
+  </section>
+
+  }
+  <section class="product-page__section product-page__reviews" aria-labelledby="reviews-title">
+    <div class="catalog-container">
+      <p class="catalog-eyebrow">ОТЗЫВЫ</p>
+      <h2 id="reviews-title">Что говорят владельцы.</h2>
+      <div class="product-page__review-grid">
+        {product.reviews.map((review) => (
+          <article class="product-page__review">
+            <div class="product-page__review-meta">
+              <strong>{review.author}</strong>
+              <span aria-label={`Оценка ${review.rating} из 5`}>{'★'.repeat(review.rating)}</span>
+            </div>
+            <p>{review.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="product-page__section product-page__related" aria-labelledby="related-title">
+    <div class="catalog-container">
+      <div class="product-page__section-heading">
+        <div>
+          <p class="catalog-eyebrow">СВЯЗАННЫЕ ТОВАРЫ</p>
+          <h2 id="related-title">С этим товаром покупают.</h2>
+        </div>
+        <a href="/catalog">Весь каталог →</a>
+      </div>
+      {relatedProducts.length > 0 && <CatalogGrid products={relatedProducts} client:load />}
+    </div>
+  </section>
+</main>

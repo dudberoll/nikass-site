@@ -1,0 +1,21 @@
+---
+import MessageScrollerDemo from "../components/MessageScrollerDemo";
+import "../styles/global.css";
+const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Тестовая страница Message Scroller для NIKASS." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Message Scroller — NIKASS</title>
+  </head>
+  <body class="message-scroller-page">
+    <main class="message-scroller-main">
+      <MessageScrollerDemo apiBase={apiBase} client:load />
+      <p class="message-scroller-note">Ответы приходят через backend; история хранится только в текущей вкладке.</p>
+    </main>
+  </body>
+</html>

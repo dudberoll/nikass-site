@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" role="img" aria-labelledby="title">
+  <title id="title">Зарядная станция NIKASS</title>
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#d8e8d7"/><stop offset="1" stop-color="#a7c5b0"/></linearGradient></defs>
+  <rect width="720" height="480" rx="28" fill="url(#bg)"/>
+  <rect x="250" y="72" width="220" height="330" rx="28" fill="#17211c"/>
+  <rect x="281" y="110" width="158" height="95" rx="10" fill="#dcefe0"/>
+  <path d="M360 129v42m-21-21h42" stroke="#236638" stroke-width="12" stroke-linecap="round"/>
+  <rect x="302" y="244" width="116" height="10" rx="5" fill="#718078"/>
+  <circle cx="324" cy="290" r="10" fill="#e35d3e"/><circle cx="360" cy="290" r="10" fill="#e5b45c"/><circle cx="396" cy="290" r="10" fill="#dcefe0"/>
+  <path d="M470 200h28v80h-28" fill="none" stroke="#17211c" stroke-width="14"/>
+</svg>

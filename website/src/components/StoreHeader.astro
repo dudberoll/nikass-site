@@ -1,0 +1,12 @@
+<header class="store-header">
+  <a class="store-logo" href="/" aria-label="NIKASS — главная">NIKASS</a>
+  <nav class="store-nav" aria-label="Навигация магазина"><a href="/catalog">Каталог</a><a href="/#footer">О нас</a><a href="/#footer">Поддержка</a></nav>
+  <div class="store-actions"><a href="/catalog">Поиск</a><a href="/cart" class="store-cart-link">Корзина <span data-cart-count>0</span></a></div>
+</header>
+
+<script>
+  import { getCartCount, readCart, subscribeToCart } from "../lib/cart";
+  const update = () => document.querySelectorAll("[data-cart-count]").forEach((node) => { node.textContent = String(getCartCount(readCart().items)); });
+  subscribeToCart(update);
+  update();
+</script>

@@ -1,0 +1,70 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import { CATALOG_PAGE_SIZE, CATEGORIES, CatalogExplorer, paginateProducts, PRODUCTS } from '@/features/catalog'
+import CatalogPagination from '@/components/catalog/CatalogPagination.astro'
+import NikassFooter from '@/components/catalog/NikassFooter.astro'
+import NikassHeader from '@/components/catalog/NikassHeader.astro'
+import '@/styles/catalog.css'
+
+const websiteUrl = import.meta.env.PUBLIC_WEBSITE_URL
+const canonicalUrl = websiteUrl ? new URL(Astro.url.pathname, websiteUrl).toString() : undefined
+const featuredCategories = CATEGORIES.filter(({ slug }) => slug !== 'power-banks')
+---
+
+<BaseLayout
+  lang="ru"
+  title="Каталог NIKASS — электроника для автономной жизни"
+  description="Зарядные станции, Power Bank, солнечные панели, инверторы и AGM-аккумуляторы NIKASS."
+  canonicalUrl={canonicalUrl}
+>
+  <div class="catalog-page">
+    <NikassHeader active="catalog" />
+
+    <main id="main-content">
+      <section class="catalog-hero" aria-labelledby="catalog-title">
+        <div class="catalog-container">
+          <p class="catalog-eyebrow">NIKASS / КАТАЛОГ</p>
+          <h1 id="catalog-title">Энергия для<br /><em>автономной жизни.</em></h1>
+          <p class="catalog-hero__description">
+            Оборудование для дома, дороги и работы без привязки к розетке. Данные на этой странице — локальная демонстрационная витрина.
+          </p>
+        </div>
+      </section>
+
+      <section class="catalog-categories" aria-labelledby="categories-title">
+        <div class="catalog-container">
+          <div class="catalog-section-heading">
+            <div>
+              <p class="catalog-eyebrow">ЧЕТЫРЕ НАПРАВЛЕНИЯ</p>
+              <h2 id="categories-title">Соберите свою систему</h2>
+            </div>
+            <span>{PRODUCTS.length} моделей</span>
+          </div>
+          <div class="catalog-category-grid">
+            {featuredCategories.map((category) => (
+              <a class="catalog-category-pill" href={`/catalog?category=${category.slug}#catalog-controls`}>
+                {category.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section class="catalog-products" aria-labelledby="products-title">
+        <div class="catalog-container">
+          <div class="catalog-section-heading">
+            <div>
+              <p class="catalog-eyebrow">ТОВАРЫ</p>
+              <h2 id="products-title">Вся витрина</h2>
+            </div>
+            <p>Ищите по названию, SKU и характеристикам или настройте подбор по категории.</p>
+          </div>
+          <CatalogExplorer products={PRODUCTS} pageSize={CATALOG_PAGE_SIZE} client:load />
+          <CatalogPagination currentPage={1} pageCount={paginateProducts(PRODUCTS, 1, CATALOG_PAGE_SIZE).pageCount} />
+        </div>
+      </section>
+    </main>
+
+    <NikassFooter />
+  </div>
+</BaseLayout>
