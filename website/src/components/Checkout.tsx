@@ -2,6 +2,7 @@ import { cartReviewRequestSchema, orderQuoteRequestSchema, orderQuoteResponseSch
 import { useEffect, useState, type SyntheticEvent } from "react";
 
 import { readCart, saveCart } from "../lib/cart";
+import { formatYandexSuggestion, parseYandexAddress, type YandexSuggestResult } from "../lib/yandex-address";
 
 const STORAGE_KEY = "nikass-checkout";
 const fields = [
@@ -11,7 +12,7 @@ const fields = [
 ] as const;
 type Quote = ReturnType<typeof orderQuoteResponseSchema.parse>;
 type Initial = { cart: CartReviewRequest | null; quote: Quote | null; result: OrderResult | null; error: string };
-type CheckoutProps = { apiBase: string; privacyUrl: string; termsUrl: string };
+type CheckoutProps = { apiBase: string; privacyUrl: string; termsUrl: string; yandexSuggestApiKey: string };
 const money = (minor: number) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB" }).format(minor / 100);
 
 function readCheckout(): Initial {
@@ -27,7 +28,7 @@ function readCheckout(): Initial {
   } catch { return { cart: null, quote: null, result: null, error: "Корзина недоступна или пуста. Вернитесь в каталог." }; }
 }
 
-function CheckoutClient({ apiBase, privacyUrl, termsUrl }: CheckoutProps) {
+function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey }: CheckoutProps) {
   const [initial] = useState(readCheckout);
   const [cart] = useState(initial.cart);
   const [quote, setQuote] = useState(initial.quote);
@@ -36,6 +37,43 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl }: CheckoutProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState(initial.error);
   const [busy, setBusy] = useState(false);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState("");
+  const [suggestions, setSuggestions] = useState<YandexSuggestResult[]>([]);
+  const [suggestionError, setSuggestionError] = useState("");
+
+  useEffect(() => {
+    const query = addressQuery.trim();
+    if (!yandexSuggestApiKey || query.length < 3 || query === selectedAddress) {
+      setSuggestions([]);
+      setSuggestionError("");
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const url = new URL("https://suggest-maps.yandex.ru/v1/suggest");
+        url.searchParams.set("apikey", yandexSuggestApiKey);
+        url.searchParams.set("text", query);
+        url.searchParams.set("lang", "ru");
+        url.searchParams.set("results", "7");
+        url.searchParams.set("types", "house");
+        url.searchParams.set("countries", "ru");
+        url.searchParams.set("print_address", "1");
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error();
+        const data = await response.json() as { results?: YandexSuggestResult[] };
+        if (controller.signal.aborted) return;
+        setSuggestions(Array.isArray(data.results) ? data.results : []);
+        setSuggestionError("");
+      } catch {
+        if (controller.signal.aborted) return;
+        setSuggestions([]);
+        setSuggestionError("Подсказки временно недоступны — введите адрес вручную.");
+      }
+    }, 250);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [addressQuery, selectedAddress, yandexSuggestApiKey]);
 
   async function request(path: string, body: unknown, schema: typeof orderResultSchema | typeof orderQuoteResponseSchema) {
     const response = await fetch(`${apiBase}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "omit", body: JSON.stringify(body) });
@@ -75,6 +113,17 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl }: CheckoutProps) {
   async function status() { if (!quote) return; setBusy(true); setError(""); try { setResult(await request("/api/orders/status", { checkoutToken: quote.checkoutToken }, orderResultSchema) as OrderResult); } catch { setError("Статус временно недоступен."); } finally { setBusy(false); } }
   function edit() { try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ cart })); setQuote(null); setResult(null); setError(""); } catch { setError("Не удалось сохранить корзину."); } }
   function newCart() { sessionStorage.removeItem(STORAGE_KEY); saveCart([]); location.assign("/catalog"); }
+  function selectSuggestion(suggestion: YandexSuggestResult) {
+    for (const [name, value] of Object.entries(parseYandexAddress(suggestion))) {
+      const input = document.getElementById(name);
+      if (input instanceof HTMLInputElement && value) input.value = value;
+    }
+    const formatted = formatYandexSuggestion(suggestion);
+    setSelectedAddress(formatted);
+    setAddressQuery(formatted);
+    setSuggestions([]);
+    setSuggestionError("");
+  }
 
   if (!cart) return <div className="cart-empty"><h2>Корзина пуста</h2><p>{error}</p><a className="store-primary-button" href="/catalog">Перейти в каталог</a></div>;
   return <div className="checkout-shell">
@@ -82,7 +131,7 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl }: CheckoutProps) {
     {result?.state === "confirmed" ? <section className="checkout-result" aria-live="polite"><p className="store-eyebrow">ЗАКАЗ ОФОРМЛЕН</p><h2>Заказ №{result.orderNumber}</h2><p>Заказ ожидает обработки менеджером. Сохраните номер.</p><button className="store-primary-button" type="button" onClick={newCart}>Перейти к новой корзине</button></section>
       : result && result.state !== "quoted" ? <section className="checkout-result" aria-live="polite"><h2>{result.state === "rejected" ? "Нужно проверить заказ заново" : "Проверяем результат"}</h2><p>{result.state === "rejected" ? "Цена, наличие или условия изменились." : "Не оформляйте этот заказ повторно."}</p><button className="store-primary-button" type="button" disabled={busy} onClick={result.state === "rejected" ? edit : status}>{result.state === "rejected" ? "Проверить заново" : "Обновить статус"}</button></section>
       : quote ? <section className="checkout-result"><h2>Проверьте итоговую сумму</h2><ul className="checkout-total-list">{quote.totals.items.map((item) => <li key={item.sku}><span>{item.name} · {item.quantity} шт.</span><strong>{money(item.totalMinor)}</strong></li>)}</ul><div className="checkout-summary-line"><span>Скидка</span><strong>{money(quote.totals.discountMinor)}</strong></div><div className="checkout-summary-line checkout-summary-total"><span>Итого</span><strong>{money(quote.totals.totalMinor)}</strong></div><p>Расчёт действителен 15 минут.</p><div className="checkout-actions"><button className="store-primary-button" type="button" disabled={busy} onClick={submit}>{busy ? "Отправляем…" : "Подтвердить и оформить"}</button><button className="checkout-secondary-button" type="button" disabled={busy} onClick={edit}>Изменить данные</button></div></section>
-      : <form className="checkout-form" onSubmit={review} noValidate><fieldset disabled={busy}><legend>Контакты и адрес доставки</legend><div className="checkout-fields">{fields.map(([name, label, type, autoComplete, maxLength]) => <div className="checkout-field" key={name}><label htmlFor={name}>{label}</label><div className={`checkout-field-control${errors[name] ? " has-error" : ""}`}><input id={name} name={name} type={type} autoComplete={autoComplete} maxLength={maxLength} defaultValue={draft[name] ?? ""} required={name !== "apartment"} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <p className="checkout-error" id={`${name}-error`}>{errors[name]}</p>}</div></div>)}</div><label htmlFor="comment">Комментарий к заказу</label><div className={`checkout-field-control checkout-field-control-textarea${errors.comment ? " has-error" : ""}`}><textarea id="comment" name="comment" maxLength={1000} required defaultValue={draft.comment ?? ""} aria-invalid={Boolean(errors.comment)} aria-describedby={errors.comment ? "comment-error" : undefined} />{errors.comment && <p className="checkout-error" id="comment-error">{errors.comment}</p>}</div><label htmlFor="promoCode">Промокод (если есть)</label><input id="promoCode" name="promoCode" maxLength={100} defaultValue={draft.promoCode ?? ""} /><label className="checkout-consent"><input type="checkbox" name="consent" required defaultChecked={draft.consent === "on"} /><span>Согласен с {termsUrl ? <a href={termsUrl} target="_blank" rel="noreferrer">условиями покупки</a> : "условиями покупки"} и {privacyUrl ? <a href={privacyUrl} target="_blank" rel="noreferrer">обработкой персональных данных</a> : "обработкой персональных данных"}.</span></label>{errors.consent && <p className="checkout-error">{errors.consent}</p>}<button className="store-primary-button" type="submit">{busy ? "Проверяем…" : "Проверить заказ и промокод"}</button></fieldset></form>}
+      : <form className="checkout-form" onSubmit={review} noValidate><fieldset disabled={busy}><legend>Контакты и адрес доставки</legend><div className="checkout-address-suggest"><label htmlFor="addressSearch">Начните вводить адрес</label><div className="checkout-field-control"><input id="addressSearch" type="text" autoComplete="street-address" value={addressQuery} placeholder="Например, Москва, Лесная, 3" role="combobox" aria-autocomplete="list" aria-expanded={suggestions.length > 0} aria-controls="address-suggestions" onChange={(event) => { setSelectedAddress(""); setAddressQuery(event.currentTarget.value); }} onBlur={() => window.setTimeout(() => setSuggestions([]), 120)} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} />{suggestions.length > 0 && <ul className="checkout-address-suggest-list" id="address-suggestions" role="listbox">{suggestions.map((suggestion, index) => <li key={`${formatYandexSuggestion(suggestion)}-${index}`}><button className="checkout-address-suggest-option" type="button" role="option" onMouseDown={(event) => event.preventDefault()} onClick={() => selectSuggestion(suggestion)}><strong>{suggestion.title?.text || formatYandexSuggestion(suggestion)}</strong>{suggestion.subtitle?.text && <span>{suggestion.subtitle.text}</span>}</button></li>)}</ul>}</div><p className="checkout-hint" aria-live="polite">{suggestionError || (yandexSuggestApiKey ? "Выберите подсказку — регион, город, улица и дом заполнятся автоматически. Индекс укажите вручную. Подсказки обрабатываются сервисом Яндекс." : "Можно заполнить адрес вручную.")}</p></div><div className="checkout-fields">{fields.map(([name, label, type, autoComplete, maxLength]) => <div className="checkout-field" key={name}><label htmlFor={name}>{label}</label><div className={`checkout-field-control${errors[name] ? " has-error" : ""}`}><input id={name} name={name} type={type} autoComplete={autoComplete} maxLength={maxLength} defaultValue={draft[name] ?? ""} required={name !== "apartment"} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <p className="checkout-error" id={`${name}-error`}>{errors[name]}</p>}</div></div>)}</div><label htmlFor="comment">Комментарий к заказу</label><div className={`checkout-field-control checkout-field-control-textarea${errors.comment ? " has-error" : ""}`}><textarea id="comment" name="comment" maxLength={1000} required defaultValue={draft.comment ?? ""} aria-invalid={Boolean(errors.comment)} aria-describedby={errors.comment ? "comment-error" : undefined} />{errors.comment && <p className="checkout-error" id="comment-error">{errors.comment}</p>}</div><label htmlFor="promoCode">Промокод (если есть)</label><input id="promoCode" name="promoCode" maxLength={100} defaultValue={draft.promoCode ?? ""} /><label className="checkout-consent"><input type="checkbox" name="consent" required defaultChecked={draft.consent === "on"} /><span>Согласен с {termsUrl ? <a href={termsUrl} target="_blank" rel="noreferrer">условиями покупки</a> : "условиями покупки"} и {privacyUrl ? <a href={privacyUrl} target="_blank" rel="noreferrer">обработкой персональных данных</a> : "обработкой персональных данных"}.</span></label>{errors.consent && <p className="checkout-error">{errors.consent}</p>}<button className="store-primary-button" type="submit">{busy ? "Проверяем…" : "Проверить заказ и промокод"}</button></fieldset></form>}
   </div>;
 }
 
