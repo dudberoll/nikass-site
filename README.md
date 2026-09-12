@@ -2,7 +2,7 @@
 
 > Текущий локальный сайт: единый NIKASS storefront на Astro + React с 24 товарами,
 > вариантами, корзиной и guest checkout; прежний `website` сохранён в `website-old`.
-> Запуск: `bun run dev:website -- --host 127.0.0.1 --port 4322`.
+> Запуск сайта вместе с API: `bun run dev:storefront`.
 > Товарные маршруты: `/`, `/catalog`, `/catalog/[slug]`, `/cart`, `/checkout`.
 > Backend заказов готов к WooCommerce, но production-доступы и публикация ещё не настроены.
 
@@ -188,6 +188,12 @@ Start only the app surfaces you need in separate terminals:
 bun run dev:backend
 bun run dev:webapp
 bun run dev:website
+```
+
+For the NIKASS storefront and its AI consultant, start the website and backend together:
+
+```bash
+bun run dev:storefront
 ```
 
 #### Local Web Origin And Auth Startup
