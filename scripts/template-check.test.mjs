@@ -75,13 +75,16 @@ describe('template checklist validation', () => {
   })
 
   test('rejects malformed install status and invalid or duplicate ledger rows', () => {
-    const malformedStatus = currentChecklist.replace('`not started`', '`almost ready`')
+    const malformedStatus = currentChecklist.replace(
+      /\*\*Install status:\*\* `[^`]+`/,
+      '**Install status:** `almost ready`',
+    )
     expect(validateChecklist(malformedStatus, { agents: currentAgents, claude: currentClaude })).toContain(
       'CHECKLIST.md has invalid install status "almost ready".',
     )
 
     const duplicateStatus = currentChecklist.replace(
-      '**Install status:** `not started`',
+      /\*\*Install status:\*\* `[^`]+`/,
       '**Install status:** `not started`\n**Install status:** `completed 2026-08-16`',
     )
     expect(validateChecklist(duplicateStatus, { agents: currentAgents, claude: currentClaude })).toContain(
@@ -166,12 +169,16 @@ describe('template checklist validation', () => {
   })
 
   test('keeps a reusable not-started intake pristine', () => {
-    const answered = currentChecklist.replace('| Project name / slug                                             | _unanswered_ |', '| Project name / slug                                             | demo         |')
+    const notStarted = currentChecklist.replace(
+      /\*\*Install status:\*\* `[^`]+`/,
+      '**Install status:** `not started`',
+    )
+    const answered = notStarted.replace('| Project name / slug                                             | _unanswered_ |', '| Project name / slug                                             | demo         |')
     expect(validateChecklist(answered, { agents: currentAgents, claude: currentClaude })).toContain(
       'A reusable template with status "not started" must keep every intake answer `_unanswered_`.',
     )
 
-    const checked = currentChecklist.replace('- [ ] `backend` - API, database, auth', '- [x] `backend` - API, database, auth')
+    const checked = notStarted.replace('- [ ] `backend` - API, database, auth', '- [x] `backend` - API, database, auth')
     expect(validateChecklist(checked, { agents: currentAgents, claude: currentClaude })).toContain(
       'A reusable template with status "not started" must keep every checklist item unchecked.',
     )
@@ -266,7 +273,10 @@ describe('template checklist validation', () => {
       'CHECKLIST.md section "Product" is missing required question "What product do you want to build first?".',
     )
 
-    const noSurface = completed.replace('- [x] `website` - public pages', '- [ ] `website` - public pages')
+    const noSurface = completed.replace(
+      /^- \[[xX]\](\s+`(?:backend|webapp|website|mobile)`.*)$/gm,
+      '- [ ]$1',
+    )
     expect(validateChecklist(noSurface, { agents: cleanAgents, claude: cleanClaude })).toContain(
       'A completed install must mark at least one active surface.',
     )
@@ -428,7 +438,7 @@ function completedChecklist() {
   const completed = `${currentChecklist.slice(0, deploymentStart).replaceAll('_unanswered_', 'n/a')}${currentChecklist.slice(deploymentStart)}`
 
   return completed
-    .replace('**Install status:** `not started`', '**Install status:** `completed 2026-08-16`')
+    .replace(/\*\*Install status:\*\* `[^`]+`/, '**Install status:** `completed 2026-08-16`')
     .replace('- [ ] `website`', '- [x] `website`')
 }
 

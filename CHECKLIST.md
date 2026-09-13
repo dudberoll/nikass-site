@@ -21,7 +21,7 @@ Answer cells hold `_unanswered_` until the question is asked, and `n/a` when the
 | --------------------------------------------------------------- | ------------ |
 | New project from this template, or work on the template itself? | Новый проект на основе шаблона; не работа над шаблоном. |
 | Project name / slug                                             | _unanswered_ |
-| Your own GitHub repository URL, if you have one                 | Не предоставлен; origin не настроен. |
+| Your own GitHub repository URL, if you have one                 | https://github.com/dudberoll/nikass-site.git |
 
 If no GitHub destination is chosen, the repository is left without `origin` and publishing stays unconfigured. The template remote is detached during setup unless this checkout is explicitly for improving the template.
 
@@ -29,8 +29,8 @@ If no GitHub destination is chosen, the repository is left without `origin` and 
 
 | Question                                                  | Answer       |
 | --------------------------------------------------------- | ------------ |
-| What product do you want to build first?                  | Сейчас — публичный storefront NIKASS на Astro + React: локальный mock-каталог электроники. Старые Apple Store и Shop Mac остаются отдельными legacy-маршрутами. |
-| What is the first user journey that must work end to end? | Главная → каталог NIKASS → карточка товара → локальная корзина; отдельно `/message-scroller` принимает вопрос и получает ответ AI через backend. Backend checkout и оплата отложены. |
+| What product do you want to build first?                  | Публичный storefront NIKASS на Astro + React с каталогом WooCommerce, корзиной и гостевым заказом без онлайн-оплаты. |
+| What is the first user journey that must work end to end? | Главная → каталог NIKASS → карточка товара → корзина → двухшаговое оформление → проверка цены и наличия в backend → заказ WooCommerce. AI-консультант остаётся отдельной опцией. |
 
 ## 3. Active surfaces
 
@@ -43,7 +43,7 @@ Mark what is active now, and set the install status to `in progress` as soon as 
 
 | Question                                                                                                             | Answer       |
 | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Why the unmarked surfaces are deferred, if it needs explaining                                                       | Активны публичный website и backend/API для каталога, guest checkout и AI-консультанта. Webapp и мобильное приложение отложены; старые Apple-маршруты сохраняются как legacy-поверхность. |
+| Why the unmarked surfaces are deferred, if it needs explaining                                                       | Активны публичный website и backend/API для каталога, guest checkout и AI-консультанта. Webapp и мобильное приложение отложены; старые Apple-маршруты не входят в текущую витрину. |
 | If `mobile` is active: are Expo/EAS builds, Expo Push, and Maestro E2E needed now, or left unconfigured until later? | n/a |
 
 The split between `webapp` and `website` is the agent's call, not the user's; `README.md` explains how to route a feature between them.
@@ -57,12 +57,12 @@ Ask about product needs, not implementations. Mark what the first version actual
 - [ ] File, image, or media uploads → also answer _Files, images, and media_
 - [ ] Paid subscriptions or one-off payments → also answer _Payments_
 - [ ] Admin tools or roles
-- [x] External integrations (which: AI provider through a server-side chat-completions API)
+- [x] External integrations (which: WooCommerce, Yandex Geosuggest, optional AI provider through a server-side chat-completions API)
 - [ ] Real-time chat, presence, collaboration, or live updates
 
 | Question                                                                                          | Answer       |
 | ------------------------------------------------------------------------------------------------- | ------------ |
-| What the first version explicitly should NOT do (write "nothing ruled out" if that is the answer) | Админка, загрузка и хранение пользовательских файлов не нужны. Личный кабинет и оплаты не подтверждены; RAG, база знаний, сохранение истории и операторский чат отложены. |
+| What the first version explicitly should NOT do (write "nothing ruled out" if that is the answer) | Личный кабинет, онлайн-оплата, подписки, загрузка пользовательских файлов, RAG, хранение истории и операторский чат не входят в текущую версию. |
 
 ## 5. Files, images, and media
 
@@ -70,13 +70,13 @@ This project ships private file storage with user avatars, so answer these for t
 
 | Question                                                                                      | Answer       |
 | --------------------------------------------------------------------------------------------- | ------------ |
-| What do users upload?                                                                         | _unanswered_ |
-| Public, private, shared with selected people, or mixed?                                       | _unanswered_ |
-| Who can upload, view, replace, and delete?                                                    | _unanswered_ |
-| Maximum file size and allowed file types                                                      | _unanswered_ |
-| Do images need thumbnails, resizing, format conversion, compression, cropping, or moderation? | _unanswered_ |
-| How long do files live after the owning record is deleted?                                    | _unanswered_ |
-| Should filenames be visible to users, or opaque?                                              | _unanswered_ |
+| What do users upload?                                                                         | n/a |
+| Public, private, shared with selected people, or mixed?                                       | n/a |
+| Who can upload, view, replace, and delete?                                                    | n/a |
+| Maximum file size and allowed file types                                                      | n/a |
+| Do images need thumbnails, resizing, format conversion, compression, cropping, or moderation? | n/a |
+| How long do files live after the owning record is deleted?                                    | n/a |
+| Should filenames be visible to users, or opaque?                                              | n/a |
 
 ## 6. Website data and freshness
 
@@ -85,9 +85,9 @@ follow the implementation contract in `docs/WEB_SURFACES.md`.
 
 | Question                                                                                    | Answer       |
 | ------------------------------------------------------------------------------------------- | ------------ |
-| Which public product or content data comes from the backend/database at website build time? | Никакие: каталог NIKASS пока хранится в локальной mock-модели website. |
-| How soon after that data changes must the public website show the change?                   | После изменения исходного кода и ручной статической сборки; backend-синхронизация отложена. |
-| Which changes require an automatic rebuild/redeploy rather than a manual release?           | В текущем переносе таких изменений нет; публикация не запрошена. |
+| Which public product or content data comes from the backend/database at website build time? | Каталог NIKASS загружается из WooCommerce API при статической сборке website и ограничивается выбранными артикулами CSV. |
+| How soon after that data changes must the public website show the change?                   | После следующей ручной статической сборки; автоматическая синхронизация пока не включена. |
+| Which changes require an automatic rebuild/redeploy rather than a manual release?           | Никакие в текущем локальном этапе; публикация и автоматический rebuild не запрошены. |
 
 The default is Astro SSG. Database-backed public data is fetched while building static output. If
 published database changes must appear automatically, implement the documented `website:rebuild`
@@ -100,9 +100,9 @@ Answer these only when payments are active above; otherwise mark the rows `n/a`.
 
 | Question                                                                                                                    | Answer       |
 | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| What exactly do users pay for?                                                                                              | n/a: payments are disabled for the current NIKASS mock stage. |
-| Recurring subscription, one-off purchase, or both?                                                                          | n/a: payments are disabled for the current NIKASS mock stage. |
-| Does the public website need a local cart or offer selection before registration/sign-in?                                   | n/a: payments are disabled for the current NIKASS mock stage; local cart scope is recorded in the active capability ledger. |
+| What exactly do users pay for?                                                                                              | n/a: the current NIKASS checkout does not take online payments. |
+| Recurring subscription, one-off purchase, or both?                                                                          | n/a: the current NIKASS checkout does not take online payments. |
+| Does the public website need a local cart or offer selection before registration/sign-in?                                   | n/a for payments: website всё равно хранит локальную корзину до гостевого checkout. |
 | Which active surfaces need payment: browser checkout, App Store / Google Play, native card entry, Apple Pay, or Google Pay? | n/a: no payment surface is active. |
 | What stops working when someone does not pay?                                                                               | n/a: there is no paid capability in this stage. |
 
@@ -179,14 +179,14 @@ A capability with no row is `absent` by default. Add the row instead of assuming
 | Infrastructure as code          | included | Provider-specific Terraform bootstrap, foundation, migration/runtime, and static roots cover DigitalOcean and Yandex Cloud, with remote state, guarded plan/apply, migration-gated immutable releases, media storage, static hosting, and jobs. `scripts/infra.mjs` is the one operations entry point. See `infra/README.md` and `docs/DEPLOYMENT.md`.                                                               |
 | Static asset precompression     | included | `bun run static:precompress` writes `.br` and `.gz` next to the text assets in `webapp/dist` and `website/dist`, using `node:zlib` and no dependency. It is own-server tooling: hosted releases do not upload those sidecars and use their edge/runtime compression when available.                                                                                                                                  |
 | Storybook component catalogs    | included | Separate local React/Vite catalogs cover every `src/components/ui` module in `webapp` and `website`, with official docs/a11y addons and story-only composition examples. They are not deployed; Astro sections remain outside Storybook and the website stays static SSG.                                                                                                                                       |
-| Apple storefront prototype | included | Перенесены Store и Shop Mac: статический HTML, локальные изображения, меню и карусели. Поиск, корзина и покупка остаются заглушками исходника. |
-| NIKASS local mock catalog | included | `/`, `/catalog`, `/catalog/[slug]`, `/cart` и `/checkout` образуют локальный товарный путь для пяти категорий, вариантов SKU, цен, доступности, описаний и характеристик. Корзина хранит только slug/SKU/quantity в версионированном `sessionStorage`; форма checkout передаёт данные в существующий backend, оплата отсутствует. |
+| Apple storefront prototype | removed | Старые Apple Store/Shop Mac маршруты удалены из активной website-поверхности; NIKASS использует собственные публичные маршруты. |
+| NIKASS storefront catalog | included | `/`, `/catalog`, `/catalog/[slug]`, `/cart` и `/checkout` образуют путь на данных WooCommerce API, ограниченных выбранными артикулами CSV. Корзина хранит только slug/SKU/quantity в версионированном `sessionStorage`; оплата отсутствует. |
 | NIKASS backend catalog and cart review | included | WooCommerce catalog API and fresh cart review; provider credentials pending. Orders are a separately configured module. |
 | AI-консультант | available | `/message-scroller` вызывает `POST /api/chat`; провайдер chat-completions подключается через серверные `AI_*`. По умолчанию отключён, история не хранится. |
-| Website build-time backend data | absent   | Контент текущего макета хранится в коде; backend не подключён. |
+| Website build-time backend data | included | Astro загружает каталог из WooCommerce API во время сборки; при ошибке сборка останавливается, а dev-запрос может повториться после запуска API. |
 | Automatic SSG rebuild           | absent   | Durable desired/published revision state, single-flight deployment reconciliation, immutable atomic/blue-green release promotion, public-marker verification, and a provider adapter are not implemented. Yandex additionally needs a separate builder/upload component. See `docs/WEB_SURFACES.md`.                                                                                                                 |
 | Website cart handoff | included | Корзина `website` хранит только slug/SKU/quantity в версионном sessionStorage и открывает единый same-origin `/checkout`; цену и остаток повторно проверяет backend. |
-| Browser checkout / payments | included | Единый активный гостевой checkout без оплаты находится в `website`: контакты, адрес, согласие, промокод, серверный расчёт и WooCommerce order. Онлайн-платежи отсутствуют; ORDERS_ENABLED выключен до настройки магазина. |
+| Browser checkout / payments | included | Единый активный гостевой checkout без оплаты находится в `website`: двухшаговая форма собирает личные данные, затем адрес с подсказками Яндекса и отдельными полями дома/квартиры; далее идут согласие, промокод, серверный расчёт и WooCommerce order. Онлайн-платежи отсутствуют; ORDERS_ENABLED выключен до настройки магазина. |
 | Push notifications              | absent   | No push code here. Expo Push comes from the mobile template line.                                                                                                                                                                                                                                                                                                                                                    |
 | Social sign-in (Apple / Google) | absent   | No social auth here. It comes from the mobile template line.                                                                                                                                                                                                                                                                                                                                                         |
 | Real-time / WebSockets          | absent   | Requires an explicit product need.                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -202,7 +202,7 @@ A capability with no row is `absent` by default. Add the row instead of assuming
 
 Verified by the agent during setup, not asked.
 
-- [ ] `docker compose version` and `docker info` succeed (needed for backend/API, uploads, or DB-backed validation)
+- [ ] `docker compose version` and `docker info` succeed (needed for PostgreSQL-backed backend flows, uploads, or DB-backed validation; not for read-only WooCommerce catalog access)
 - [x] `git remote -v` inspected; template remote detached unless contributing to the template
 - [ ] App-local `.env` files created from `.env.example`, with a locally generated `JWT_SECRET` (never committed)
 - [x] Smallest meaningful validation run for the active surfaces
@@ -258,4 +258,4 @@ Verified by the agent during setup, not asked.
 
 ### NIKASS storefront consolidation — 2026-09-11
 
-Astra-версия стала единым `website`: сохранены её главная, визуальный язык, 24 товара и локальные фото. Из прежней версии перенесены варианты со статусами наличия/предзаказа/недоступности, защищённая корзина, связанные товары и контрактная checkout-логика; старый архив удалён после консолидации. На текущем CSV нет колонки `Наличие`, поэтому все 24 позиции по умолчанию показаны как «в наличии»; перед заказом авторитетен WooCommerce.
+Astra-версия стала единым `website`: сохранены её главная и визуальный язык, а каталог переключён на build-time snapshot из WooCommerce. 24 строки CSV сопоставляются с 21 уникальной моделью; варианты, наличие, цены и связанные товары приходят из backend, а перед заказом авторитетен свежий WooCommerce review.

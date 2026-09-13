@@ -91,7 +91,7 @@ test('the mobile publication gate requires its three available capabilities', ()
 function mobileChecklist() {
   return currentChecklist
     .replace(
-      /^(\| Browser checkout \/ payments\s+\| absent\s+\|.*)$/m,
+      /^(\| Browser checkout \/ payments\s+\|.*)$/m,
       '$1\n| Payments / subscriptions        | available | Mobile store subscriptions are available. |',
     )
     .replace(/^(\| Push notifications\s+\|) absent(\s+\|)/m, '$1 available$2')
@@ -99,6 +99,7 @@ function mobileChecklist() {
       /^(\| Social sign-in \(Apple \/ Google\)\s+\|) absent(\s+\|)/m,
       '$1 available$2',
     )
+    .replace(/^(\| AI-консультант\s+\|) available(\s+\|)/m, '$1 absent$2')
 }
 
 function escapeRegExp(value) {

@@ -1,0 +1,556 @@
+---
+const reviews = [
+	{
+		name: "Анастасия Мачалова",
+		rating: "5.0",
+		text: "Прекрасный салон, мастер Эмма помогает с выбором цвета, покрытие без проблем носится 3 недели",
+	},
+	{
+		name: "Ирина Титова",
+		rating: "5.0",
+		text: "Посещаю салон на протяжении многих лет. Чисто, уютно, очень индивидуальный подход к клиенту, мастера вежливые, доброжелательные и выполняют работу очень качественно. Переехала, но продолжаю ходить только к ним, другие салоны не идут ни в какое сравнение.",
+	},
+	{
+		name: "Татьяна Е.",
+		rating: "5.0",
+		text: "Приятные впечатления начинаются  с момента, как переступаешь порог салон: внимательный персонал, чудесные администраторы, которые окружают тебя  вниманием, великолепный кофе..дальше погружаешься в приятные процедуры с мастерами: все качественно, оперативно по времени, с учётом всех твоих пожеланий. Екатерина - мастер своего дела, после неё - ноготочки красивые, ухоженные и результат держится делительное время. Спасибо всем сотрудникам, за то, что вы делаете!",
+	},
+	{
+		name: "Елена Григорьева",
+		rating: "5.0",
+		text: "Замечательный мастер Яна, последнее время к ней записываюсь. А вообще уже 16 лет храню верность этому салону. Переехала в другой район, езжу сюда, вне конкуренции",
+	},
+	{
+		name: "Ульяна Б.",
+		rating: "5.0",
+		text: "Была в данном салоне месяц назад на педикюре. Узнала совершенно случайно от коллеги и очень удачно) потрясающая атмосфера, максимальный комфорт во время процедуры! Мастер Эмма вежливо общалась, работала очень аккуратно и педикюр получился супер!Осталась очень довольна и обязательно приду ещё!",
+	},
+	{
+		name: "Виктория",
+		rating: "5.0",
+		text: "Я надорвала наращенный ноготь, были опасения, что он отвалится, надо было действовать бережно и аккуратно, чтобы снять наращивание и обработать травмированное место.\nКакое счастье, что я попала к Софии. Всё прошло идеально, 0 дискомфорта, мастер объясняла как будет действовать и спрашивала по ходу, всё ли комфортно.\nОт души рекомендую!",
+	},
+	{
+		name: "Ирина Соловьева",
+		rating: "5.0",
+		text: "Отличный салон. Маникюр сделали быстро, качественно. Результат превзошел ожидания! Спасибо!",
+	},
+	{
+		name: "Инга Авдеева",
+		rating: "5.0",
+		text: "Спасибо большое мастеру Юли за маникюр!\nПотрясающий мастер,больше 5 лет делаю у нее ногти 🩷",
+	},
+	{
+		name: "Ekaterina B.",
+		rating: "5.0",
+		text: "Мастер Яна супер!\nОчень довольна, нашли идеальный цвет и втирку как я и хотела, ходила с гель лаком четыре недели и возвращаюсь за новым дизайном!",
+	},
+	{
+		name: "Ангелина А.",
+		rating: "5.0",
+		text: "Замечательный мастер - Екатерина, красивые ноготочки, профессиональный подход, приятный в общении человек! Приветливый администратор! Адекватная для центра цена! Всë отлично, спасибо!",
+	},
+	{
+		name: "Anna Boyandina",
+		rating: "5.0",
+		text: "Очень вежливое и классное обслуживание у мастера Татьяны, сделала быстрый и красивый маникюр без единой царапины на кутикуле\nОгромное спасибо за отношение и возможность быстро ответить на созвон в середине процедуры",
+	},
+	{
+		name: "Александра",
+		rating: "5.0",
+		text: "Красивое пространство, высокий сервис и качественный маникюр - 10/10, пришла по рекомендации, всем советую!",
+	},
+	{
+		name: "Низам Г.",
+		rating: "5.0",
+		text: "Отлично стригут",
+	},
+	{
+		name: "Алевтина Шеленкова",
+		rating: "5.0",
+		text: "10 лет являюсь клиентом салона.Всегда тепло, с заботой встречают, профессиональный мастера выполняют свою работу четко, быстро.Особенно люблю и уважаю мастера Индиру, мои волосы тоже))",
+	},
+	{
+		name: "Ал Б",
+		rating: "5.0",
+		text: "Замечательная студия с высоким уровнем сервиса и оказываемых услуг.\nСпасибо за мои идеальные ногти ❤️😁",
+	},
+	{
+		name: "Екатерина Г.",
+		rating: "5.0",
+		text: "Место превосходное! В салоне всегда чисто, аккуратно, красиво. Администратор вежливый, готов ответить на все вопросы\n\nМастер София. Удивительная девушка, профессионал с большой буквы. Ходу только к ней.",
+	},
+	{
+		name: "Tanya m.",
+		rating: "5.0",
+		text: "Была у мастера Юлии!\nРабота выполнена прекрасно! Мастер меня услышала и помогла с выбором цвета, а было очень сложно определиться🙈 \nманикюр аккуратный, не толстый\nЮлия сделала все быстро и качественно \n\nСам салон может и не такой новый и замороченный, но он чистый, аккуратный \nАтмосфера очень дружелюбная и семейная \nВидно, что у мастеров прекрасные отношения с менеджером \n\nМенеджер Наталья восхитительная, позаботится о вашем комфорте 💯",
+	},
+	{
+		name: "I.S.",
+		rating: "5.0",
+		text: "Чисто, профессионально , мастер Эмма делает отличный красивый маникюр )))",
+	},
+	{
+		name: "Елизавета Д",
+		rating: "5.0",
+		text: "замечательная студия и очень аккуратная мастер Эмма",
+	},
+	{
+		name: "Ия В.",
+		rating: "5.0",
+		text: "Мастер София - большой профессионал. Очень аккуратно и красиво. Очень аккуратно работает с кутикулой.",
+	},
+	{
+		name: "Валерия Л.",
+		rating: "5.0",
+		text: "Хочу оставить отзыв о любимом салоне, куда я хожу на маникюр. Здесь всегда чувствуется настоящий профессионализм — мастера работают очень аккуратно, внимательно относятся к деталям и всегда делают идеальный результат. Видно, что люди действительно любят свою работу и заботятся о клиентах. Отдельно хочу отметить администраторов — это просто чудесные девушки. Они создают невероятно тёплую и приятную атмосферу с самого момента, как заходишь в салон. Всегда приветливые, внимательные и искренне заботятся о комфорте гостей. Каждый визит сюда — это не просто маникюр, а маленький отдых и удовольствие. Спасибо всей команде за высокий уровень сервиса и такую приятную атмосферу!",
+	},
+	{
+		name: "Регина Ямалова",
+		rating: "5.0",
+		text: "Это жемчужина в Хамовниках. Невероятно приятный сервис, Наталья, администратор, делает здесь настроение, даже только ради этого ходила бы сюда )) Но и мастера удивили. София сделала очень хороший педикюр, на котором я даже умудрилась уснуть, это один из самых комфортных педикюров в моей жизни. Анна сделала аппаратный маникюр, на котором не использовались ножницы, что меня ооооочень порадовало, так как от ножниц у меня потом растут некрасиво обрезки, несмотря на то, что там потом полируют аппаратом. В общем, я теперь буду сюда часто забегать, спасибо за позитив )",
+	},
+	{
+		name: "Диана Diamapola",
+		rating: "5.0",
+		text: "Посещаю салон NailsProfi с 2016 года, качество услуг на высоте. Специалисты учитывают все индивидуальные особенности и очень внимательно относятся к пожеланиям клиента. Чуткие и заботливые администраторы всегда предложат вкусный кофе или чай и оптимальное время для записи. Особенно хочу отметить своего любимого мастера Оксану Сокол, слова излишни, лучше один раз сделать и больше никогда с ней не расставаться. Лучшая из лучших ❤️ Владелица салона Татьяна Сахарчук собрала команду настоящих мастеров своего дела. Заходишь в салон человеком, выходишь произведением искусства 💫 В общем, мои сердечные рекомендации!",
+	},
+	{
+		name: "Ирина К",
+		rating: "5.0",
+		text: "Долго была постоянным клиентом. Дикрет, смена салонов и мастеров. Вернулась с большим удовольствием. Попала к новому мастеру Ирине П. Качество на высоком уровне. Стойкое покрытие, при этом аккуратное тонкое, естественный вид ногтей!!! Администраторы всегда приветливы, помогают скорректировать запись. Продуманная обстановка в кабинете создает комфорт во время процедуры!! Спасибо",
+	},
+	{
+		name: "Вера Князькина",
+		rating: "5.0",
+		text: "Делаю маникюр здесь на постоянной основе. Особенно хочу отметить мастера Юлю, выбрала и не пожалела. Мастер с большой буквы, золотые руки. Маникюр хорошо держится, все аккуратно, профессиональные средства. Атмосфера чарующая, приветливая администратор всегда нальет вкуснейший кофе, уходишь с прекрасным настроением и красивым маникюром. Цены для центра очень щадящие, а уровень на высоте. Спасибо девочкам за их труд и высочайший профессионализм.",
+	},
+	{
+		name: "Наталья Сим",
+		rating: "5.0",
+		text: "Девочки просто супер!!! Приятная атмосфера, доброжелательные люди, начиная с Владельца - очень красивая девушка и как личность открытая с правильными принципами (развитие и качество). 🤗 Мастер Марина - давно её знаю, и всегда приятно провожу время с ней😎. Маникюр всегда классный и четкий. Классно делает форму ногтя с учётом пожеланий клиента всегда правильно посоветует как будет лучше. Всегда НЕ БЕЗРАЗЛИЧНА к результату!! Администратор Наталья - прикольнее её не встречала человека. Чувствуется любовь к работе, которую выполняет. 🥰",
+	},
+	{
+		name: "Светлана Демина",
+		rating: "5.0",
+		text: "Посещаю этот салон более 5 лет. Мне очень нравится комфортная и расслабляющая атмосфера салона, приветливый и клиентоориентированный персонал. Здесь всегда предложат напитки по вашему вкусу. Все мастера салона профессионалы своего дела. Мой любимый мастер Анна: всегда быстро, добросовестно и качественно делает гель-френч. Спасибо, Анна, за Вашу прекрасную профессиональную работу! Рекомендую к посещению.",
+	},
+	{
+		name: "Ангелина Н.",
+		rating: "5.0",
+		text: "Мой любимый салон на протяжении 3 лет, потрясающая атмосфера, шикарное обслуживание, девочки профессионалы! Всегда довольна педикюром и маникюром, а так же делают шикарное ламинирование и окрашивание бровей и ресниц!! Рекомендую. Вас всегда угостят вкусным кофе и будет замечательное настроение на весь день)",
+	},
+	{
+		name: "Тамила Т",
+		rating: "5.0",
+		text: "Была у мастера Оксаны на маникюре. Уютная студия, большая зона ожидания. Приветливый администратор. Чистота в кабинете и на рабочем месте мастера. Инструменты стерильные, что очень важно для меня. Одноразовые расходники. Ну и комфортный чистый маникюр без порезов. Идеально ровное покрытие. Я довольна результатом. Благодарю. И от души рекомендую)",
+	},
+	{
+		name: "Антонина Маленькая",
+		rating: "5.0",
+		text: "Очень приятный доброжелательный персонал, делала здесь маникюр и укладку. Цены адекватные и подход добросовестный. Мастер по маникюру увидев, что ногтевая пластина повреждена и сильно истонченная отговорила покрывать гель лаком и мы нанесли обычный лак, думаю в любом другом салоне никто бы не стал переживать о вашем здоровье а просто бы выполнили пожелание клиента. Так что очень рекомендую данный салон!!!",
+	},
+	{
+		name: "Наталья К.",
+		rating: "5.0",
+		text: "Очень понравился салон! Чистота, уютно. Персонал очень вежливый, деликатный! Обратилась с деликатной просьбой - после пластической операции помыть голову - обслужили на высшем уровне - максимально аккуратно, деликатно. Большое спасибо мастеру Индире и всему персоналу!!!",
+	},
+	{
+		name: "Юля П.",
+		rating: "5.0",
+		text: "Хожу в эту студию уже несколько лет и менять не собираюсь. Очень комфортная студия, администратор всегда очень приветлив и любезен. Делаю маникюр и наращивание акрилом у Кати, она профессионал своего дела, быстро и качественно, всем советую эту студию.",
+	},
+];
+---
+
+<section class="reviews-standalone" id="reviews" aria-label="Отзывы клиентов">
+	<h2>Отзывы клиентов</h2>
+	<div class="reviews-trust" aria-label="Рейтинг NailsProfi на Яндекс Картах">
+		<div class="reviews-trust__award">
+			<svg class="reviews-trust__award-mark" viewBox="0 0 72 72" aria-hidden="true">
+				<g class="award-laurels">
+					<path d="M17.7 54.8C11 54.2 6.7 50.5 5 44.7c6.5.3 10.9 3.7 12.7 10.1Z" />
+					<path d="M15.1 45.4C9.4 43.8 6 39.9 5.2 34.4c5.8 1.3 9.2 5 9.9 11Z" />
+					<path d="M16.4 35.9c-4.2-3.2-5.7-7.5-4.4-12.6 4.4 3 5.9 7.1 4.4 12.6Z" />
+					<path d="M24.1 27.3c-2.6-4.9-1.9-9.2 1.9-12.8 2.7 4.7 2.1 9-1.9 12.8Z" />
+					<path d="M54.3 54.8C61 54.2 65.3 50.5 67 44.7c-6.5.3-10.9 3.7-12.7 10.1Z" />
+					<path d="M56.9 45.4c5.7-1.6 9.1-5.5 9.9-11-5.8 1.3-9.2 5-9.9 11Z" />
+					<path d="M55.6 35.9c4.2-3.2 5.7-7.5 4.4-12.6-4.4 3-5.9 7.1-4.4 12.6Z" />
+					<path d="M47.9 27.3c2.6-4.9 1.9-9.2-1.9-12.8-2.7 4.7-2.1 9 1.9 12.8Z" />
+				</g>
+				<path class="award-pin" d="M36 16c-11 0-19 8.6-19 19.2C17 49.7 36 62 36 62s19-12.3 19-26.8C55 24.6 47 16 36 16Zm0 27.5a8.3 8.3 0 1 1 0-16.6 8.3 8.3 0 0 1 0 16.6Z" />
+			</svg>
+			<span><strong>Хорошее место 2026</strong><small>Награда Яндекс Карт</small></span>
+		</div>
+		<div class="reviews-trust__rating">
+			<strong>5,0</strong>
+			<span aria-label="5 из 5 звёзд">★★★★★</span>
+		</div>
+		<div class="reviews-trust__count"><strong>396</strong><span>отзывов</span></div>
+		<a
+			class="reviews-trust__link"
+			href="https://yandex.ru/maps/org/nailsprofi/1122428957/reviews/?ll=37.596643%2C55.733179&z=15.08"
+			target="_blank"
+			rel="noopener noreferrer"
+		>
+			<span>Все отзывы на Яндекс Картах</span>
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7M4 12h12" /></svg>
+		</a>
+	</div>
+	<div class="reviews-marquee" data-reviews-scroll>
+		{[...reviews, ...reviews].map((review) => (
+			<article class="review-card">
+				<details name="reviews">
+					<summary>
+						<span class="review-topline"><strong>{review.rating}</strong></span>
+						<span class="review-name">{review.name}</span>
+						<span class="review-preview">{review.text}</span>
+						<span class="review-action" aria-hidden="true"></span>
+					</summary>
+					<p class="review-full">{review.text}</p>
+				</details>
+			</article>
+		))}
+	</div>
+</section>
+
+<script>
+	document.querySelectorAll<HTMLElement>("[data-reviews-scroll]").forEach((scroller) => {
+		let pressed = false;
+		let dragging = false;
+		let touching = false;
+		let suppressClickUntil = 0;
+		let startX = 0;
+		let startLeft = 0;
+		let position = scroller.scrollLeft;
+		let previousFrame = performance.now();
+		let resumeTimer = 0;
+
+		const animate = (now: number) => {
+			const elapsed = Math.min(now - previousFrame, 50);
+			previousFrame = now;
+			if (dragging || touching || scroller.querySelector("details[open]")) {
+				position = scroller.scrollLeft;
+				requestAnimationFrame(animate);
+				return;
+			}
+			const halfway = scroller.scrollWidth / 2;
+			position = position >= halfway ? position - halfway : position + elapsed * 0.036;
+			scroller.scrollLeft = position;
+			requestAnimationFrame(animate);
+		};
+		requestAnimationFrame(animate);
+
+		const pauseTouch = () => {
+			touching = true;
+			window.clearTimeout(resumeTimer);
+		};
+		const resumeTouch = () => {
+			window.clearTimeout(resumeTimer);
+			resumeTimer = window.setTimeout(() => { touching = false; }, 1800);
+		};
+		scroller.addEventListener("touchstart", pauseTouch, { passive: true });
+		scroller.addEventListener("touchend", resumeTouch, { passive: true });
+		scroller.addEventListener("touchcancel", resumeTouch, { passive: true });
+
+		scroller.addEventListener("pointerdown", (event) => {
+			if (event.pointerType !== "mouse") return;
+			pressed = true;
+			startX = event.clientX;
+			startLeft = scroller.scrollLeft;
+		});
+
+		scroller.addEventListener("pointermove", (event) => {
+			if (event.pointerType !== "mouse" || !pressed) return;
+			const distance = event.clientX - startX;
+			if (!dragging && Math.abs(distance) < 6) return;
+			if (!dragging) {
+				dragging = true;
+				scroller.classList.add("dragging");
+				scroller.setPointerCapture(event.pointerId);
+			}
+			scroller.scrollLeft = startLeft - distance;
+		});
+
+		const stop = () => {
+			if (dragging) suppressClickUntil = performance.now() + 100;
+			pressed = false;
+			dragging = false;
+			scroller.classList.remove("dragging");
+		};
+
+		scroller.addEventListener("click", (event) => {
+			if (performance.now() >= suppressClickUntil) return;
+			event.preventDefault();
+			event.stopPropagation();
+		});
+		scroller.addEventListener("pointerup", stop);
+		scroller.addEventListener("pointercancel", stop);
+	});
+</script>
+
+<style>
+	@font-face {
+		font-family: "Reviews Involve";
+		src: url("/fonts/Involve-Regular.ttf") format("truetype");
+		font-style: normal;
+		font-weight: 400;
+		font-display: swap;
+	}
+
+	.reviews-standalone {
+		--font-heading: "Reviews Involve", Montserrat, sans-serif;
+		background: #e8e6e2;
+		color: #171916;
+		font-family: Montserrat, ui-sans-serif, system-ui, sans-serif;
+		line-height: normal;
+		width: 100%;
+		padding: 28px 0 90px;
+		overflow: hidden;
+	}
+
+	.reviews-standalone h2 {
+		width: min(100% - 60px, 2000px);
+		margin: 0 auto;
+		color: #333131;
+		font-family: var(--font-heading);
+		font-size: clamp(2.375rem, 3.472vw, 3.125rem);
+		font-weight: 400;
+		line-height: 1.296;
+	}
+
+	.reviews-trust {
+		display: grid;
+		grid-template-columns: minmax(310px, 1.65fr) auto auto minmax(310px, 1.2fr);
+		gap: 16px;
+		width: min(100% - 60px, 2000px);
+		margin: 28px auto 0;
+	}
+
+	.reviews-trust > * {
+		box-sizing: border-box;
+		min-height: 92px;
+		border: 1px solid rgba(255, 255, 255, 0.7);
+		border-radius: 18px;
+		background: rgba(255, 255, 255, 0.68);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
+	}
+
+	.reviews-trust__award,
+	.reviews-trust__rating,
+	.reviews-trust__count,
+	.reviews-trust__link {
+		display: flex;
+		align-items: center;
+	}
+
+	.reviews-trust__award {
+		gap: 14px;
+		padding: 15px 20px;
+	}
+
+	.reviews-trust__award-mark {
+		stroke: none;
+		width: 54px;
+		height: 54px;
+		flex: 0 0 auto;
+	}
+
+	.award-laurels { fill: #ffb000; }
+	.award-pin { fill: #ff5b2e; }
+
+	.reviews-trust__award span {
+		display: grid;
+		gap: 5px;
+	}
+
+	.reviews-trust__award strong {
+		color: #3285ee;
+		font-size: 18px;
+		font-weight: 500;
+	}
+
+	.reviews-trust__award small {
+		color: #77716d;
+		font-size: 13px;
+	}
+
+	.reviews-trust__rating {
+		gap: 13px;
+		padding: 0 24px;
+		white-space: nowrap;
+	}
+
+	.reviews-trust__rating strong,
+	.reviews-trust__count strong {
+		color: #282522;
+		font-size: 26px;
+		font-weight: 400;
+	}
+
+	.reviews-trust__rating span {
+		color: #888;
+		font-size: 21px;
+		letter-spacing: 1px;
+	}
+
+	.reviews-trust__count {
+		gap: 6px;
+		justify-content: center;
+		padding: 0 24px;
+		white-space: nowrap;
+	}
+
+	.reviews-trust__count span {
+		color: #514b47;
+		font-size: 18px;
+	}
+
+	.reviews-trust__link {
+		justify-content: space-between;
+		gap: 20px;
+		padding: 0 28px;
+		background: linear-gradient(110deg, #efdce6, #e8c9d8);
+		color: #302b2e;
+		text-decoration: none;
+		font-size: 17px;
+		transition: box-shadow 180ms ease, transform 140ms ease;
+	}
+
+	.reviews-trust__link:hover {
+		box-shadow: 0 14px 32px rgba(82, 53, 69, 0.12);
+		transform: translateY(-2px);
+	}
+
+	.reviews-trust__link:active { transform: scale(0.98); }
+
+	.reviews-trust__link svg {
+		width: 24px;
+		height: 24px;
+		fill: none;
+		stroke: currentColor;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		stroke-width: 1.6;
+	}
+
+	.reviews-marquee {
+		display: flex;
+		align-items: flex-start;
+		gap: 16px;
+		margin-top: 34px;
+		overflow-x: auto;
+		overflow-y: hidden;
+		overscroll-behavior-x: contain;
+		-webkit-overflow-scrolling: touch;
+		padding: 0 30px 8px;
+		scrollbar-width: none;
+		touch-action: auto;
+		user-select: none;
+		cursor: grab;
+	}
+
+	.reviews-marquee::-webkit-scrollbar { display: none; }
+	.reviews-marquee.dragging { cursor: grabbing; }
+
+	.review-card {
+		flex: 0 0 calc((100vw - 108px) / 4);
+		box-sizing: border-box;
+		min-height: 168px;
+		border-radius: 16px;
+		background: rgba(255, 255, 255, 0.68);
+		cursor: pointer;
+		transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+	}
+
+	.review-card details { min-height: inherit; }
+	.review-card summary {
+		box-sizing: border-box;
+		min-height: inherit;
+		padding: 18px 20px;
+		list-style: none;
+	}
+	.review-card summary::-webkit-details-marker { display: none; }
+	.review-card:hover {
+		background: rgba(255, 255, 255, 0.82);
+		box-shadow: 0 14px 32px rgba(38, 32, 27, 0.08);
+		transform: scale(1.025);
+	}
+
+	.review-topline { display: flex; align-items: center; color: #6d6660; font-size: 14px; }
+	.review-topline strong { color: #2e2b29; font-size: 16px; font-weight: 500; }
+	.review-topline strong::before {
+		margin-right: 8px;
+		color: #888;
+		font-size: 13px;
+		letter-spacing: 1px;
+		content: "★★★★★";
+	}
+
+	.review-name { display: block; margin: 18px 0 8px; font-size: 22px; font-weight: 400; }
+	.review-preview {
+		display: -webkit-box;
+		overflow: hidden;
+		color: #47413d;
+		font-size: 15px;
+		line-height: 1.42;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+	}
+	.review-action { display: block; margin-top: 12px; color: #7a5f70; font-size: 13px; }
+	.review-action::before { content: "Читать полностью ↓"; }
+	.review-card details[open] .review-preview { display: none; }
+	.review-card details[open] .review-action::before { content: "Свернуть ↑"; }
+	.review-full { margin: 0; padding: 0 20px 18px; color: #47413d; font-size: 15px; line-height: 1.42; }
+
+	@media (max-width: 900px) {
+		.reviews-standalone h2 { width: min(100% - 32px, 1198px); font-size: 38px; }
+		.reviews-trust {
+			grid-template-columns: 1fr 1fr;
+			width: min(100% - 32px, 1198px);
+		}
+		.reviews-trust__award,
+		.reviews-trust__link { grid-column: 1 / -1; }
+		.reviews-marquee { padding: 0 16px 8px; }
+		.review-card { flex-basis: min(78vw, 320px); }
+	}
+
+	@media (max-width: 520px) {
+		.reviews-trust { gap: 10px; }
+		.reviews-trust > * { min-height: 78px; border-radius: 15px; }
+		.reviews-trust__award { padding: 12px 15px; }
+		.reviews-trust__award-mark { width: 46px; height: 46px; }
+		.reviews-trust__award strong { font-size: 16px; }
+		.reviews-trust__award small { font-size: 12px; }
+		.reviews-trust__rating,
+		.reviews-trust__count { padding: 0 14px; }
+		.reviews-trust__rating { gap: 8px; }
+		.reviews-trust__rating strong,
+		.reviews-trust__count strong { font-size: 22px; }
+		.reviews-trust__rating span { font-size: 14px; letter-spacing: 0; }
+		.reviews-trust__count span { font-size: 15px; }
+		.reviews-trust__link { min-height: 82px; padding: 0 20px; font-size: 16px; }
+	}
+
+	@media (max-width: 767px) {
+		.reviews-standalone {
+			padding: 24px 0 44px;
+		}
+
+		.reviews-standalone h2 {
+			width: calc(100% - 32px);
+			font-size: clamp(2rem, 9vw, 2.55rem);
+		}
+
+		.reviews-marquee {
+			gap: 12px;
+			margin-top: 20px;
+			scroll-padding-inline: 16px;
+		}
+
+		.review-card {
+			flex-basis: min(82vw, 320px);
+			scroll-snap-align: start;
+		}
+	}
+</style>

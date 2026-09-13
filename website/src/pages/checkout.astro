@@ -3,16 +3,36 @@ import Checkout from "../components/Checkout";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import "../styles/global.css";
+
 function publicUrl(value: string, { httpsOnly = false } = {}) {
   if (!value) return "";
   const url = new URL(value);
   if ((httpsOnly && url.protocol !== "https:") || (!httpsOnly && !["http:", "https:"].includes(url.protocol))) throw new Error(`Недопустимый публичный URL: ${value}`);
   return url.href;
 }
+
 const apiBase = publicUrl(import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const privacyUrl = publicUrl(import.meta.env.PUBLIC_PRIVACY_URL ?? "", { httpsOnly: true });
 const termsUrl = publicUrl(import.meta.env.PUBLIC_TERMS_URL ?? "", { httpsOnly: true });
 const yandexSuggestApiKey = import.meta.env.PUBLIC_YANDEX_SUGGEST_API_KEY ?? "";
 ---
 <!doctype html>
-<html lang="ru"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width" /><meta name="description" content="Безопасное оформление заказа NIKASS без регистрации." /><link rel="icon" href="/favicon.ico" /><title>Оформление заказа — NIKASS</title></head><body class="store-page"><StoreHeader /><main class="store-main checkout-page"><p class="store-eyebrow">NIKASS / ОФОРМЛЕНИЕ</p><h1>Ваш заказ</h1><p class="checkout-lead">Без регистрации. Сервер ещё раз проверит цену, наличие и промокод перед созданием заказа.</p><Checkout {apiBase} {privacyUrl} {termsUrl} {yandexSuggestApiKey} client:load /></main><StoreFooter /></body></html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Безопасное оформление заказа NIKASS без регистрации." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Оформление заказа — NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main checkout-page" id="main-content">
+      <p class="store-eyebrow">NIKASS / ОФОРМЛЕНИЕ</p>
+      <h1>Ваш заказ</h1>
+      <p class="checkout-lead">Без регистрации. Сервер ещё раз проверит цену, наличие и промокод перед созданием заказа.</p>
+      <Checkout {apiBase} {privacyUrl} {termsUrl} {yandexSuggestApiKey} client:load />
+    </main>
+    <StoreFooter />
+  </body>
+</html>

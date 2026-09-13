@@ -17,6 +17,11 @@ function git(args) {
   return execFileSync('git', args, { cwd: repositoryRoot, encoding: 'utf8' }).trim()
 }
 
+function optionalGit(args) {
+  const result = spawnSync('git', args, { cwd: repositoryRoot, encoding: 'utf8' })
+  return result.status === 0 ? result.stdout.trim() : undefined
+}
+
 function mobileReleaseErrors({ branch, status, head, originMobile, masterIsAncestor, requirePublished }) {
   const errors = []
 
@@ -65,7 +70,7 @@ if (import.meta.main) {
       branch: git(['branch', '--show-current']),
       status: git(['status', '--porcelain=v1']),
       head: git(['rev-parse', 'HEAD']),
-      originMobile: git(['rev-parse', 'origin/mobile']),
+      originMobile: optionalGit(['rev-parse', '--verify', 'origin/mobile^{commit}']),
       masterIsAncestor: ancestor.status === 0,
       requirePublished: process.argv.includes('--published'),
     }),

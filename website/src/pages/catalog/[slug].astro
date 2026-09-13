@@ -2,19 +2,20 @@
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
 import ProductVariantSelector from "../../components/ProductVariantSelector";
-import { detailLines, detailRows, formatPrice, products, relatedProducts, type Product } from "../../data/catalog";
+import { detailLines, detailRows, formatPrice, loadCatalogProducts, relatedProducts, type Product } from "../../data/catalog";
 
 import "../../styles/global.css";
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const products = await loadCatalogProducts();
   return products.map((product) => ({ params: { slug: product.slug }, props: { product } }));
 }
 
 const { product } = Astro.props as { product: Product };
 const characteristics = detailRows(product.characteristics);
 const packageContents = detailLines(product.packageContents);
-const related = relatedProducts(product);
-const scrollStory = product.slug === "1755808721" ? [
+const related = relatedProducts(product, await loadCatalogProducts());
+const scrollStory = product.slug === "portativnaya-zaryadnaya-stantsiya-500w-160000mah" ? [
   {
     number: "01",
     title: "500 Вт для важных задач",
@@ -61,7 +62,7 @@ const scrollStory = product.slug === "1755808721" ? [
   </head>
   <body class="store-page">
     <StoreHeader />
-    <main class="store-main product-page">
+    <main class="store-main product-page" id="main-content">
       <p class="store-breadcrumb"><a href="/catalog">Каталог</a> / {product.category}</p>
       <section class="product-layout">
         <div class="product-gallery"><img src={product.image} alt={product.name} /></div>

@@ -6,20 +6,24 @@ import { fileURLToPath } from "node:url";
 
 const dist = fileURLToPath(new URL("../dist/", import.meta.url));
 
-test("ships the Astra homepage and all 24 product routes", () => {
+test("ships the Astra homepage and every product route from the API snapshot", () => {
   const home = readFileSync(resolve(dist, "index.html"), "utf8");
   assert.match(home, /Энергия без привязки/);
   assert.match(home, /orbea-hero/);
-  const routes = readFileSync(resolve(dist, "catalog/index.html"), "utf8").match(/data-product-card/g) ?? [];
-  assert.equal(routes.length, 24);
-  for (const entry of readFileSync(resolve(process.cwd(), "src/data/nikass_catalog_ozon.csv"), "utf8").matchAll(/^"(\d+)";/gm)) {
-    assert.ok(existsSync(resolve(dist, `catalog/${entry[1]}/index.html`)), `missing route ${entry[1]}`);
-    assert.ok(existsSync(resolve(dist, `products/${entry[1]}.webp`)), `missing image ${entry[1]}`);
+  const catalog = readFileSync(resolve(dist, "catalog/index.html"), "utf8");
+  const routes = [...catalog.matchAll(/href="\/catalog\/([^"/]+)"/g)].map((entry) => entry[1]);
+  const uniqueRoutes = new Set(routes);
+  assert.equal(uniqueRoutes.size, 21);
+  for (const slug of uniqueRoutes) {
+    assert.ok(existsSync(resolve(dist, `catalog/${slug}/index.html`)), `missing route ${slug}`);
   }
 });
 
 test("ships related products, variant state, cart and contract-backed checkout hydration", () => {
-  const product = readFileSync(resolve(dist, "catalog/3204442838/index.html"), "utf8");
+  const catalog = readFileSync(resolve(dist, "catalog/index.html"), "utf8");
+  const slug = catalog.match(/href="\/catalog\/([^"/]+)"/)?.[1];
+  assert.ok(slug);
+  const product = readFileSync(resolve(dist, `catalog/${slug}/index.html`), "utf8");
   assert.match(product, /С этим товаром покупают/);
   assert.match(product, /data-cart-stage="ready"/);
   assert.match(product, /В наличии/);

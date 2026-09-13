@@ -10,7 +10,13 @@ export default function CatalogExplorer({ products, categories }: { products: Pr
   const [message, setMessage] = useState("");
   const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => setHydrated(true), []);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setQuery(params.get("q") ?? "");
+    const requestedCategory = params.get("category") ?? "";
+    setCategory(categories.includes(requestedCategory) ? requestedCategory : "");
+    setHydrated(true);
+  }, [categories]);
 
   const visible = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("ru-RU");

@@ -2,8 +2,27 @@
 import CartView from "../components/CartView";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
-import { products } from "../data/catalog";
+import { loadCatalogProducts } from "../data/catalog";
 import "../styles/global.css";
+
+const products = await loadCatalogProducts();
 ---
 <!doctype html>
-<html lang="ru"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width" /><meta name="description" content="Корзина NIKASS." /><link rel="icon" href="/favicon.ico" /><title>Корзина — NIKASS</title></head><body class="store-page"><StoreHeader /><main class="store-main cart-page"><p class="store-eyebrow">NIKASS / КОРЗИНА</p><h1>Ваша корзина</h1><CartView products={products} client:load /></main><StoreFooter /></body></html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Корзина NIKASS." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Корзина — NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main cart-page" id="main-content">
+      <p class="store-eyebrow">NIKASS / КОРЗИНА</p>
+      <h1>Ваша корзина</h1>
+      <CartView products={products} client:load />
+    </main>
+    <StoreFooter />
+  </body>
+</html>

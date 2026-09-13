@@ -15,13 +15,14 @@
 
 ## Перед подключением WooCommerce
 
-- [ ] Вставить значения в `backend/.env`: `CATALOG_PROVIDER=woocommerce`, URL
+- [x] Вставить значения в `backend/.env`: `CATALOG_PROVIDER=woocommerce`, URL
   `/wp-json/wc/v3/products`, `WOOCOMMERCE_CONSUMER_KEY` и
   `WOOCOMMERCE_CONSUMER_SECRET`.
 - [ ] Проверить реальные поля категорий, атрибутов, изображений, акций и
   вариантов; при расхождении изменить только адаптер
   `src/modules/catalog/infrastructure/woocommerce-source.ts`.
-- [ ] Подключить website к этим read-only маршрутам после согласования DTO.
+- [x] Подключить website к этим read-only маршрутам после согласования DTO. Website получает build-time snapshot через
+  `GET /api/catalog`; CSV больше не используется.
 
 ## Следующий срез
 
@@ -32,5 +33,5 @@
 - [ ] Проверить настоящий WooCommerce, бесплатную доставку, offline gateway, промокоды и уведомления по docs/ORDERS.md.
 - [ ] Заявки, блог и уведомления email/Telegram.
 
-Пока провайдер отключён, backend намеренно отвечает `503` на catalog routes и
+Если провайдер не настроен, backend намеренно отвечает `503` на catalog routes и
 не подставляет fake-товары.

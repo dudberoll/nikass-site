@@ -2,11 +2,31 @@
 import CatalogExplorer from "../components/CatalogExplorer";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
-import { categories, products } from "../data/catalog";
+import { loadCatalogProducts } from "../data/catalog";
 import "../styles/global.css";
+
+const products = await loadCatalogProducts();
+const categories = [...new Set(products.map((product) => product.category))];
 ---
 <!doctype html>
 <html lang="ru">
-  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width" /><meta name="description" content="Каталог NIKASS: зарядные станции, солнечные панели, инверторы и аккумуляторы." /><link rel="icon" href="/favicon.ico" /><title>Каталог NIKASS — автономная энергия</title></head>
-  <body class="store-page"><StoreHeader /><main class="store-main"><section class="store-intro"><p class="store-eyebrow">NIKASS / КАТАЛОГ</p><h1>Энергия, которая всегда с вами</h1><p>24 решения для дома, дороги, работы и резервного питания.</p></section><CatalogExplorer products={products} categories={categories} client:load /></main><StoreFooter /></body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Каталог NIKASS: зарядные станции, солнечные панели, инверторы и аккумуляторы." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Каталог NIKASS — автономная энергия</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main" id="main-content">
+      <section class="store-intro">
+        <p class="store-eyebrow">NIKASS / КАТАЛОГ</p>
+        <h1>Энергия, которая всегда с вами</h1>
+        <p>{products.length} решений для дома, дороги, работы и резервного питания.</p>
+      </section>
+      <CatalogExplorer products={products} categories={categories} client:load />
+    </main>
+    <StoreFooter />
+  </body>
 </html>

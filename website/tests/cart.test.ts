@@ -2,11 +2,24 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { Product } from "../src/data/catalog";
-import { products } from "../src/data/catalog";
 import { addCartItem, normalizeCart, parseCart, removeCartItem, setCartItemQuantity } from "../src/lib/cart";
 
+const product: Product = {
+  slug: "nikass-invertor-1200",
+  sku: "3204442838",
+  name: "NIKASS Инвертор 1200 Вт",
+  category: "Инверторы",
+  rawCategory: "invertory",
+  price: 4333,
+  oldPrice: 90000,
+  description: "Инвертор для автомобиля.",
+  packageContents: "Инвертор",
+  characteristics: "Мощность: 1200 Вт",
+  image: "https://cdn.example.com/inverter.jpg",
+  variants: [{ sku: "3204442838", label: "Основной вариант", price: 4333, oldPrice: 90000, availability: "in-stock" }],
+};
+
 test("merges duplicate lines, caps quantity and strips stale stored fields", () => {
-  const product = products[0];
   const variant = product.variants[0];
   const cart = addCartItem(addCartItem([], product, variant.sku, 98), product, variant.sku, 5);
 
@@ -16,7 +29,7 @@ test("merges duplicate lines, caps quantity and strips stale stored fields", () 
 });
 
 test("allows preorder, blocks unavailable and removes a line at zero", () => {
-  const base = products[0];
+  const base = product;
   const preorder: Product = { ...base, variants: [{ ...base.variants[0], sku: "pre", availability: "preorder" }] };
   const unavailable: Product = { ...base, variants: [{ ...base.variants[0], sku: "off", availability: "unavailable" }] };
 

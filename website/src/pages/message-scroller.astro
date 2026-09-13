@@ -13,7 +13,7 @@ const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").repl
     <title>Message Scroller — NIKASS</title>
   </head>
   <body class="message-scroller-page">
-    <main class="message-scroller-main">
+    <main id="main-content" class="message-scroller-main">
       <MessageScrollerDemo apiBase={apiBase} client:load />
       <p class="message-scroller-note">Ответы приходят через backend; история хранится только в текущей вкладке.</p>
     </main>

@@ -1,10 +1,10 @@
 # Vibe Coding Template
 
-> Текущий локальный сайт: единый NIKASS storefront на Astro + React с 24 товарами,
+> Текущий локальный сайт: единый NIKASS storefront на Astro + React с 21 моделью из CSV, загружаемой через WooCommerce API,
 > вариантами, корзиной и guest checkout.
 > Запуск сайта вместе с API: `bun run dev:storefront`.
 > Товарные маршруты: `/`, `/catalog`, `/catalog/[slug]`, `/cart`, `/checkout`.
-> Backend заказов готов к WooCommerce, но production-доступы и публикация ещё не настроены.
+> Каталог backend уже читает WooCommerce REST API; production-заказы, доступы и публикация ещё не настроены.
 
 <p align="center">
   <img src="docs/assets/vibe_tmpl_schema.png" alt="Vibe Coding Template architecture schema" width="100%">
@@ -114,7 +114,7 @@ Install dependencies first:
 bun install
 ```
 
-If backend/API, full-stack, or other database-backed work is active, check Docker first. Docker is the local app that runs PostgreSQL for this template:
+If database-backed backend, full-stack, or database validation is active, check Docker first. Docker is the local app that runs PostgreSQL for this template. The read-only NIKASS catalog path talks to WooCommerce through the backend and does not require PostgreSQL or Docker:
 
 ```bash
 docker compose version
@@ -127,7 +127,7 @@ If either command fails, install and start Docker before continuing:
 - macOS: install and start Docker Desktop, or another Docker Engine with Compose v2, then rerun `docker compose version` and `docker info`.
 - Linux: install Docker Engine and the Docker Compose plugin, start the Docker service, then rerun `docker compose version` and `docker info`.
 
-Do not switch new users to native PostgreSQL during local setup. The repository's documented local path is Docker Compose for backend/API work.
+Do not switch new users to native PostgreSQL during local setup. The repository's documented local path is Docker Compose for PostgreSQL-backed backend/API work.
 
 ### Backend/API Or Full-Stack
 
@@ -201,8 +201,10 @@ bun run dev:storefront
 The included `webapp` is a full-stack browser client, not a standalone static
 site. Its register, login, and session bootstrap flows require PostgreSQL and the
 backend. Start the database, apply migrations, and run `dev:backend` before
-opening the webapp. Website-only setups can skip backend/PostgreSQL; a webapp-only
-project can skip them only after replacing or removing the included auth golden
+opening the webapp. The current NIKASS website needs the backend process for its
+WooCommerce catalog, but its read-only catalog route can run without PostgreSQL;
+orders, auth, readiness, outbox, and integration tests still need the database.
+A truly website-only setup can skip both only after removing the API-backed catalog
 path.
 
 Use the same browser origin that appears in `backend/.env` under
@@ -287,7 +289,7 @@ signal because it depends on the Terraform CLI rather than the normal applicatio
 - `bun run test:webapp` - run webapp client tests.
 - `bun run test:website` - run website unit tests.
 - `bun run test:build-contracts` - build `webapp` and `website`, then check production-output
-  invariants. The website contract covers the Astra homepage, all 24 NIKASS product routes, local assets,
+  invariants. The website contract covers the Astra homepage, every generated WooCommerce product route,
   related products and catalog/cart/checkout hydration; the webapp contract covers its shipped CSS and
   lazy hero chunk. This is the one test script that builds; `test:webapp` and `test:website` stay
   read-only.
