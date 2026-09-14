@@ -11,7 +11,8 @@ export function createOrdersModule({ env, db, provider }: { env: AppEnv; db: DbC
   const source = provider ?? (env.ORDERS_ENABLED && env.WOOCOMMERCE_PRODUCTS_ENDPOINT && env.WOOCOMMERCE_STORE_ENDPOINT && env.WOOCOMMERCE_CONSUMER_KEY && env.WOOCOMMERCE_CONSUMER_SECRET
     ? createWooCommerceOrders({ productsEndpoint: env.WOOCOMMERCE_PRODUCTS_ENDPOINT, storeEndpoint: env.WOOCOMMERCE_STORE_ENDPOINT, consumerKey: env.WOOCOMMERCE_CONSUMER_KEY, consumerSecret: env.WOOCOMMERCE_CONSUMER_SECRET, timeoutMs: env.CATALOG_REQUEST_TIMEOUT_MS })
     : { quote: disabled, submit: disabled })
-  return { routes: createOrderRoutes(new OrdersService(createOrderStore(db), source)) }
+  const emailEnabled = Boolean(env.ORDER_MANAGER_EMAIL && ['postbox', 'resend'].includes(env.EMAIL_DELIVERY))
+  return { routes: createOrderRoutes(new OrdersService(createOrderStore(db, emailEnabled), source)) }
 }
 export type { OrderProvider } from './application/ports'
 export { deliverOrderNotification } from './infrastructure/notifications'

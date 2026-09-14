@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import ReviewsSection from "../components/ReviewsSection.astro";
 import MessageScrollerDemo from "../components/MessageScrollerDemo";
 import { formatPrice, loadCatalogProducts } from "../data/catalog";
 
@@ -34,6 +35,15 @@ const footerGroups = [
 ];
 
 const bestSellers = products.slice(0, 4);
+const heroProducts = [
+  { article: "1755808721", heroImage: "/products_clean/1755808721/product.webp" },
+  { article: "3204445652", heroImage: "/products_clean/3204445652/product.webp" },
+  { article: "1755717935", heroImage: "/products_clean/1755717935/product.webp" },
+].map(({ article, heroImage }) => {
+  const product = products.find((item) => item.sku === article);
+  if (!product) throw new Error(`Hero product ${article} is missing from the catalog`);
+  return { ...product, heroImage };
+});
 ---
 
 <!doctype html>
@@ -47,7 +57,7 @@ const bestSellers = products.slice(0, 4);
   </head>
   <body>
     <div class="orbea-page">
-      <header class="orbea-header" data-header>
+      <header class="orbea-header orbea-header-light" data-header>
         <a class="skip-link" href="#main-content">К содержимому</a>
         <div class="orbea-header-inner">
           <button class="orbea-mobile-menu-button" type="button" aria-label="Открыть меню" data-open-menu>
@@ -100,12 +110,7 @@ const bestSellers = products.slice(0, 4);
       </div>
 
       <main id="main-content">
-        <section class="orbea-hero">
-          <picture class="orbea-hero-picture">
-            <source media="(max-width: 767px)" srcset="/assets/images/hero-nikass.webp" />
-            <img src="/assets/images/hero-nikass.webp" alt="Автономная энергия NIKASS в горах" fetchpriority="high" />
-          </picture>
-          <div class="orbea-hero-overlay"></div>
+        <section class="orbea-hero orbea-hero-featured">
           <div class="orbea-hero-copy">
             <h1>Энергия без привязки</h1>
             <p>Надёжные решения для дома, дороги и работы — там, где нужна свобода от розетки.</p>
@@ -113,6 +118,14 @@ const bestSellers = products.slice(0, 4);
               <a class="orbea-button" href="/catalog"><span>↗</span> Смотреть каталог</a>
               <a class="orbea-button orbea-button-dark" href="#custom">Подобрать решение</a>
             </div>
+          </div>
+          <div class="orbea-hero-products" aria-label="Рекомендуемые товары">
+            {heroProducts.map((product, index) => (
+              <a class="orbea-hero-product-card" href={`/catalog/${product.slug}`} aria-label={`Открыть ${product.name}`}>
+                <span class="orbea-hero-product-media"><img src={product.heroImage} alt={product.name} loading={index === 0 ? "eager" : "lazy"} decoding="async" /></span>
+                <span class="orbea-hero-product-name">{product.name}</span>
+              </a>
+            ))}
           </div>
         </section>
 
@@ -197,6 +210,7 @@ const bestSellers = products.slice(0, 4);
             ))}
           </div>
         </section>
+        <ReviewsSection />
       </main>
 
       <footer class="orbea-footer" id="footer">

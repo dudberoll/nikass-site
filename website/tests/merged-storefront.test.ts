@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { detailRows, mapCatalogProduct, relatedProducts, selectCatalogProducts } from '../src/data/catalog'
 
 const homepage = readFileSync(fileURLToPath(new URL('../src/pages/index.astro', import.meta.url)), 'utf8')
+const homepageStyles = readFileSync(fileURLToPath(new URL('../src/styles/global.css', import.meta.url)), 'utf8')
 
 const products = [
   mapCatalogProduct({
@@ -37,9 +38,10 @@ test('maps WooCommerce products with orderable variants', () => {
   assert.ok(products.every((product) => product.variants.length > 0))
   assert.ok(products.every((product) => product.variants.every((variant) =>
     ['in-stock', 'preorder', 'unavailable'].includes(variant.availability))))
-  assert.equal(products[0]?.image, 'https://cdn.example.com/inverter.jpg')
+  assert.equal(products[0]?.image, '/products_clean/3204442838/product.webp')
   assert.equal(products[0]?.sku, '3204442838')
   assert.equal(products[0]?.variants[0]?.sku, 'WJF-1200MX')
+  assert.equal(products[1]?.image, '/products_clean/3204445652/product.webp')
 })
 
 test('keeps only the CSV-selected WooCommerce products', () => {
@@ -84,4 +86,15 @@ test('homepage CTA contracts use the system builder and chat widget', () => {
   assert.match(homepage, /<a[^>]+href="#custom"[^>]*>Подобрать решение<\/a>/)
   assert.match(homepage, /data-chat-open/)
   assert.match(homepage, /data-chat-widget/)
+})
+
+test('homepage hero exposes the requested featured products', () => {
+  for (const article of ['1755808721', '3204445652', '1755717935']) {
+    assert.match(homepage, new RegExp(`/products_clean/${article}/product\\.webp`))
+  }
+  assert.match(homepage, /class="orbea-hero-products"/)
+  assert.match(homepage, /class="orbea-hero-product-name"/)
+  assert.match(homepage, /href={`\/catalog\/\$\{product\.slug\}`}/)
+  assert.match(homepageStyles, /orbea-hero-product-card:hover[^}]+scale\(1\.15\)/)
+  assert.match(homepageStyles, /orbea-hero-product-card:hover[^}]+orbea-hero-product-name[^}]+opacity: 1/)
 })

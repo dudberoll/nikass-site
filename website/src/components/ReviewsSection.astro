@@ -290,19 +290,10 @@ const reviews = [
 </script>
 
 <style>
-	@font-face {
-		font-family: "Reviews Involve";
-		src: url("/fonts/Involve-Regular.ttf") format("truetype");
-		font-style: normal;
-		font-weight: 400;
-		font-display: swap;
-	}
-
 	.reviews-standalone {
-		--font-heading: "Reviews Involve", Montserrat, sans-serif;
-		background: #e8e6e2;
+		background: #f3f3f3;
 		color: #171916;
-		font-family: Montserrat, ui-sans-serif, system-ui, sans-serif;
+		font-family: inherit;
 		line-height: normal;
 		width: 100%;
 		padding: 28px 0 90px;
@@ -310,13 +301,14 @@ const reviews = [
 	}
 
 	.reviews-standalone h2 {
-		width: min(100% - 60px, 2000px);
-		margin: 0 auto;
+		width: auto;
+		margin: 0;
+		padding-inline: 64px;
 		color: #333131;
-		font-family: var(--font-heading);
-		font-size: clamp(2.375rem, 3.472vw, 3.125rem);
-		font-weight: 400;
-		line-height: 1.296;
+		font-size: 32px;
+		font-weight: 500;
+		line-height: 1.1;
+		letter-spacing: -.02em;
 	}
 
 	.reviews-trust {
@@ -504,7 +496,6 @@ const reviews = [
 	.review-full { margin: 0; padding: 0 20px 18px; color: #47413d; font-size: 15px; line-height: 1.42; }
 
 	@media (max-width: 900px) {
-		.reviews-standalone h2 { width: min(100% - 32px, 1198px); font-size: 38px; }
 		.reviews-trust {
 			grid-template-columns: 1fr 1fr;
 			width: min(100% - 32px, 1198px);
@@ -538,8 +529,8 @@ const reviews = [
 		}
 
 		.reviews-standalone h2 {
-			width: calc(100% - 32px);
-			font-size: clamp(2rem, 9vw, 2.55rem);
+			padding-inline: 20px;
+			font-size: 28px;
 		}
 
 		.reviews-marquee {

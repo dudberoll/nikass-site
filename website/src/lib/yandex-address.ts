@@ -3,11 +3,16 @@ export type YandexSuggestResult = {
   subtitle?: { text?: string };
   address?: {
     formatted_address?: string;
-    component?: Array<{ kind?: string; name?: string }>;
+    component?: Array<{ kind?: string | string[]; name?: string }>;
   };
 };
 
 export type DeliveryAddressFields = Partial<Record<"region" | "city" | "street" | "house", string>>;
+
+export function yandexSuggestType(query: string) {
+  const lastToken = query.trim().split(/\s+/).at(-1) ?? "";
+  return /\d/.test(lastToken) ? "house" : "street";
+}
 
 export function formatYandexSuggestion(result: YandexSuggestResult) {
   return result.address?.formatted_address?.trim()
@@ -16,7 +21,10 @@ export function formatYandexSuggestion(result: YandexSuggestResult) {
 
 export function parseYandexAddress(result: YandexSuggestResult): DeliveryAddressFields {
   const components = result.address?.component ?? [];
-  const value = (...kinds: string[]) => components.find((component) => kinds.includes(component.kind ?? "") && component.name?.trim())?.name?.trim();
+  const value = (...kinds: string[]) => components.find((component) => {
+    const componentKinds = Array.isArray(component.kind) ? component.kind : [component.kind];
+    return componentKinds.some((kind) => kinds.includes(kind?.toLowerCase() ?? "")) && component.name?.trim();
+  })?.name?.trim();
   return Object.fromEntries([
     ["region", value("region", "province")],
     ["city", value("locality")],

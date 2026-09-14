@@ -650,10 +650,9 @@ function validatePrivateStorageEnv(env: z.infer<typeof envSchema>, ctx: z.Refine
 
 function validateOrdersEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx) {
   if (!env.ORDERS_ENABLED) return
-  for (const key of ['WOOCOMMERCE_PRODUCTS_ENDPOINT', 'WOOCOMMERCE_STORE_ENDPOINT', 'WOOCOMMERCE_CONSUMER_KEY', 'WOOCOMMERCE_CONSUMER_SECRET', 'ORDER_MANAGER_EMAIL', 'ORDER_TELEGRAM_BOT_TOKEN', 'ORDER_TELEGRAM_CHAT_ID'] as const) {
+  for (const key of ['WOOCOMMERCE_PRODUCTS_ENDPOINT', 'WOOCOMMERCE_STORE_ENDPOINT', 'WOOCOMMERCE_CONSUMER_KEY', 'WOOCOMMERCE_CONSUMER_SECRET', 'ORDER_TELEGRAM_BOT_TOKEN', 'ORDER_TELEGRAM_CHAT_ID'] as const) {
     if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: `${key} is required when ORDERS_ENABLED=true` })
   }
-  if (!['postbox', 'resend'].includes(env.EMAIL_DELIVERY)) ctx.addIssue({ code: 'custom', path: ['EMAIL_DELIVERY'], message: 'Orders require configured real email delivery' })
   if (env.WOOCOMMERCE_STORE_ENDPOINT) {
     const url = new URL(env.WOOCOMMERCE_STORE_ENDPOINT)
     if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) ctx.addIssue({ code: 'custom', path: ['WOOCOMMERCE_STORE_ENDPOINT'], message: 'Store API requires HTTPS without credentials, query or fragment' })

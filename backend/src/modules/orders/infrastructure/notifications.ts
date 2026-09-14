@@ -13,7 +13,7 @@ export async function deliverOrderNotification(payload: unknown, runtime: Backen
   const text = [
     `Новый заказ №${row.orderNumber}`,
     ...totals.items.map((item) => `${item.sku}: ${item.quantity} шт., ${(item.totalMinor / 100).toFixed(2)} ₽`),
-    `Итого: ${(totals.totalMinor / 100).toFixed(2)} ₽. Доставка СДЭК бесплатно.`,
+    `Итого: ${(totals.totalMinor / 100).toFixed(2)} ₽. Доставка бесплатно.`,
     `Промокод: ${promoCode || 'нет'}`,
     `${customer.name}, ${customer.phone}, ${customer.email}`,
     `${customer.postcode}, ${customer.region}, ${customer.city}, ${customer.street}, д. ${customer.house}${customer.apartment ? `, кв. ${customer.apartment}` : ''}`,

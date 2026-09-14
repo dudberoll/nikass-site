@@ -59,11 +59,12 @@ test("moves from personal details to the Yandex-assisted delivery address", asyn
 
   await expect(page.getByRole("group", { name: "Личные данные" })).toBeHidden();
   await expect(page.getByRole("group", { name: "Адрес доставки" })).toBeVisible();
-  const addressLabels = await page.locator("fieldset:not([hidden]) label").allTextContents();
-  expect(addressLabels.slice(0, 4)).toEqual(["Адрес", "Дом / корпус", "Квартира / офис (необязательно)", "Почтовый индекс"]);
-
-  await page.getByRole("button", { name: "Проверить заказ" }).click();
+  const addressLabels = await page.locator("fieldset:not([hidden]) label:visible").allTextContents();
+  expect(addressLabels.slice(0, 4)).toEqual(["Регион / область", "Город", "Улица", "Дом / корпус"]);
   await expect(page.locator("#manual-address-fields")).toBeVisible();
+  await expect(page.locator("#addressSearch")).toBeHidden();
+
+  await page.getByRole("button", { name: "Перейти к оплате" }).click();
   await expect(page.getByLabel("Регион / область")).toBeFocused();
 });
 

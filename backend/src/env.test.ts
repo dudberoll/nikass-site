@@ -462,3 +462,20 @@ describe('email env', () => {
     expect(loadEnv({ ...runner, EMAIL_DELIVERY: 'console' }).EMAIL_DELIVERY).toBe('console')
   })
 })
+
+describe('orders env', () => {
+  test('allows Telegram-only orders without email configuration', () => {
+    expect(() => loadEnv({
+      DATABASE_URL: 'postgresql://superuser:superpassword@localhost:54329/web_app_demo',
+      JWT_SECRET: '12345678901234567890123456789012',
+      ORDERS_ENABLED: 'true',
+      CATALOG_PROVIDER: 'woocommerce',
+      WOOCOMMERCE_PRODUCTS_ENDPOINT: 'https://catalog.example.com/products',
+      WOOCOMMERCE_STORE_ENDPOINT: 'https://store.example.com/wp-json/wc/store/v1',
+      WOOCOMMERCE_CONSUMER_KEY: 'ck_test',
+      WOOCOMMERCE_CONSUMER_SECRET: 'cs_test',
+      ORDER_TELEGRAM_BOT_TOKEN: '123:test',
+      ORDER_TELEGRAM_CHAT_ID: 'chat-test',
+    })).not.toThrow()
+  })
+})

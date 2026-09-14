@@ -72,6 +72,7 @@ const catalogArticlesBySlug: CatalogSelection = {
   "rezervnyy-istochnik-pitaniya-500-vt-537-vtch-168000-mah": ["1896489414"],
   "portativnaya-zaryadnaya-stantsiya-500w-160000mah": ["1755808721"],
 };
+const cleanedProductArticles = new Set(Object.values(catalogArticlesBySlug).flat());
 
 export const AVAILABILITY_LABELS: Record<Availability, string> = {
   "in-stock": "В наличии",
@@ -134,7 +135,9 @@ export function mapCatalogProduct(product: CatalogApiProduct, articles: readonly
     characteristics: Object.entries(characteristics)
       .map(([label, value]) => `${label}: ${value}`)
       .join("\n"),
-    image: product.images[0] ?? "/assets/images/gear-menu.webp",
+    image: cleanedProductArticles.has(article)
+      ? `/products_clean/${article}/product.webp`
+      : product.images[0] ?? "/assets/images/gear-menu.webp",
     variants,
   };
 }

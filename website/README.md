@@ -4,7 +4,7 @@
 
 Маршруты: `/`, `/catalog`, `/catalog/[slug]`, `/cart`, `/checkout`, `/message-scroller`.
 
-`/message-scroller` отправляет историю текущей вкладки в `POST /api/chat`. Для локальной страницы задайте `PUBLIC_API_URL`, а в `backend/.env` включите `AI_PROVIDER=chat-completions` и укажите серверные `AI_API_URL` и `AI_API_KEY`; по умолчанию AI выключен.
+`/message-scroller` отправляет историю текущей вкладки в `POST /api/chat`. Для локальной страницы задайте `PUBLIC_API_URL`, а в `backend/.env` включите `AI_PROVIDER=chat-completions` и укажите серверные `AI_API_URL` и `AI_API_KEY`; по умолчанию AI выключен. Вопросы о времени работы используют встроенный расчётчик; формула и правила базы знаний описаны в [../docs/CHAT_KNOWLEDGE.md](../docs/CHAT_KNOWLEDGE.md).
 
 Из корня репозитория `bun run dev:storefront` запускает сайт и API вместе.
 

@@ -2,7 +2,7 @@ import type { DbClient } from '../../../db'
 import { enqueueTask } from '../../../outbox'
 import type { OrderStore } from '../application/ports'
 
-export function createOrderStore(db: DbClient): OrderStore {
+export function createOrderStore(db: DbClient, emailEnabled: boolean): OrderStore {
   return {
     create: async (tokenHash, cartToken, input, totals, expiresAt) => {
       await db.checkoutAttempt.create({ data: { tokenHash, cartToken, input, totals, expiresAt } })
@@ -14,7 +14,7 @@ export function createOrderStore(db: DbClient): OrderStore {
     finish: async (id, orderNumber) => {
       await db.$transaction(async (tx) => {
         await tx.checkoutAttempt.update({ where: { id }, data: { state: 'confirmed', orderNumber, cartToken: null } })
-        for (const channel of ['email', 'telegram']) {
+        for (const channel of emailEnabled ? ['email', 'telegram'] : ['telegram']) {
           await enqueueTask(tx, { type: 'orders:notify', dedupeKey: `${id}:${channel}`, payload: { id, channel } })
         }
       })

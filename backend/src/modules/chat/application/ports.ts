@@ -1,7 +1,11 @@
 import type { ChatMessage } from '@web-app-demo/contracts'
 
+export type ChatProviderRequestOptions = {
+  useEnergyTool?: boolean
+}
+
 export type ChatProvider = {
-  respond: (messages: readonly ChatMessage[]) => Promise<string>
+  respond: (messages: readonly ChatMessage[], options?: ChatProviderRequestOptions) => Promise<string>
 }
 
 export type ChatFailureKind = 'not_configured' | 'unavailable' | 'invalid_response'

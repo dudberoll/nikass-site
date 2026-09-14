@@ -1,4 +1,5 @@
 import type { AppEnv } from '../../env'
+import { buildChatSystemPrompt } from './application/knowledge-base'
 import { ChatFailure, type ChatProvider } from './application/ports'
 import { createChatCompletionsProvider } from './infrastructure/chat-completions-provider'
 import { createChatRoutes } from './transport/routes'
@@ -23,7 +24,7 @@ function providerFromEnv(env: AppEnv): ChatProvider {
     apiUrl: env.AI_API_URL,
     model: env.AI_MODEL,
     requestTimeoutMs: env.AI_REQUEST_TIMEOUT_MS,
-    systemPrompt: env.AI_SYSTEM_PROMPT,
+    systemPrompt: buildChatSystemPrompt(env.AI_SYSTEM_PROMPT),
   })
 }
 
