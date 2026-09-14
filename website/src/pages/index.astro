@@ -3,6 +3,7 @@ import "../styles/global.css";
 import ReviewsSection from "../components/ReviewsSection.astro";
 import MessageScrollerDemo from "../components/MessageScrollerDemo";
 import { formatPrice, loadCatalogProducts } from "../data/catalog";
+import { directionEntries, storyEntries } from "../data/blog";
 
 const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const products = await loadCatalogProducts();
@@ -14,31 +15,21 @@ const bikes = [
   { id: "batteries", category: "Аккумуляторы", title: "AGM-аккумуляторы", body: "Запас автономности", cta: "Выбрать аккумулятор", image: "orca-aero.webp" },
 ];
 
-const directions = [
-  { id: "home", title: "Для дома", body: "Резервное питание, когда оно действительно нужно", image: "road.webp", mobileImage: "road-mobile.webp" },
-  { id: "travel", title: "Для дороги", body: "Заряжайте технику и оставайтесь на связи в пути", image: "mountain.webp", mobileImage: "mountain-mobile.webp" },
-  { id: "work", title: "Для автономной работы", body: "Тихая энергия для мастерской, дачи и выездных задач", image: "urban.webp", mobileImage: "urban-mobile.webp" },
-];
-
-const stories = [
-  { date: "Сегодня", tag: "Практика", title: "Энергия на даче", image: "story-pisgah.jpg" },
-  { date: "23 июля 2026", title: "Зарядка в дороге", image: "story-beyond.jpg" },
-  { date: "30 июня 2026", title: "Как собрать автономную систему", image: "story-experience.webp" },
-  { date: "23 июня 2026", tag: "NIKASS", title: "Резерв для работы", image: "story-rebound.jpg" },
-  { date: "12 мая 2026", title: "Солнце в системе", image: "story-moving-forward.jpg" },
-  { date: "19 февраля 2026", title: "Больше автономности, меньше зависимости", image: "story-doing-things-differently.jpg" },
-];
+const directions = directionEntries;
+const stories = storyEntries;
 
 const footerGroups = [
-  { title: "Магазин", links: [{ label: "Каталог", href: "/catalog" }, { label: "Корзина", href: "/cart" }] },
+  { title: "Магазин", links: [{ label: "Каталог", href: "/catalog" }, { label: "Блог", href: "/blog" }, { label: "Корзина", href: "/cart" }] },
   { title: "Поддержка", links: [{ label: "Написать нам", href: "mailto:hello@nikass.ru" }] },
 ];
 
 const bestSellers = products.slice(0, 4);
 const heroProducts = [
+  { article: "3541653896", heroImage: "/products_clean/3541653896/product.webp" },
   { article: "1755808721", heroImage: "/products_clean/1755808721/product.webp" },
   { article: "3204445652", heroImage: "/products_clean/3204445652/product.webp" },
   { article: "1755717935", heroImage: "/products_clean/1755717935/product.webp" },
+  { article: "2132347841", heroImage: "/products_clean/2132347841/product.webp" },
 ].map(({ article, heroImage }) => {
   const product = products.find((item) => item.sku === article);
   if (!product) throw new Error(`Hero product ${article} is missing from the catalog`);
@@ -66,6 +57,7 @@ const heroProducts = [
           <nav class="orbea-desktop-nav" aria-label="Основная навигация">
             <button type="button" data-open-menu="Bikes">Товары</button>
             <button type="button" data-open-menu="Gear">Каталог</button>
+            <a href="/blog">Блог</a>
             <a href="#custom">Как выбрать</a>
             <button type="button" data-open-menu="Commitment">О NIKASS</button>
           </nav>
@@ -96,6 +88,7 @@ const heroProducts = [
           <div class="orbea-menu-root" data-menu-root>
             <button class="orbea-menu-root-link" type="button" data-menu-section="Bikes">Товары <span>›</span></button>
             <button class="orbea-menu-root-link" type="button" data-menu-section="Gear">Каталог <span>›</span></button>
+            <a class="orbea-menu-root-link" href="/blog" data-menu-anchor>Блог</a>
             <a class="orbea-menu-root-link" href="#custom" data-menu-anchor>Как выбрать</a>
             <button class="orbea-menu-root-link" type="button" data-menu-section="Commitment">О NIKASS <span>›</span></button>
           </div>
@@ -119,13 +112,32 @@ const heroProducts = [
               <a class="orbea-button orbea-button-dark" href="#custom">Подобрать решение</a>
             </div>
           </div>
-          <div class="orbea-hero-products" aria-label="Рекомендуемые товары">
+          <div class="orbea-hero-products" role="region" aria-roledescription="карусель" aria-label="Рекомендуемые товары" data-hero-carousel>
+            <button class="orbea-hero-arrow orbea-hero-arrow-previous" type="button" aria-label="Предыдущий товар" aria-controls="hero-products-viewport" data-hero-previous>
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <div class="orbea-hero-products-viewport" id="hero-products-viewport" data-hero-viewport>
             {heroProducts.map((product, index) => (
-              <a class="orbea-hero-product-card" href={`/catalog/${product.slug}`} aria-label={`Открыть ${product.name}`}>
-                <span class="orbea-hero-product-media"><img src={product.heroImage} alt={product.name} loading={index === 0 ? "eager" : "lazy"} decoding="async" /></span>
+              <a
+                class="orbea-hero-product-card"
+                href={`/catalog/${product.slug}`}
+                aria-label={`${index === 2 ? "Открыть" : "Показать"} ${product.name}`}
+                aria-current={index === 2 ? "true" : undefined}
+                aria-hidden={Math.abs(index - 2) > 1 ? "true" : undefined}
+                tabindex={Math.abs(index - 2) > 1 ? -1 : undefined}
+                data-hero-product
+                data-product-name={product.name}
+                data-hero-position={index - 2}
+              >
+                <span class="orbea-hero-product-media"><img src={product.heroImage} alt={product.name} loading={index === 2 ? "eager" : "lazy"} decoding="async" /></span>
                 <span class="orbea-hero-product-name">{product.name}</span>
               </a>
             ))}
+            </div>
+            <button class="orbea-hero-arrow orbea-hero-arrow-next" type="button" aria-label="Следующий товар" aria-controls="hero-products-viewport" data-hero-next>
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
+            </button>
+            <span class="sr-only" aria-live="polite" data-hero-status>{heroProducts[2].name}, 3 из {heroProducts.length}</span>
           </div>
         </section>
 
@@ -181,16 +193,13 @@ const heroProducts = [
           <div class="orbea-directions-viewport">
             <div class="orbea-directions-track" data-directions-track>
               {directions.map((direction) => (
-                <article class="orbea-direction-card" id={direction.id}>
-                  <picture><source media="(max-width: 767px)" srcset={`/assets/images/${direction.mobileImage}`} /><img src={`/assets/images/${direction.image}`} alt="" /></picture>
+                <a class="orbea-direction-card" id={direction.slug} href={`/blog/${direction.slug}`} aria-label={`Открыть статью: ${direction.title}`}>
+                  <picture><img src={`/assets/images/${direction.image}`} alt="" /></picture>
                   <div class="orbea-direction-shade"></div>
-                  <div class="orbea-direction-copy"><h3>{direction.title}: {direction.body}</h3><a class="orbea-button" href="/catalog">Смотреть решения</a></div>
-                </article>
+                  <div class="orbea-direction-copy"><h3>{direction.title}: {direction.body}</h3><span class="orbea-button">Читать статью ↗</span></div>
+                </a>
               ))}
             </div>
-          </div>
-          <div class="orbea-direction-dots" role="group" aria-label="Сценарии использования">
-            {directions.map((direction, index) => <button class:list={{ "is-active": index === 0 }} type="button" aria-label={direction.title} aria-pressed={index === 0 ? "true" : "false"} data-direction-index={index}></button>)}
           </div>
         </section>
 
@@ -198,20 +207,34 @@ const heroProducts = [
           <div class="orbea-stories-intro">
             <h2>Практика автономной жизни</h2>
             <p>Разбираем реальные сценарии: как пережить отключение, зарядить технику в дороге и собрать систему под свои задачи.</p>
-            <a class="orbea-button orbea-button-dark" href="/catalog"><span>↗</span> Все решения</a>
+            <a class="orbea-button orbea-button-dark" href="/blog"><span>↗</span> Все статьи</a>
           </div>
-          <div class="orbea-story-row">
+          <div class="orbea-story-row" role="region" aria-label="Статьи блога" tabindex="0">
             {stories.map((story) => (
-              <article class="orbea-story-card" style={`background-image:url('/assets/images/${story.image}')`}>
+              <a class="orbea-story-card" href={`/blog/${story.slug}`} aria-label={`Открыть статью: ${story.title}`} style={`background-image:url('/assets/images/${story.image}')`}>
                 <div class="orbea-story-shade"></div>
                 <div class="orbea-story-meta"><span>{story.date}</span>{story.tag && <span>{story.tag}</span>}</div>
                 <h3>{story.title}</h3>
-              </article>
+              </a>
             ))}
           </div>
         </section>
         <ReviewsSection />
-      </main>
+        <section class="orbea-contact-cta" id="contacts" aria-labelledby="orbea-contact-title">
+          <div class="orbea-contact-copy">
+            <p class="orbea-section-kicker">NIKASS / ПОДДЕРЖКА</p>
+            <h2 id="orbea-contact-title">Остались вопросы?</h2>
+            <p>Позвоните нам или напишите в мессенджере — ответим на вопросы и поможем подобрать оборудование под Вашу задачу.</p>
+          </div>
+          <div class="orbea-contact-actions" role="group" aria-label="Связаться с NIKASS">
+            <a class="orbea-contact-pill" href="mailto:hello@nikass.ru">hello@nikass.ru</a>
+            <button class="orbea-contact-pill" type="button" data-chat-open aria-controls="nikass-chat-widget" aria-expanded="false">Получить консультацию</button>
+            <button class="orbea-contact-icon" type="button" data-chat-open aria-controls="nikass-chat-widget" aria-expanded="false" aria-label="Открыть консультанта NIKASS">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H12l-4 3v-3.1a2.5 2.5 0 0 1-3-2.4v-6Z" /><path d="M8 9h8M8 12h5" /></svg>
+            </button>
+          </div>
+        </section>
+        </main>
 
       <footer class="orbea-footer" id="footer">
         <div class="orbea-newsletter">
@@ -357,11 +380,57 @@ const heroProducts = [
       addEventListener("scroll", updateHeader, { passive: true });
       updateHeader();
 
-      const directionTrack = document.querySelector("[data-directions-track]");
-      document.querySelectorAll("[data-direction-index]").forEach((button) => button.addEventListener("click", () => {
-        directionTrack.style.setProperty("--direction-index", button.dataset.directionIndex);
-        document.querySelectorAll("[data-direction-index]").forEach((dot) => { const active = dot === button; dot.classList.toggle("is-active", active); dot.setAttribute("aria-pressed", String(active)); });
-      }));
+      const heroCarousel = document.querySelector("[data-hero-carousel]");
+      if (heroCarousel) {
+        const heroItems = [...heroCarousel.querySelectorAll("[data-hero-product]")];
+        const heroViewport = heroCarousel.querySelector("[data-hero-viewport]");
+        const heroStatus = heroCarousel.querySelector("[data-hero-status]");
+        let heroIndex = heroItems.findIndex((item) => item.dataset.heroPosition === "0");
+        let heroPointerStart;
+        let suppressHeroClick = false;
+
+        const updateHero = (nextIndex) => {
+          heroIndex = (nextIndex + heroItems.length) % heroItems.length;
+          heroItems.forEach((item, index) => {
+            let position = index - heroIndex;
+            if (position > heroItems.length / 2) position -= heroItems.length;
+            if (position < -heroItems.length / 2) position += heroItems.length;
+            const active = position === 0;
+            const visible = Math.abs(position) <= 1;
+            item.dataset.heroPosition = String(position);
+            item.setAttribute("aria-label", `${active ? "Открыть" : "Показать"} ${item.dataset.productName}`);
+            item.toggleAttribute("aria-current", active);
+            item.toggleAttribute("aria-hidden", !visible);
+            item.tabIndex = visible ? 0 : -1;
+          });
+          heroStatus.textContent = `${heroItems[heroIndex].dataset.productName}, ${heroIndex + 1} из ${heroItems.length}`;
+        };
+
+        heroCarousel.querySelector("[data-hero-previous]").addEventListener("click", () => updateHero(heroIndex - 1));
+        heroCarousel.querySelector("[data-hero-next]").addEventListener("click", () => updateHero(heroIndex + 1));
+        heroItems.forEach((item, index) => item.addEventListener("click", (event) => {
+          if (suppressHeroClick || index !== heroIndex) {
+            event.preventDefault();
+            if (!suppressHeroClick) updateHero(index);
+          }
+        }));
+        heroCarousel.addEventListener("keydown", (event) => {
+          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+          event.preventDefault();
+          updateHero(heroIndex + (event.key === "ArrowRight" ? 1 : -1));
+        });
+        heroViewport.addEventListener("pointerdown", (event) => {
+          if (event.pointerType !== "mouse") heroPointerStart = event.clientX;
+        });
+        heroViewport.addEventListener("pointerup", (event) => {
+          if (heroPointerStart === undefined || Math.abs(event.clientX - heroPointerStart) < 40) return;
+          suppressHeroClick = true;
+          updateHero(heroIndex + (event.clientX < heroPointerStart ? 1 : -1));
+          heroPointerStart = undefined;
+          setTimeout(() => { suppressHeroClick = false; });
+        });
+        heroViewport.addEventListener("pointercancel", () => { heroPointerStart = undefined; });
+      }
 
       let paused = matchMedia("(prefers-reduced-motion: reduce)").matches;
       const videoToggle = document.querySelector("[data-video-toggle]");

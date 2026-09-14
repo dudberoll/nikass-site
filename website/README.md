@@ -2,7 +2,9 @@
 
 Единый активный storefront: главная и визуальный язык Astra объединены с проверенной логикой вариантов, наличия, предзаказа, корзины и guest checkout. Каталог при сборке берётся из `GET /api/catalog` backend, а backend получает его из WooCommerce REST API. Из ответа выбирается набор моделей из CSV: 24 строки выгрузки соответствуют 21 уникальному товару WooCommerce.
 
-Маршруты: `/`, `/catalog`, `/catalog/[slug]`, `/cart`, `/checkout`, `/message-scroller`.
+Маршруты: `/`, `/catalog`, `/catalog/[slug]`, `/blog`, `/blog/[slug]`, `/cart`, `/checkout`, `/message-scroller`.
+
+Публичный блог содержит короткие статьи NIKASS о сценариях автономной энергии; записи доступны из шапки сайта и карточек на главной.
 
 `/message-scroller` отправляет историю текущей вкладки в `POST /api/chat`. Для локальной страницы задайте `PUBLIC_API_URL`, а в `backend/.env` включите `AI_PROVIDER=chat-completions` и укажите серверные `AI_API_URL` и `AI_API_KEY`; по умолчанию AI выключен. Вопросы о времени работы используют встроенный расчётчик; формула и правила базы знаний описаны в [../docs/CHAT_KNOWLEDGE.md](../docs/CHAT_KNOWLEDGE.md).
 

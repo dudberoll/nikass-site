@@ -1,0 +1,40 @@
+---
+import StoreFooter from "../../components/StoreFooter.astro";
+import StoreHeader from "../../components/StoreHeader.astro";
+import { blogEntries } from "../../data/blog";
+import "../../styles/global.css";
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Блог NIKASS о резервной энергии для дома, дороги и работы." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Блог NIKASS — практика автономной жизни</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main blog-page" id="main-content">
+      <section class="store-intro">
+        <p class="store-eyebrow">NIKASS / БЛОГ</p>
+        <h1>Практика автономной жизни</h1>
+        <p>Коротко рассказываем, как использовать энергию дома, в дороге и на работе.</p>
+      </section>
+      <div class="blog-grid">
+        {blogEntries.map((entry) => (
+          <a class="blog-card" href={`/blog/${entry.slug}`}>
+            <div class="blog-card-media"><img src={`/assets/images/${entry.image}`} alt="" loading="lazy" /></div>
+            <div class="blog-card-copy">
+              <div class="blog-card-meta"><span>{entry.date}</span><span>{entry.category}</span></div>
+              <h2>{entry.title}</h2>
+              <p>{entry.summary}</p>
+              <span class="blog-card-link">Читать статью ↗</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </main>
+    <StoreFooter />
+  </body>
+</html>

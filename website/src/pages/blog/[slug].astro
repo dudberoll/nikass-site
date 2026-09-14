@@ -1,0 +1,43 @@
+---
+import StoreFooter from "../../components/StoreFooter.astro";
+import StoreHeader from "../../components/StoreHeader.astro";
+import { blogEntries, type BlogEntry } from "../../data/blog";
+import "../../styles/global.css";
+
+type Props = { entry: BlogEntry };
+
+export function getStaticPaths() {
+  return blogEntries.map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={entry.summary} />
+    <link rel="icon" href="/favicon.ico" />
+    <title>{entry.title} — Блог NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main blog-article-page" id="main-content">
+      <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <a href="/blog">Блог</a> / <span>{entry.title}</span></nav>
+      <article class="blog-article">
+        <header class="blog-article-header">
+          <p class="store-eyebrow">{entry.category} / {entry.date}</p>
+          <h1>{entry.title}</h1>
+          <p>{entry.summary}</p>
+        </header>
+        <figure class="blog-article-image"><img src={`/assets/images/${entry.image}`} alt={entry.title} /></figure>
+        <div class="blog-article-body">
+          {entry.content.map((sentence) => <p>{sentence}</p>)}
+        </div>
+        <a class="store-primary-button" href="/blog">Все статьи</a>
+      </article>
+    </main>
+    <StoreFooter />
+  </body>
+</html>

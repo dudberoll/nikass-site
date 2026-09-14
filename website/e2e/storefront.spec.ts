@@ -30,6 +30,28 @@ test("product page shows availability and related products", async ({ page }) =>
   expect(related).toBeLessThanOrEqual(4);
 });
 
+test("product details are collapsed and expand downward", async ({ page }) => {
+  await page.goto("/catalog");
+  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
+  await page.getByLabel("Поиск по каталогу").fill("3204442838");
+  await page.locator("[data-product-card] a[href^='/catalog/']").first().click();
+
+  const disclosures = page.locator("details.product-detail-disclosure");
+  const characteristics = disclosures.nth(0);
+  const delivery = disclosures.nth(1);
+  await expect(characteristics).not.toHaveAttribute("open", "");
+  await expect(delivery).not.toHaveAttribute("open", "");
+  await expect(characteristics.locator(".product-specs")).toBeHidden();
+  await expect(delivery.locator("p")).toBeHidden();
+
+  await characteristics.locator("summary").click();
+  await expect(characteristics).toHaveAttribute("open", "");
+  await expect(characteristics.locator(".product-specs")).toBeVisible();
+  await delivery.locator("summary").click();
+  await expect(delivery).toHaveAttribute("open", "");
+  await expect(delivery.locator("p")).toBeVisible();
+});
+
 test("moves from personal details to the Yandex-assisted delivery address", async ({ page }) => {
   await page.goto("/catalog");
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
@@ -72,6 +94,33 @@ test("solution CTA points to the system builder", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Подобрать решение" }).click();
   await expect(page).toHaveURL(/\/#custom$/);
+});
+
+test("hero carousel centers a side product before opening it", async ({ page }, testInfo) => {
+  await page.goto("/");
+
+  const carousel = page.getByRole("region", { name: "Рекомендуемые товары" });
+  const products = carousel.locator("[data-hero-product]");
+  await expect(products).toHaveCount(5);
+
+  const sideProduct = carousel.locator('[data-hero-position="1"]');
+  const target = await sideProduct.getAttribute("href");
+  const targetProduct = carousel.locator(`[data-hero-product][href="${target}"]`);
+  await targetProduct.click();
+
+  await expect(targetProduct).toHaveAttribute("data-hero-position", "0");
+  await expect(targetProduct.locator(".orbea-hero-product-name")).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+
+  if (testInfo.project.name === "mobile") {
+    await carousel.locator("[data-hero-viewport]").dispatchEvent("pointerdown", { clientX: 300, pointerType: "touch" });
+    await carousel.locator("[data-hero-viewport]").dispatchEvent("pointerup", { clientX: 100, pointerType: "touch" });
+    await expect(targetProduct).toHaveAttribute("data-hero-position", "-1");
+    return;
+  }
+
+  await targetProduct.click();
+  await expect(page).toHaveURL(target!);
 });
 
 test("consultation CTA opens a compact chat widget", async ({ page }) => {

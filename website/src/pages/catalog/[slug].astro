@@ -109,9 +109,9 @@ const scrollStory = product.slug === "portativnaya-zaryadnaya-stantsiya-500w-160
       </section>}
 
       <section class="product-details">
-        {characteristics.length > 0 && <div class="product-details-characteristics"><h2>Характеристики</h2><table class="product-specs"><tbody>{characteristics.map(([label, value]) => <tr><th scope="row">{label}</th><td>{value}</td></tr>)}</tbody></table></div>}
+        {characteristics.length > 0 && <details class="product-detail-disclosure"><summary><span>Характеристики</span></summary><table class="product-specs"><tbody>{characteristics.map(([label, value]) => <tr><th scope="row">{label}</th><td>{value}</td></tr>)}</tbody></table></details>}
         {packageContents.length > 0 && <div><h2>Комплектация</h2><ul>{packageContents.map((line) => <li>{line}</li>)}</ul></div>}
-        <div><h2>Доставка</h2><p>Доставим по России. Точную стоимость и срок покажем на этапе оформления заказа.</p></div>
+        <details class="product-detail-disclosure"><summary><span>Доставка</span></summary><p>Доставим по России. Точную стоимость и срок покажем на этапе оформления заказа.</p></details>
       </section>
       {related.length > 0 && <section class="product-related" aria-labelledby="related-title">
         <p class="store-eyebrow">NIKASS / СВЯЗАННЫЕ ТОВАРЫ</p><h2 id="related-title">С этим товаром покупают</h2>
