@@ -1,7 +1,7 @@
 ---
 import "../styles/global.css";
 import ReviewsSection from "../components/ReviewsSection.astro";
-import MessageScrollerDemo from "../components/MessageScrollerDemo";
+import { AssistantCard } from "../components/AiComponentsDemo";
 import { formatPrice, loadCatalogProducts } from "../data/catalog";
 import { directionEntries, storyEntries } from "../data/blog";
 
@@ -24,17 +24,12 @@ const footerGroups = [
 ];
 
 const bestSellers = products.slice(0, 4);
-const heroProducts = [
-  { article: "3541653896", heroImage: "/products_clean/3541653896/product.webp" },
-  { article: "1755808721", heroImage: "/products_clean/1755808721/product.webp" },
-  { article: "3204445652", heroImage: "/products_clean/3204445652/product.webp" },
-  { article: "1755717935", heroImage: "/products_clean/1755717935/product.webp" },
-  { article: "2132347841", heroImage: "/products_clean/2132347841/product.webp" },
-].map(({ article, heroImage }) => {
-  const product = products.find((item) => item.sku === article);
-  if (!product) throw new Error(`Hero product ${article} is missing from the catalog`);
-  return { ...product, heroImage };
-});
+const heroCategories = [
+  { category: "Солнечные панели", image: "/assets/images/category-panels.webp" },
+  { category: "Аккумуляторы", image: "/assets/images/category-batteries.webp" },
+  { category: "Инверторы", image: "/assets/images/category-inverters.webp" },
+  { category: "Зарядные станции", image: "/assets/images/category-stations.webp" },
+];
 ---
 
 <!doctype html>
@@ -61,7 +56,7 @@ const heroProducts = [
             <a href="#custom">Как выбрать</a>
             <button type="button" data-open-menu="Commitment">О NIKASS</button>
           </nav>
-          <a class="orbea-logo" href="/" aria-label="NIKASS — главная"><span class="orbea-wordmark">NIKASS</span></a>
+          <a class="orbea-logo" href="/" aria-label="NIKASS — главная"><img class="orbea-logo-image" src="/assets/images/nikass-smart-selection-logo.png" alt="" /></a>
           <div class="orbea-actions">
             <button class="orbea-icon-button" type="button" aria-label="Поиск" data-search-open>
               <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
@@ -112,32 +107,32 @@ const heroProducts = [
               <a class="orbea-button orbea-button-dark" href="#custom">Подобрать решение</a>
             </div>
           </div>
-          <div class="orbea-hero-products" role="region" aria-roledescription="карусель" aria-label="Рекомендуемые товары" data-hero-carousel>
-            <button class="orbea-hero-arrow orbea-hero-arrow-previous" type="button" aria-label="Предыдущий товар" aria-controls="hero-products-viewport" data-hero-previous>
+          <div class="orbea-hero-products" role="region" aria-roledescription="карусель" aria-label="Категории товаров" data-hero-carousel>
+            <button class="orbea-hero-arrow orbea-hero-arrow-previous" type="button" aria-label="Предыдущая категория" aria-controls="hero-products-viewport" data-hero-previous>
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
             </button>
             <div class="orbea-hero-products-viewport" id="hero-products-viewport" data-hero-viewport>
-            {heroProducts.map((product, index) => (
+            {heroCategories.map((category, index) => (
               <a
                 class="orbea-hero-product-card"
-                href={`/catalog/${product.slug}`}
-                aria-label={`${index === 2 ? "Открыть" : "Показать"} ${product.name}`}
+                href={`/catalog?category=${encodeURIComponent(category.category)}`}
+                aria-label={`${index === 2 ? "Открыть" : "Показать"} категорию «${category.category}»`}
                 aria-current={index === 2 ? "true" : undefined}
                 aria-hidden={Math.abs(index - 2) > 1 ? "true" : undefined}
                 tabindex={Math.abs(index - 2) > 1 ? -1 : undefined}
                 data-hero-product
-                data-product-name={product.name}
+                data-product-name={category.category}
                 data-hero-position={index - 2}
               >
-                <span class="orbea-hero-product-media"><img src={product.heroImage} alt={product.name} loading={index === 2 ? "eager" : "lazy"} decoding="async" /></span>
-                <span class="orbea-hero-product-name">{product.name}</span>
+                <span class="orbea-hero-product-media"><img src={category.image} alt={category.category} loading={index === 2 ? "eager" : "lazy"} decoding="async" /></span>
+                <span class="orbea-hero-product-name">{category.category}</span>
               </a>
             ))}
             </div>
-            <button class="orbea-hero-arrow orbea-hero-arrow-next" type="button" aria-label="Следующий товар" aria-controls="hero-products-viewport" data-hero-next>
+            <button class="orbea-hero-arrow orbea-hero-arrow-next" type="button" aria-label="Следующая категория" aria-controls="hero-products-viewport" data-hero-next>
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
             </button>
-            <span class="sr-only" aria-live="polite" data-hero-status>{heroProducts[2].name}, 3 из {heroProducts.length}</span>
+            <span class="sr-only" aria-live="polite" data-hero-status>{heroCategories[2].category}, 3 из {heroCategories.length}</span>
           </div>
         </section>
 
@@ -256,8 +251,10 @@ const heroProducts = [
     </div>
 
     <aside id="nikass-chat-widget" class="orbea-chat-widget" hidden data-chat-widget role="dialog" aria-modal="true" aria-label="Консультант NIKASS">
-      <button class="orbea-chat-widget-close" type="button" aria-label="Закрыть консультанта" data-chat-close>×</button>
-      <MessageScrollerDemo apiBase={apiBase} client:load />
+      <div class="orbea-chat-widget-panel">
+        <button class="orbea-chat-widget-close" type="button" aria-label="Закрыть консультанта" data-chat-close>×</button>
+        <AssistantCard apiBase={apiBase} client:load />
+      </div>
     </aside>
 
     <script is:inline>
@@ -290,7 +287,7 @@ const heroProducts = [
       };
       const menuLabels = { Bikes: "Товары", Gear: "Каталог", Commitment: "О NIKASS" };
 
-      const syncOverflow = () => { document.body.style.overflow = !menuBackdrop.hidden || !searchPanel.hidden ? "hidden" : ""; };
+      const syncOverflow = () => { document.body.style.overflow = !menuBackdrop.hidden || !searchPanel.hidden || !chatWidget?.hidden ? "hidden" : ""; };
       const showMenuRoot = () => {
         menuTitle.textContent = "NIKASS";
         menuBack.hidden = true;
@@ -329,11 +326,13 @@ const heroProducts = [
         chatWidget.hidden = !open;
         page.inert = open;
         chatOpenButtons.forEach((button) => button.setAttribute("aria-expanded", String(open)));
+        syncOverflow();
         if (open) {
           lastChatTrigger = document.activeElement;
           requestAnimationFrame(() => chatClose?.focus());
-        } else if (lastChatTrigger instanceof HTMLElement) {
-          lastChatTrigger.focus();
+        } else {
+          document.dispatchEvent(new CustomEvent("nikass:chat-close"));
+          if (lastChatTrigger instanceof HTMLElement) lastChatTrigger.focus();
         }
       };
       chatOpenButtons.forEach((button) => button.addEventListener("click", () => setChatOpen(true)));

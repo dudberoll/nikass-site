@@ -1,0 +1,21 @@
+---
+import AiComponentsDemo from "../components/AiComponentsDemo";
+import "../styles/global.css";
+
+const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Демонстрация компонентов чат-бота NIKASS." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Chat — NIKASS</title>
+  </head>
+  <body class="ai-components-page">
+    <main class="ai-components-main">
+      <AiComponentsDemo {apiBase} client:load />
+    </main>
+  </body>
+</html>

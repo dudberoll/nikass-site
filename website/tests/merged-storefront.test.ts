@@ -88,17 +88,21 @@ test('homepage CTA contracts use the system builder and chat widget', () => {
   assert.match(homepage, /data-chat-widget/)
 })
 
-test('homepage hero exposes the requested featured products', () => {
-  for (const article of ['3541653896', '1755808721', '3204445652', '1755717935', '2132347841']) {
-    assert.match(homepage, new RegExp(`/products_clean/${article}/product\\.webp`))
+test('homepage hero exposes the four product categories', () => {
+  for (const image of ['category-panels', 'category-batteries', 'category-inverters', 'category-stations']) {
+    assert.match(homepage, new RegExp(`/assets/images/${image}\\.webp`))
   }
+  for (const category of ['Солнечные панели', 'Аккумуляторы', 'Инверторы', 'Зарядные станции']) {
+    assert.match(homepage, new RegExp(category))
+  }
+  assert.doesNotMatch(homepage, /heroProducts/)
   assert.match(homepage, /class="orbea-hero-products"/)
   assert.match(homepage, /class="orbea-hero-product-name"/)
-  assert.match(homepage, /href={`\/catalog\/\$\{product\.slug\}`}/)
+  assert.match(homepage, /href={`\/catalog\?category=\$\{encodeURIComponent\(category\.category\)\}`}/)
   assert.match(homepage, /data-hero-previous/)
   assert.match(homepage, /data-hero-next/)
   assert.match(homepage, /pointerdown/)
-  assert.match(homepageStyles, /data-hero-position="0"[^}]+scale\(1\.2\)/)
+  assert.match(homepageStyles, /data-hero-position="0"[^}]+orbea-hero-product-media[^}]+scale\(2\)/)
   assert.match(homepageStyles, /data-hero-position="-1"[^}]+opacity: \.45/)
   assert.match(homepageStyles, /data-hero-position="0"[^}]+orbea-hero-product-name[^}]+opacity: 1/)
 })

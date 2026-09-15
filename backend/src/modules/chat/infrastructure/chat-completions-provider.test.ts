@@ -76,3 +76,40 @@ test('offers the energy calculator only for a routed energy question and uses it
   expect((requests[1]?.messages as Array<{ role: string; content?: string }>).at(-1)?.content).toContain('runtimeHours')
   expect((requests[1]?.messages as Array<{ role: string; content?: string }>).at(-1)?.content).toContain('"fits":null')
 })
+
+test('sends audio to the Cloud.ru Whisper transcription endpoint', async () => {
+  let request: { url: string; body: FormData } | undefined
+  const provider = createChatCompletionsProvider({
+    apiKey: 'test-key',
+    apiUrl: 'https://foundation-models.api.cloud.ru/v1/chat/completions',
+    model: 'deepseek-ai/DeepSeek-V4-Pro',
+    requestTimeoutMs: 1_000,
+    systemPrompt: 'Ты консультант NIKASS.',
+    fetchImpl: async (input, init) => {
+      request = { url: String(input), body: init?.body as FormData }
+      return new Response('Подберите станцию для дачи.', { status: 200 })
+    },
+  })
+
+  await expect(provider.transcribe(new File(['подскажи'], 'voice.webm', { type: 'audio/webm' })))
+    .resolves.toBe('Подберите станцию для дачи.')
+  expect(request?.url).toBe('https://foundation-models.api.cloud.ru/v1/audio/transcriptions')
+  expect(request?.body.get('model')).toBe('openai/whisper-large-v3')
+  expect(request?.body.get('response_format')).toBe('text')
+  expect(request?.body.get('temperature')).toBe('0.5')
+  expect(request?.body.get('language')).toBe('ru')
+  expect(request?.body.get('file')).toBeInstanceOf(File)
+})
+
+test('extracts text from a JSON transcription response', async () => {
+  const provider = createChatCompletionsProvider({
+    apiKey: 'test-key',
+    apiUrl: 'https://foundation-models.api.cloud.ru/v1/chat/completions',
+    model: 'deepseek-ai/DeepSeek-V4-Pro',
+    requestTimeoutMs: 1_000,
+    systemPrompt: 'Ты консультант NIKASS.',
+    fetchImpl: async () => new Response(JSON.stringify({ text: ' Хуй...', usage: { type: 'duration', seconds: 3 } }), { status: 200 }),
+  })
+
+  await expect(provider.transcribe(new File(['audio'], 'voice.wav', { type: 'audio/wav' }))).resolves.toBe('Хуй...')
+})

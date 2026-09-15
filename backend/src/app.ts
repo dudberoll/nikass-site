@@ -12,7 +12,7 @@ import { disabledEmailDelivery, type EmailDelivery } from './email'
 import type { AppEnv } from './env'
 import { errorResponse, handleError, validationErrorHook } from './http/errors'
 import { createReadinessProbe } from './http/readiness'
-import { createAuthSecurity, createChatSecurity, createFixedWindowRateLimit } from './http/security'
+import { clientAddress, createAuthSecurity, createChatSecurity, createFixedWindowRateLimit } from './http/security'
 import { createAuthModule, type AuthHttpEnv } from './modules/auth'
 import { createCatalogModule, type CatalogSource } from './modules/catalog'
 import { createChatModule, type ChatProvider } from './modules/chat'
@@ -123,6 +123,16 @@ export function createApp({
     app.use('/api/orders', middleware)
     app.use('/api/orders/*', middleware)
   }
+  const chatRateLimit = createFixedWindowRateLimit({
+    errorMessage: 'Too many chat requests',
+    key: (c) => clientAddress(c, {
+      trustProxy: env.TRUST_PROXY,
+      trustedProxyClientIpHeader: env.TRUSTED_PROXY_CLIENT_IP_HEADER,
+      trustedProxyClientIpPosition: env.TRUSTED_PROXY_CLIENT_IP_POSITION,
+    }),
+    max: env.CHAT_RATE_LIMIT_MAX,
+    windowSeconds: env.CHAT_RATE_LIMIT_WINDOW_SECONDS,
+  })
   for (const middleware of createChatSecurity({
     bodyLimitBytes: env.CHAT_BODY_LIMIT_BYTES,
     rateLimitMax: env.CHAT_RATE_LIMIT_MAX,
@@ -130,9 +140,18 @@ export function createApp({
     trustProxy: env.TRUST_PROXY,
     trustedProxyClientIpHeader: env.TRUSTED_PROXY_CLIENT_IP_HEADER,
     trustedProxyClientIpPosition: env.TRUSTED_PROXY_CLIENT_IP_POSITION,
-  })) {
+  }, chatRateLimit)) {
     app.use('/api/chat', middleware)
-    app.use('/api/chat/*', middleware)
+  }
+  for (const middleware of createChatSecurity({
+    bodyLimitBytes: env.CHAT_AUDIO_BODY_LIMIT_BYTES,
+    rateLimitMax: env.CHAT_RATE_LIMIT_MAX,
+    rateLimitWindowSeconds: env.CHAT_RATE_LIMIT_WINDOW_SECONDS,
+    trustProxy: env.TRUST_PROXY,
+    trustedProxyClientIpHeader: env.TRUSTED_PROXY_CLIENT_IP_HEADER,
+    trustedProxyClientIpPosition: env.TRUSTED_PROXY_CLIENT_IP_POSITION,
+  }, chatRateLimit)) {
+    app.use('/api/chat/transcribe', middleware)
   }
   app.get('/', (c) => {
     return c.json({

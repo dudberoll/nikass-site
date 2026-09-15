@@ -19,6 +19,13 @@ export const chatResponseSchema = z
   })
   .strict()
 
+export const chatTranscriptionResponseSchema = z
+  .object({
+    text: z.string().trim().min(1).max(4_000),
+  })
+  .strict()
+
 export type ChatMessage = z.infer<typeof chatMessageSchema>
 export type ChatRequest = z.infer<typeof chatRequestSchema>
 export type ChatResponse = z.infer<typeof chatResponseSchema>
+export type ChatTranscriptionResponse = z.infer<typeof chatTranscriptionResponseSchema>

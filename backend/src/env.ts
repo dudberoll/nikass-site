@@ -62,11 +62,13 @@ const envSchema = z.object({
   WOOCOMMERCE_CONSUMER_SECRET: optionalStringSchema,
   AI_PROVIDER: z.enum(['disabled', 'chat-completions']).default('disabled'),
   AI_API_URL: optionalUrlSchema,
+  AI_TRANSCRIPTION_URL: optionalUrlSchema,
   AI_API_KEY: optionalStringSchema,
   AI_MODEL: stringWithDefault('gpt-4o-mini'),
   AI_SYSTEM_PROMPT: stringWithDefault('Ты консультант магазина NIKASS. Отвечай по-русски, кратко и по делу. Не выдумывай цены, наличие и характеристики товаров; если данных недостаточно, честно скажи об этом и предложи открыть каталог или связаться с менеджером.'),
   AI_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().max(60_000).default(30_000),
   CHAT_BODY_LIMIT_BYTES: z.coerce.number().int().positive().max(512 * 1024).default(128 * 1024),
+  CHAT_AUDIO_BODY_LIMIT_BYTES: z.coerce.number().int().positive().max(27 * 1024 * 1024).default(26 * 1024 * 1024),
   CHAT_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(20),
   CHAT_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(15 * 60),
@@ -489,7 +491,7 @@ function validateCatalogEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx
 
 function validateAiEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx) {
   if (env.AI_PROVIDER === 'disabled') {
-    for (const key of ['AI_API_URL', 'AI_API_KEY'] as const) {
+    for (const key of ['AI_API_URL', 'AI_TRANSCRIPTION_URL', 'AI_API_KEY'] as const) {
       if (env[key] !== undefined) {
         ctx.addIssue({
           code: 'custom',
@@ -509,6 +511,9 @@ function validateAiEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx) {
   }
   if (env.AI_API_URL && env.NODE_ENV === 'production' && !env.AI_API_URL.startsWith('https://')) {
     ctx.addIssue({ code: 'custom', path: ['AI_API_URL'], message: 'AI_API_URL must use HTTPS in production' })
+  }
+  if (env.AI_TRANSCRIPTION_URL && env.NODE_ENV === 'production' && !env.AI_TRANSCRIPTION_URL.startsWith('https://')) {
+    ctx.addIssue({ code: 'custom', path: ['AI_TRANSCRIPTION_URL'], message: 'AI_TRANSCRIPTION_URL must use HTTPS in production' })
   }
 }
 

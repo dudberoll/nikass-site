@@ -11,6 +11,7 @@ type ChatCompletionsProviderOptions = {
   model: string
   requestTimeoutMs: number
   systemPrompt: string
+  transcriptionUrl?: string
   fetchImpl?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 }
 
@@ -20,9 +21,37 @@ export function createChatCompletionsProvider({
   model,
   requestTimeoutMs,
   systemPrompt,
+  transcriptionUrl = deriveTranscriptionUrl(apiUrl),
   fetchImpl = fetch,
 }: ChatCompletionsProviderOptions) {
   return {
+    async transcribe(audio: File) {
+      const requestController = new AbortController()
+      const timeout = setTimeout(() => requestController.abort(), requestTimeoutMs)
+      try {
+        const form = new FormData()
+        form.append('file', audio, audio.name || 'voice.webm')
+        form.append('model', 'openai/whisper-large-v3')
+        form.append('response_format', 'text')
+        form.append('temperature', '0.5')
+        form.append('language', 'ru')
+        const response = await fetchImpl(transcriptionUrl, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${apiKey}` },
+          body: form,
+          signal: requestController.signal,
+        })
+        if (!response.ok) throw new ChatFailure('unavailable', 'Audio transcription is unavailable')
+        const text = extractTranscriptionText(await response.text())
+        if (!text) throw new ChatFailure('invalid_response', 'Audio transcription returned an empty reply')
+        return text
+      } catch (error) {
+        if (error instanceof ChatFailure) throw error
+        throw new ChatFailure('unavailable', 'Audio transcription is unavailable')
+      } finally {
+        clearTimeout(timeout)
+      }
+    },
     async respond(messages: readonly ChatMessage[], requestOptions: ChatProviderRequestOptions = {}) {
       const requestMessages: ApiMessage[] = [
         { role: 'system', content: systemPrompt },
@@ -90,6 +119,25 @@ export function createChatCompletionsProvider({
       }
     },
   }
+}
+
+function deriveTranscriptionUrl(apiUrl: string) {
+  const url = new URL(apiUrl)
+  url.pathname = url.pathname.replace(/\/chat\/completions\/?$/, '/audio/transcriptions')
+  return url.toString()
+}
+
+function extractTranscriptionText(body: string) {
+  const trimmedBody = body.trim()
+  try {
+    const payload: unknown = JSON.parse(trimmedBody)
+    if (payload && typeof payload === 'object' && 'text' in payload && typeof payload.text === 'string') {
+      return payload.text.trim()
+    }
+  } catch {
+    // The provider may return plain text when response_format=text is honored.
+  }
+  return trimmedBody
 }
 
 type ApiMessage = {

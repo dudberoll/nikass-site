@@ -202,6 +202,54 @@ test('chat route validates the conversation and returns the provider reply', asy
   expect(await response.json()).toEqual({ reply: 'Ответ на: Какая станция подойдёт для дома?' })
 })
 
+test('chat transcription route accepts an audio file and returns recognized text', async () => {
+  let receivedAudio: File | undefined
+  const app = createApp({
+    env,
+    prisma: {} as DbClient,
+    chatProvider: {
+      respond: async () => 'Ответ',
+      transcribe: async (audio) => {
+        receivedAudio = audio
+        return 'Какая станция подойдёт для дачи?'
+      },
+    },
+  })
+  const form = new FormData()
+  form.append('file', new File([new Uint8Array(140 * 1024)], 'voice.webm', { type: 'audio/webm;codecs=opus' }))
+
+  const response = await app.request('/api/chat/transcribe', { method: 'POST', body: form })
+
+  expect(response.status).toBe(200)
+  expect(response.headers.get('cache-control')).toBe('no-store')
+  expect(await response.json()).toEqual({ text: 'Какая станция подойдёт для дачи?' })
+  expect(receivedAudio?.name).toBe('voice.webm')
+  expect(receivedAudio?.type).toMatch(/^(audio|video)\/webm/)
+})
+
+test('chat and transcription share one request budget per client', async () => {
+  const app = createApp({
+    env: { ...env, CHAT_RATE_LIMIT_MAX: 1 },
+    prisma: {} as DbClient,
+    chatProvider: {
+      respond: async () => 'Ответ',
+      transcribe: async () => 'Голосовой запрос',
+    },
+  })
+
+  const chatResponse = await app.request('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: [{ role: 'user', content: 'Привет' }] }),
+  })
+  const form = new FormData()
+  form.append('file', new File(['voice'], 'voice.webm', { type: 'audio/webm' }))
+  const transcriptionResponse = await app.request('/api/chat/transcribe', { method: 'POST', body: form })
+
+  expect(chatResponse.status).toBe(200)
+  expect(transcriptionResponse.status).toBe(429)
+})
+
 test('chat route fails closed when no AI provider is configured', async () => {
   const app = createApp({ env, prisma: {} as DbClient })
   const response = await app.request('/api/chat', {

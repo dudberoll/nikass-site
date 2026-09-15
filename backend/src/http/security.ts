@@ -40,18 +40,21 @@ export function createAuthSecurity(options: AuthSecurityOptions): MiddlewareHand
   ]
 }
 
-export function createChatSecurity(options: AuthSecurityOptions): MiddlewareHandler[] {
+export function createChatSecurity(
+  options: AuthSecurityOptions,
+  rateLimit = createFixedWindowRateLimit({
+    errorMessage: 'Too many chat requests',
+    key: (c) => clientAddress(c, options),
+    max: options.rateLimitMax,
+    windowSeconds: options.rateLimitWindowSeconds,
+  }),
+): MiddlewareHandler[] {
   return [
     bodyLimit({
       maxSize: options.bodyLimitBytes,
       onError: (c) => c.json(errorResponse('PAYLOAD_TOO_LARGE', 'Request body is too large'), 413),
     }),
-    createFixedWindowRateLimit({
-      errorMessage: 'Too many chat requests',
-      key: (c) => clientAddress(c, options),
-      max: options.rateLimitMax,
-      windowSeconds: options.rateLimitWindowSeconds,
-    }),
+    rateLimit,
   ]
 }
 

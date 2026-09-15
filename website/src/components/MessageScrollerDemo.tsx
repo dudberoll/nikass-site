@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode, type SubmitEvent } from "react";
 import { MessageScroller } from "@shadcn/react/message-scroller";
-import { chatResponseSchema } from "@web-app-demo/contracts";
+import { chatResponseSchema, chatTranscriptionResponseSchema } from "@web-app-demo/contracts";
+import { convertAudioToWav } from "../lib/audio";
 
 type ChatUiMessage = {
   id: string;
@@ -195,6 +196,19 @@ function SendIcon({ direction = "up" }: { direction?: "up" | "down" }) {
   </svg>;
 }
 
+function MicIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="8" y="3.5" width="8" height="12" rx="4" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M8.5 21h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>;
+}
+
+function StopIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" />
+  </svg>;
+}
+
 function HumanAvatar() {
   return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="12" cy="8" r="3.2" fill="currentColor" />
@@ -206,17 +220,27 @@ function MessageScrollerPanel({
   messages,
   streaming,
   error,
+  recording,
+  transcribing,
   onReset,
   onSend,
+  onStartRecording,
+  onStopRecording,
 }: {
   messages: ChatUiMessage[];
   streaming: boolean;
   error: string;
+  recording: boolean;
+  transcribing: boolean;
   onReset: () => void;
   onSend: (text: string) => void | Promise<void>;
+  onStartRecording: () => void | Promise<void>;
+  onStopRecording: () => void;
 }) {
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const busy = streaming || recording || transcribing;
+  const hasDraft = Boolean(draft.trim());
 
   useEffect(() => {
     const input = inputRef.current;
@@ -228,7 +252,7 @@ function MessageScrollerPanel({
 
   function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft.trim()) return;
+    if (busy || !hasDraft) return;
     onSend(draft);
     setDraft("");
   }
@@ -272,8 +296,20 @@ function MessageScrollerPanel({
 
     <form className="message-scroller-composer" onSubmit={submit}>
       <label className="sr-only" htmlFor="message-scroller-input">Новое сообщение</label>
-      <textarea disabled={streaming} ref={inputRef} id="message-scroller-input" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={1} />
-      <button className="message-scroller-send" type="submit" disabled={streaming} aria-label="Отправить сообщение"><SendIcon /></button>
+      <textarea disabled={busy} ref={inputRef} id="message-scroller-input" value={draft} placeholder={recording ? "Говорите… нажмите ещё раз для остановки" : transcribing ? "Распознаю голос…" : "Напишите сообщение или нажмите микрофон"} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={1} />
+      <button
+        className={`message-scroller-send${recording ? " is-recording" : ""}`}
+        type={hasDraft ? "submit" : "button"}
+        disabled={streaming || transcribing}
+        onClick={() => {
+          if (recording) onStopRecording();
+          else if (!hasDraft) void onStartRecording();
+        }}
+        aria-label={recording ? "Остановить запись" : transcribing ? "Распознаю голос" : hasDraft ? "Отправить сообщение" : "Записать голос"}
+      >
+        {recording ? <StopIcon /> : hasDraft ? <SendIcon /> : <MicIcon />}
+      </button>
+      <span className="sr-only" role="status">{recording ? "Идёт запись голоса" : transcribing ? "Распознаю голос" : ""}</span>
     </form>
   </section>;
 }
@@ -281,34 +317,210 @@ function MessageScrollerPanel({
 export default function MessageScrollerDemo({ apiBase }: { apiBase: string }) {
   const [messages, setMessages] = useState<ChatUiMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState("");
   const nextId = useRef(0);
   const streamTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const requestController = useRef<AbortController | null>(null);
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const recordingStream = useRef<MediaStream | null>(null);
+  const recordingChunks = useRef<Blob[]>([]);
+  const recordingAttempt = useRef(0);
+  const recordingStartPending = useRef(false);
+  const transcribingRef = useRef(false);
+  const transcriptionAttempt = useRef(0);
+  const chatAttempt = useRef(0);
+  const recordingStopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeAssistantId = useRef<string | null>(null);
 
-  useEffect(() => () => {
-    if (streamTimer.current) clearInterval(streamTimer.current);
-    requestController.current?.abort();
+  useEffect(() => {
+    const handleChatClose = () => cancelVoiceInput();
+    document.addEventListener("nikass:chat-close", handleChatClose);
+    return () => {
+      recordingAttempt.current += 1;
+      recordingStartPending.current = false;
+      transcriptionAttempt.current += 1;
+      chatAttempt.current += 1;
+      document.removeEventListener("nikass:chat-close", handleChatClose);
+      if (streamTimer.current) clearInterval(streamTimer.current);
+      if (recordingStopTimer.current) clearTimeout(recordingStopTimer.current);
+      requestController.current?.abort();
+      const recorder = mediaRecorder.current;
+      if (recorder && recorder.state !== "inactive") {
+        recorder.ondataavailable = null;
+        recorder.onstop = null;
+        recorder.onerror = null;
+        recorder.stop();
+      }
+      recordingStream.current?.getTracks().forEach((track) => track.stop());
+    };
   }, []);
 
-  function reset() {
-    if (streamTimer.current) clearInterval(streamTimer.current);
+  function releaseRecording() {
+    recordingAttempt.current += 1;
+    recordingStartPending.current = false;
+    if (recordingStopTimer.current) clearTimeout(recordingStopTimer.current);
+    recordingStopTimer.current = null;
+    const recorder = mediaRecorder.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      recorder.onerror = null;
+      recorder.stop();
+    }
+    mediaRecorder.current = null;
+    recordingStream.current?.getTracks().forEach((track) => track.stop());
+    recordingStream.current = null;
+    recordingChunks.current = [];
+    setRecording(false);
+  }
+
+  function cancelChatActivity() {
+    transcriptionAttempt.current += 1;
+    chatAttempt.current += 1;
+    transcribingRef.current = false;
     requestController.current?.abort();
     requestController.current = null;
+    if (streamTimer.current) clearInterval(streamTimer.current);
     streamTimer.current = null;
+    if (activeAssistantId.current) {
+      const assistantId = activeAssistantId.current;
+      setMessages((current) => current.filter((message) => message.id !== assistantId));
+      activeAssistantId.current = null;
+    }
     setStreaming(false);
+    setTranscribing(false);
+  }
+
+  function cancelVoiceInput() {
+    releaseRecording();
+    cancelChatActivity();
+  }
+
+  function reset() {
+    releaseRecording();
+    cancelChatActivity();
     setError("");
     setMessages([]);
   }
 
-  async function sendMessage(text: string) {
-    if (streaming || streamTimer.current) return;
+  async function transcribeAudio(audio: Blob) {
+    const attempt = ++transcriptionAttempt.current;
+    transcribingRef.current = true;
+    setTranscribing(true);
+    setError("");
+    const controller = new AbortController();
+    requestController.current = controller;
+    try {
+      const wav = await convertAudioToWav(audio);
+      const form = new FormData();
+      form.append("file", wav, `voice-${Date.now()}.wav`);
+      const response = await fetch(`${apiBase}/api/chat/transcribe`, {
+        method: "POST",
+        body: form,
+        signal: controller.signal,
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error?.message ?? "Не удалось распознать голос.");
+      const text = chatTranscriptionResponseSchema.parse(data).text;
+      if (transcriptionAttempt.current !== attempt) return;
+      await sendMessage(text, true);
+    } catch (cause) {
+      if (transcriptionAttempt.current !== attempt) return;
+      if (cause instanceof DOMException && cause.name === "AbortError") return;
+      setError(cause instanceof Error ? cause.message : "Не удалось распознать голос.");
+    } finally {
+      if (transcriptionAttempt.current === attempt) {
+        transcribingRef.current = false;
+        if (requestController.current === controller) requestController.current = null;
+        setTranscribing(false);
+      }
+    }
+  }
+
+  async function startRecording() {
+    if (streaming || recording || transcribing || recordingStartPending.current) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setError("Голосовой ввод не поддерживается этим браузером.");
+      return;
+    }
+
+    setError("");
+    const attempt = ++recordingAttempt.current;
+    recordingStartPending.current = true;
+    let stream: MediaStream | null = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (recordingAttempt.current !== attempt) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      const supportedType = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"]
+        .find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = supportedType ? new MediaRecorder(stream, { mimeType: supportedType }) : new MediaRecorder(stream);
+      recordingStream.current = stream;
+      recordingChunks.current = [];
+      mediaRecorder.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) recordingChunks.current.push(event.data);
+      };
+      recorder.onerror = () => {
+        if (mediaRecorder.current !== recorder) return;
+        releaseRecording();
+        setError("Во время записи произошла ошибка. Попробуйте ещё раз.");
+      };
+      recorder.onstop = () => {
+        recorder.onerror = null;
+        if (recordingStopTimer.current) clearTimeout(recordingStopTimer.current);
+        recordingStopTimer.current = null;
+        const audio = new Blob(recordingChunks.current, { type: recorder.mimeType || supportedType || "audio/webm" });
+        mediaRecorder.current = null;
+        recordingStream.current?.getTracks().forEach((track) => track.stop());
+        recordingStream.current = null;
+        recordingChunks.current = [];
+        setRecording(false);
+        if (audio.size === 0) {
+          setError("Не удалось записать голос. Попробуйте ещё раз.");
+          return;
+        }
+        void transcribeAudio(audio);
+      };
+      recorder.start();
+      setRecording(true);
+      recordingStopTimer.current = setTimeout(() => {
+        if (mediaRecorder.current === recorder && recorder.state !== "inactive") recorder.stop();
+      }, 60_000);
+    } catch (cause) {
+      if (recordingAttempt.current !== attempt) return;
+      stream?.getTracks().forEach((track) => track.stop());
+      recordingStream.current?.getTracks().forEach((track) => track.stop());
+      recordingStream.current = null;
+      mediaRecorder.current = null;
+      setError(cause instanceof DOMException && cause.name === "NotAllowedError" ? "Разрешите доступ к микрофону в браузере." : "Не удалось включить микрофон.");
+    } finally {
+      if (recordingAttempt.current === attempt) recordingStartPending.current = false;
+    }
+  }
+
+  function stopRecording() {
+    const recorder = mediaRecorder.current;
+    if (!recorder || recorder.state === "inactive") return;
+    recorder.stop();
+  }
+
+  async function sendMessage(text: string, fromVoice = false) {
+    if (streaming || recording || streamTimer.current || (transcribing && !fromVoice)) return;
+    const messageText = text.trim();
+    if (!messageText) return;
+    const attempt = ++chatAttempt.current;
     setError("");
     setStreaming(true);
     const sequence = ++nextId.current;
     const userId = `custom-user-${sequence}`;
     const assistantId = `stream-${sequence}`;
-    const history = [...messages, { id: userId, role: "user" as const, author: "Вы", time: "сейчас", text }];
+    activeAssistantId.current = assistantId;
+    const history = [...messages, { id: userId, role: "user" as const, author: "Вы", time: "сейчас", text: messageText }];
     setMessages([...history, { id: assistantId, role: "assistant", author: "NIKASS", time: "сейчас", text: "" }]);
     const controller = new AbortController();
     requestController.current = controller;
@@ -323,19 +535,29 @@ export default function MessageScrollerDemo({ apiBase }: { apiBase: string }) {
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error?.message ?? "Сервис консультанта временно недоступен.");
       const reply = chatResponseSchema.parse(data).reply;
+      if (chatAttempt.current !== attempt) return;
       let visibleLength = 0;
       streamTimer.current = setInterval(() => {
+        if (chatAttempt.current !== attempt) return;
         visibleLength = Math.min(visibleLength + 4, reply.length);
         setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, text: reply.slice(0, visibleLength) } : message));
         if (visibleLength === reply.length && streamTimer.current) {
           clearInterval(streamTimer.current);
           streamTimer.current = null;
+          activeAssistantId.current = null;
           setStreaming(false);
         }
       }, 45);
     } catch (cause) {
-      if (cause instanceof DOMException && cause.name === "AbortError") return;
+      if (chatAttempt.current !== attempt) return;
+      if (cause instanceof DOMException && cause.name === "AbortError") {
+        setMessages((current) => current.filter((message) => message.id !== assistantId));
+        activeAssistantId.current = null;
+        setStreaming(false);
+        return;
+      }
       setMessages((current) => current.filter((message) => message.id !== assistantId));
+      activeAssistantId.current = null;
       setError(cause instanceof Error ? cause.message : "Сервис консультанта временно недоступен.");
       setStreaming(false);
     } finally {
@@ -344,6 +566,6 @@ export default function MessageScrollerDemo({ apiBase }: { apiBase: string }) {
   }
 
   return <MessageScroller.Provider defaultScrollPosition="last-anchor" scrollPreviousItemPeek={48}>
-    <MessageScrollerPanel messages={messages} streaming={streaming} error={error} onReset={reset} onSend={sendMessage} />
+    <MessageScrollerPanel messages={messages} streaming={streaming} recording={recording} transcribing={transcribing} error={error} onReset={reset} onSend={sendMessage} onStartRecording={startRecording} onStopRecording={stopRecording} />
   </MessageScroller.Provider>;
 }

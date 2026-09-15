@@ -6,6 +6,7 @@ export type ChatProviderRequestOptions = {
 
 export type ChatProvider = {
   respond: (messages: readonly ChatMessage[], options?: ChatProviderRequestOptions) => Promise<string>
+  transcribe?: (audio: File) => Promise<string>
 }
 
 export type ChatFailureKind = 'not_configured' | 'unavailable' | 'invalid_response'
