@@ -63,6 +63,9 @@ test("moves from personal details to the Yandex-assisted delivery address", asyn
 
   await expect(page.getByRole("group", { name: "Личные данные" })).toBeVisible();
   await expect(page.getByRole("group", { name: "Адрес доставки" })).toBeHidden();
+  await expect(page.getByPlaceholder("Имя и фамилия")).toBeVisible();
+  await expect(page.getByPlaceholder("Телефон")).toBeVisible();
+  await expect(page.getByPlaceholder("Email")).toBeVisible();
   await page.getByRole("button", { name: "Перейти к адресу" }).click();
 
   await expect(page.getByRole("alert")).toContainText("Проверьте отмеченные поля.");
@@ -81,8 +84,17 @@ test("moves from personal details to the Yandex-assisted delivery address", asyn
 
   await expect(page.getByRole("group", { name: "Личные данные" })).toBeHidden();
   await expect(page.getByRole("group", { name: "Адрес доставки" })).toBeVisible();
-  const addressLabels = await page.locator("fieldset:not([hidden]) label:visible").allTextContents();
-  expect(addressLabels.slice(0, 4)).toEqual(["Регион / область", "Город", "Улица", "Дом / корпус"]);
+  await expect(page.locator('fieldset:not([hidden]) label[for="addressSearch"]')).toHaveCount(0);
+  await expect(page.getByPlaceholder("Дом / корпус")).toBeVisible();
+  await expect(page.locator('fieldset:not([hidden]) label[for="comment"]')).toBeVisible();
+  await expect(page.locator('fieldset:not([hidden]) label[for="promoCode"]')).toBeVisible();
+  const manualAddressButton = page.getByRole("button", { name: "Ввести адрес вручную" });
+  if (await manualAddressButton.isVisible()) await manualAddressButton.click();
+  await expect(page.getByPlaceholder("Регион / область")).toBeVisible();
+  await expect(page.getByPlaceholder("Город")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Улица", exact: true })).toBeVisible();
+  await expect(page.getByPlaceholder("Квартира / офис (необязательно)")).toBeVisible();
+  await expect(page.getByPlaceholder("Почтовый индекс")).toBeVisible();
   await expect(page.locator("#manual-address-fields")).toBeVisible();
   await expect(page.locator("#addressSearch")).toBeHidden();
 
