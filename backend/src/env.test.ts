@@ -479,3 +479,33 @@ describe('orders env', () => {
     })).not.toThrow()
   })
 })
+
+describe('YooKassa env', () => {
+  const base = {
+    DATABASE_URL: 'postgresql://superuser:superpassword@localhost:54329/web_app_demo',
+    JWT_SECRET: '12345678901234567890123456789012',
+  }
+
+  test('accepts a local test-store configuration', () => {
+    expect(loadEnv({
+      ...base,
+      YOO_KASSA_ENABLED: 'true',
+      YOO_KASSA_TEST_MODE: 'true',
+      YOO_KASSA_SHOP_ID: '1467722',
+      YOO_KASSA_SECRET_KEY: 'test-key',
+      YOO_KASSA_RETURN_URL: 'http://localhost:4322/checkout',
+    }).YOO_KASSA_TEST_MODE).toBe(true)
+  })
+
+  test('rejects a non-HTTPS production payment endpoint', () => {
+    expect(() => loadEnv({
+      ...base,
+      NODE_ENV: 'production',
+      YOO_KASSA_ENABLED: 'true',
+      YOO_KASSA_SHOP_ID: '1467722',
+      YOO_KASSA_SECRET_KEY: 'test-key',
+      YOO_KASSA_API_URL: 'http://localhost:3000',
+      YOO_KASSA_RETURN_URL: 'http://localhost:4322/checkout',
+    })).toThrow('YOO_KASSA_API_URL')
+  })
+})

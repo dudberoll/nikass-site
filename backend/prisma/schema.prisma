@@ -160,6 +160,9 @@ model CheckoutAttempt {
   totals      Json
   state       CheckoutAttemptState @default(quoted)
   orderNumber String?  @map("order_number")
+  paymentId   String?  @unique @map("payment_id")
+  paymentState CheckoutPaymentState @default(not_started) @map("payment_state")
+  fulfillmentState CheckoutFulfillmentState @default(not_started) @map("fulfillment_state")
   expiresAt   DateTime @map("expires_at")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -176,4 +179,24 @@ enum CheckoutAttemptState {
   rejected
 
   @@map("checkout_attempt_state")
+}
+
+enum CheckoutPaymentState {
+  not_started
+  pending
+  succeeded
+  canceled
+
+  @@map("checkout_payment_state")
+}
+
+enum CheckoutFulfillmentState {
+  not_started
+  queued
+  processing
+  confirmed
+  uncertain
+  skipped
+
+  @@map("checkout_fulfillment_state")
 }

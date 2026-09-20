@@ -1,13 +1,161 @@
-<header class="store-header">
+---
+import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
+---
+
+<header class="orbea-header orbea-header-light" data-header>
   <a class="skip-link" href="#main-content">К содержимому</a>
-  <a class="store-logo" href="/" aria-label="NIKASS — главная"><img class="store-logo-image" src="/assets/images/nikass-smart-selection-logo.png" alt="" /></a>
-  <nav class="store-nav" aria-label="Навигация магазина"><a href="/catalog">Каталог</a><a href="/blog">Блог</a><a href="/#footer">О нас</a><a href="/#footer">Поддержка</a></nav>
-  <div class="store-actions"><a href="/catalog">Поиск</a><a href="/cart" class="store-cart-link">Корзина <span data-cart-count>0</span></a></div>
+  <div class="orbea-header-inner">
+    <button class="orbea-mobile-menu-button" type="button" aria-label="Открыть меню" data-open-menu>
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16" /></svg>
+    </button>
+    <nav class="orbea-desktop-nav" aria-label="Основная навигация">
+      <button type="button" data-open-menu="Gear">Каталог</button>
+      <a href="/blog">Блог</a>
+      <a href="/#custom">Как выбрать</a>
+      <button type="button" data-open-menu="Commitment">О NIKASS</button>
+    </nav>
+    <a class="orbea-logo" href="/" aria-label="NIKASS — главная"><img class="orbea-logo-image" src="/assets/images/nikass-smart-selection-logo.png" alt="" /></a>
+    <div class="orbea-actions">
+      <button class="orbea-icon-button" type="button" aria-label="Поиск" data-search-open>
+        <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+      </button>
+      <a class="orbea-icon-button" href="/cart" aria-label="Корзина">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 8h12l1 13H5L6 8Z" /><path d="M9 8V5a3 3 0 0 1 6 0v3" /></svg>
+        <span class="orbea-cart-count" data-cart-count>0</span>
+      </a>
+    </div>
+  </div>
+  <div class="orbea-search-panel" hidden data-search-panel>
+    <label for="orbea-search">Найти товар</label>
+    <form action="/catalog"><input id="orbea-search" name="q" type="search" list="orbea-search-suggestions" placeholder="Название или артикул" /><button type="submit">Найти</button><button type="button" aria-label="Закрыть поиск" data-search-close>×</button></form>
+    <datalist id="orbea-search-suggestions">
+      {HERO_CATEGORIES.map(({ label }) => <option value={label} />)}
+    </datalist>
+  </div>
 </header>
+
+<div class="orbea-menu-backdrop" hidden data-menu-backdrop>
+  <aside class="orbea-menu-panel" role="dialog" aria-modal="true" aria-label="Навигация NIKASS">
+    <div class="orbea-menu-header">
+      <button class="orbea-menu-back" type="button" hidden data-menu-back>← <span>Назад</span></button>
+      <strong class="orbea-menu-title">NIKASS</strong>
+      <button class="orbea-icon-button" type="button" aria-label="Закрыть" data-menu-close>×</button>
+    </div>
+    <div class="orbea-menu-root" data-menu-root data-all-products-label={ALL_PRODUCTS_LABEL} data-category-items={JSON.stringify([ALL_PRODUCTS_LABEL, ...HERO_CATEGORIES.map(({ label }) => label)])}>
+      <button class="orbea-menu-root-link" type="button" data-menu-section="Gear">Каталог <span>›</span></button>
+      <a class="orbea-menu-root-link" href="/blog" data-menu-anchor>Блог</a>
+      <a class="orbea-menu-root-link" href="/#custom" data-menu-anchor>Как выбрать</a>
+      <button class="orbea-menu-root-link" type="button" data-menu-section="Commitment">О NIKASS <span>›</span></button>
+    </div>
+    <div class="orbea-menu-detail" hidden data-menu-detail>
+      <div class="orbea-menu-list" data-menu-list></div>
+      <div class="orbea-menu-promo" hidden data-menu-promo>
+        <img src="/assets/images/gear-menu.webp" alt="Оборудование NIKASS" />
+        <div><span>Система, а не отдельные детали.</span><strong>Соберите своё решение</strong><a href="/catalog" data-menu-anchor>Открыть каталог</a></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script is:inline>
+  const header = document.querySelector("[data-header]");
+  const menuBackdrop = document.querySelector("[data-menu-backdrop]");
+  const menuPanel = menuBackdrop.querySelector(".orbea-menu-panel");
+  const menuRoot = document.querySelector("[data-menu-root]");
+  const menuDetail = document.querySelector("[data-menu-detail]");
+  const menuList = document.querySelector("[data-menu-list]");
+  const menuPromo = document.querySelector("[data-menu-promo]");
+  const menuBack = document.querySelector("[data-menu-back]");
+  const menuTitle = document.querySelector(".orbea-menu-title");
+  const allProductsLabel = menuRoot.dataset.allProductsLabel || "";
+  const menuClose = document.querySelector("[data-menu-close]");
+  const mobileMenuButton = document.querySelector(".orbea-mobile-menu-button");
+  const pageRoot = header.closest(".orbea-page") || document.body;
+  const searchPanel = document.querySelector("[data-search-panel]");
+  const searchInput = document.querySelector("#orbea-search");
+  const searchOpenButton = document.querySelector("[data-search-open]");
+  let lastMenuTrigger;
+  let lastSearchTrigger;
+
+  const pageChildren = () => [...pageRoot.children].filter((element) => element !== menuBackdrop);
+  const syncOverflow = () => { document.body.style.overflow = !menuBackdrop.hidden || !searchPanel.hidden ? "hidden" : ""; };
+  const showMenuRoot = () => {
+    menuTitle.textContent = "NIKASS";
+    menuBack.hidden = true;
+    menuRoot.hidden = false;
+    menuDetail.hidden = true;
+  };
+  const showMenuSection = (section) => {
+    menuTitle.textContent = section === "Gear" ? "Каталог" : "О NIKASS";
+    menuBack.hidden = false;
+    menuRoot.hidden = true;
+    menuDetail.hidden = false;
+    menuPromo.hidden = section !== "Gear";
+    const items = section === "Gear" ? JSON.parse(menuRoot.dataset.categoryItems || "[]") : ["О компании", "Поддержка"];
+    menuList.innerHTML = items.map((item) => `<a class="orbea-menu-detail-link" href="${section === "Commitment" ? (item === "О компании" ? "/#about" : "/#footer") : item === allProductsLabel ? "/catalog" : `/catalog?category=${encodeURIComponent(item)}`}" data-menu-anchor><span>${item}</span><span>›</span></a>`).join("");
+    menuList.querySelectorAll("[data-menu-anchor]").forEach((link) => link.addEventListener("click", closeMenu));
+  };
+  const openMenu = (section) => {
+    lastMenuTrigger = document.activeElement;
+    menuBackdrop.hidden = false;
+    pageChildren().forEach((element) => { element.inert = true; });
+    mobileMenuButton.setAttribute("aria-label", "Закрыть меню");
+    section ? showMenuSection(section) : showMenuRoot();
+    syncOverflow();
+    requestAnimationFrame(() => menuClose.focus());
+  };
+  const closeMenu = () => {
+    if (menuBackdrop.hidden) return;
+    menuBackdrop.hidden = true;
+    pageChildren().forEach((element) => { element.inert = false; });
+    mobileMenuButton.setAttribute("aria-label", "Открыть меню");
+    showMenuRoot();
+    syncOverflow();
+    if (lastMenuTrigger instanceof HTMLElement) lastMenuTrigger.focus();
+  };
+  document.querySelectorAll("[data-open-menu]").forEach((button) => button.addEventListener("click", () => openMenu(button.dataset.openMenu || "")));
+  document.querySelectorAll("[data-menu-section]").forEach((button) => button.addEventListener("click", () => showMenuSection(button.dataset.menuSection)));
+  document.querySelectorAll("[data-menu-anchor]").forEach((link) => link.addEventListener("click", closeMenu));
+  menuClose.addEventListener("click", closeMenu);
+  menuBack.addEventListener("click", showMenuRoot);
+  menuBackdrop.addEventListener("click", closeMenu);
+  menuPanel.addEventListener("click", (event) => event.stopPropagation());
+
+  const trapFocus = (event, container) => {
+    const focusable = [...container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled])')].filter((element) => element.offsetParent !== null);
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (!first || !last) return;
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  };
+
+  const closeSearch = () => {
+    if (searchPanel.hidden) return;
+    searchPanel.hidden = true;
+    syncOverflow();
+    if (lastSearchTrigger instanceof HTMLElement) lastSearchTrigger.focus();
+  };
+  searchOpenButton.addEventListener("click", () => {
+    if (!searchPanel.hidden) return closeSearch();
+    lastSearchTrigger = document.activeElement;
+    searchPanel.hidden = false;
+    syncOverflow();
+    searchInput.focus();
+  });
+  document.querySelector("[data-search-close]").addEventListener("click", closeSearch);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Tab" && !menuBackdrop.hidden) trapFocus(event, menuPanel);
+    if (event.key === "Escape") { closeMenu(); closeSearch(); }
+  });
+  const updateHeader = () => header.classList.toggle("is-scrolled", scrollY > 24);
+  addEventListener("scroll", updateHeader, { passive: true });
+  updateHeader();
+</script>
 
 <script>
   import { getCartCount, readCart, subscribeToCart } from "../lib/cart";
-  const update = () => document.querySelectorAll("[data-cart-count]").forEach((node) => { node.textContent = String(getCartCount(readCart().items)); });
-  subscribeToCart(update);
-  update();
+  const updateCart = () => document.querySelectorAll("[data-cart-count]").forEach((node) => { node.textContent = String(getCartCount(readCart().items)); });
+  subscribeToCart(updateCart);
+  updateCart();
 </script>

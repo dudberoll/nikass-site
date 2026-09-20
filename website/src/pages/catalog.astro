@@ -2,11 +2,11 @@
 import CatalogExplorer from "../components/CatalogExplorer";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
-import { loadCatalogProducts } from "../data/catalog";
+import { HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
 import "../styles/global.css";
 
 const products = await loadCatalogProducts();
-const categories = [...new Set(products.map((product) => product.category))];
+const categories = HERO_CATEGORIES;
 ---
 <!doctype html>
 <html lang="ru">
@@ -20,10 +20,9 @@ const categories = [...new Set(products.map((product) => product.category))];
   <body class="store-page">
     <StoreHeader />
     <main class="store-main" id="main-content">
-      <section class="store-intro">
-        <p class="store-eyebrow">NIKASS / КАТАЛОГ</p>
-        <h1>Энергия, которая всегда с вами</h1>
-        <p>{products.length} решений для дома, дороги, работы и резервного питания.</p>
+      <section class="store-intro catalog-intro">
+        <h1>Каталог</h1>
+        <p>Решения для дома, дороги, работы и резервного питания.</p>
       </section>
       <CatalogExplorer products={products} categories={categories} client:load />
     </main>

@@ -1,0 +1,41 @@
+---
+import ReviewsFigmaSection from "../components/ReviewsFigmaSection.astro";
+import StoreFooter from "../components/StoreFooter.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Тестовая страница компонентов NIKASS." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Компоненты — NIKASS</title>
+  </head>
+  <body class="store-page components-page">
+    <StoreHeader />
+    <main class="store-main components-main" id="main-content">
+      <section class="components-intro" aria-labelledby="components-title">
+        <p class="store-eyebrow">NIKASS / КОМПОНЕНТЫ</p>
+        <h1 id="components-title">Figma / отзывы</h1>
+        <p>Тестовый перенос секции отзывов из Figma. Здесь можно проверить размеры и отступы перед переносом в основной блок.</p>
+      </section>
+      <ReviewsFigmaSection />
+    </main>
+    <StoreFooter />
+  </body>
+</html>
+
+<style>
+  .store-main.components-main { max-width: none; padding: 0 0 110px; }
+  .components-intro { max-width: 700px; padding: 78px 5vw 70px; }
+  .components-intro h1 { margin: 18px 0 14px; font-size: clamp(44px, 7vw, 96px); font-weight: 500; line-height: .9; letter-spacing: -.07em; }
+  .components-intro > p:last-child { max-width: 520px; margin: 0; color: #5f5f5b; font-size: 20px; line-height: 1.25; }
+  @media (max-width: 600px) {
+    .components-intro { padding-bottom: 48px; }
+    .components-intro h1 { font-size: 48px; }
+    .components-intro > p:last-child { font-size: 17px; }
+  }
+</style>

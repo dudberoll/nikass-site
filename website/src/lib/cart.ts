@@ -41,10 +41,11 @@ export function addCartItem(cart: CartLine[], product: Pick<Product, "slug" | "v
   const next = normalizeCart(cart);
   const variant = product.variants.find((item) => item.sku === variantSku);
   if (!variant || variant.availability === "unavailable" || !Number.isSafeInteger(quantity) || quantity <= 0) return next;
-  const existing = next.find((item) => item.productSlug === product.slug && item.variantSku === variantSku);
+  const productSlug = variant.sourceSlug ?? product.slug;
+  const existing = next.find((item) => item.productSlug === productSlug && item.variantSku === variantSku);
   return existing
     ? next.map((item) => item === existing ? { ...item, quantity: Math.min(MAX_QUANTITY, item.quantity + quantity) } : item)
-    : [...next, { productSlug: product.slug, variantSku, quantity: Math.min(MAX_QUANTITY, quantity) }];
+    : [...next, { productSlug, variantSku, quantity: Math.min(MAX_QUANTITY, quantity) }];
 }
 
 export function setCartItemQuantity(cart: CartLine[], productSlug: string, variantSku: string, quantity: number) {

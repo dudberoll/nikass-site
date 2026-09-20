@@ -2,6 +2,7 @@
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
 import { blogEntries, type BlogEntry } from "../../data/blog";
+import { formatPrice, loadCatalogProducts } from "../../data/catalog";
 import "../../styles/global.css";
 
 type Props = { entry: BlogEntry };
@@ -11,6 +12,11 @@ export function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
+const catalogProducts = entry.slug === "energy-at-dacha" ? await loadCatalogProducts() : [];
+const recommendedProducts = [
+  catalogProducts.find((product) => product.category === "Портативные зарядные станции"),
+  catalogProducts.find((product) => product.category === "Солнечные панели"),
+].filter((product) => product !== undefined);
 ---
 <!doctype html>
 <html lang="ru">
@@ -31,11 +37,51 @@ const { entry } = Astro.props;
           <h1>{entry.title}</h1>
           <p>{entry.summary}</p>
         </header>
-        <figure class="blog-article-image"><img src={`/assets/images/${entry.image}`} alt={entry.title} /></figure>
+        {!entry.hideImage && <figure class="blog-article-image"><img src={`/assets/images/${entry.image}`} alt={entry.title} /></figure>}
         <div class="blog-article-body">
-          {entry.content.map((sentence) => <p>{sentence}</p>)}
+          {entry.blocks
+            ? entry.blocks.map((block) => {
+                if (block.type === "paragraph") return <p>{block.text}</p>;
+                if (block.type === "heading") return <h2>{block.text}</h2>;
+                if (block.type === "list") {
+                  return block.ordered
+                    ? <ol class="blog-article-list">{block.items.map((item) => <li>{item}</li>)}</ol>
+                    : <ul class="blog-article-list">{block.items.map((item) => <li>{item}</li>)}</ul>;
+                }
+                if (block.type === "links") return <ul class="blog-article-list blog-article-links">{block.items.map((item) => <li><a href={item.href} target="_blank" rel="noreferrer">{item.text}</a></li>)}</ul>;
+                if (block.type === "table") return (
+                  <div class="blog-article-table-wrap">
+                    <table class="blog-article-table">
+                      <thead><tr>{block.headers.map((header) => <th scope="col">{header}</th>)}</tr></thead>
+                      <tbody>{block.rows.map((row) => <tr>{row.map((cell) => <td>{cell}</td>)}</tr>)}</tbody>
+                    </table>
+                  </div>
+                );
+                return <aside class={`blog-article-callout blog-article-callout-${block.tone}`}><strong>{block.title}</strong><p>{block.text}</p></aside>;
+              })
+            : entry.content.map((sentence) => <p>{sentence}</p>)}
         </div>
         <a class="store-primary-button" href="/blog">Все статьи</a>
+        {recommendedProducts.length === 2 && <section class="orbea-bestsellers blog-recommended-products" aria-labelledby="recommended-products-title">
+          <div class="orbea-bestsellers-intro">
+            <div>
+              <p class="orbea-section-kicker">NIKASS / К СТАТЬЕ</p>
+              <h2 id="recommended-products-title">Рекомендуемые товары</h2>
+            </div>
+          </div>
+          <div class="orbea-bestsellers-grid">
+            {recommendedProducts.map((product) => (
+              <a class="orbea-bestseller-card" href={`/catalog/${product.slug}`}>
+                <div class="orbea-bestseller-image"><img src={product.image} alt={product.name} loading="lazy" /></div>
+                <div class="orbea-bestseller-copy">
+                  <p>{product.category}</p>
+                  <h3>{product.name}</h3>
+                  <div><strong>{formatPrice(product.price)}</strong>{product.oldPrice && <del>{formatPrice(product.oldPrice)}</del>}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>}
       </article>
     </main>
     <StoreFooter />

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
-import { detailRows, mapCatalogProduct, relatedProducts, selectCatalogProducts } from '../src/data/catalog'
+import { detailRows, HERO_CATEGORIES, mapCatalogProduct, relatedProducts, selectCatalogProducts } from '../src/data/catalog'
 
 const homepage = readFileSync(fileURLToPath(new URL('../src/pages/index.astro', import.meta.url)), 'utf8')
 const homepageStyles = readFileSync(fileURLToPath(new URL('../src/styles/global.css', import.meta.url)), 'utf8')
@@ -38,10 +38,10 @@ test('maps WooCommerce products with orderable variants', () => {
   assert.ok(products.every((product) => product.variants.length > 0))
   assert.ok(products.every((product) => product.variants.every((variant) =>
     ['in-stock', 'preorder', 'unavailable'].includes(variant.availability))))
-  assert.equal(products[0]?.image, '/products_clean/3204442838/product.webp')
+  assert.equal(products[0]?.image, 'https://cdn.example.com/inverter.jpg')
   assert.equal(products[0]?.sku, '3204442838')
   assert.equal(products[0]?.variants[0]?.sku, 'WJF-1200MX')
-  assert.equal(products[1]?.image, '/products_clean/3204445652/product.webp')
+  assert.equal(products[1]?.image, '/assets/images/gear-menu.webp')
 })
 
 test('keeps only the CSV-selected WooCommerce products', () => {
@@ -85,24 +85,52 @@ test('characteristics become name-value rows', () => {
 test('homepage CTA contracts use the system builder and chat widget', () => {
   assert.match(homepage, /<a[^>]+href="#custom"[^>]*>Подобрать решение<\/a>/)
   assert.match(homepage, /data-chat-open/)
-  assert.match(homepage, /data-chat-widget/)
+  assert.match(homepage, /class="orbea-chat-widget is-minimized"[^>]*data-chat-widget/)
+  assert.match(homepage, /aria-label="Открыть чат" data-chat-restore/)
 })
 
-test('homepage hero exposes the four product categories', () => {
-  for (const image of ['category-panels', 'category-batteries', 'category-inverters', 'category-stations']) {
-    assert.match(homepage, new RegExp(`/assets/images/${image}\\.webp`))
-  }
-  for (const category of ['Солнечные панели', 'Аккумуляторы', 'Инверторы', 'Зарядные станции']) {
-    assert.match(homepage, new RegExp(category))
-  }
+test('homepage hero exposes the supplied categories in the requested order', () => {
+  assert.equal(HERO_CATEGORIES.length, 7)
+  assert.deepEqual(HERO_CATEGORIES.map(({ title }) => title), [
+    'АВТОМОБИЛЬНЫЕ ИНВЕРТОРЫ',
+    'ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ',
+    'СОЛНЕЧНЫЕ ПАНЕЛИ',
+    'AGM АККУМУЛЯТОРЫ',
+    'LiFePO4 АККУМУЛЯТОРЫ',
+    'ГИБРИДНЫЕ ИНВЕРТОРЫ',
+    'ПАУЭРБАНКИ',
+  ])
+  assert.deepEqual(HERO_CATEGORIES.map(({ label }) => label), [
+    'Автомобильные инверторы',
+    'Портативные зарядные станции',
+    'Солнечные панели',
+    'AGM аккумуляторы',
+    'LiFePO4 аккумуляторы',
+    'Гибридные инверторы',
+    'Пауэрбанки',
+  ])
+  assert.match(homepage, /const heroCategories = HERO_CATEGORIES/)
+  assert.match(homepage, /const heroInitialIndex = 0/)
   assert.doesNotMatch(homepage, /heroProducts/)
   assert.match(homepage, /class="orbea-hero-products"/)
   assert.match(homepage, /class="orbea-hero-product-name"/)
-  assert.match(homepage, /href={`\/catalog\?category=\$\{encodeURIComponent\(category\.category\)\}`}/)
+  assert.match(homepage, /href={`\/catalog\?category=\$\{encodeURIComponent\(category\.title\)\}`}/)
   assert.match(homepage, /data-hero-previous/)
   assert.match(homepage, /data-hero-next/)
   assert.match(homepage, /pointerdown/)
   assert.match(homepageStyles, /data-hero-position="0"[^}]+orbea-hero-product-media[^}]+scale\(2\)/)
   assert.match(homepageStyles, /data-hero-position="-1"[^}]+opacity: \.45/)
   assert.match(homepageStyles, /data-hero-position="0"[^}]+orbea-hero-product-name[^}]+opacity: 1/)
+})
+
+test('homepage hero auto-advances generically on desktop', () => {
+  assert.match(homepage, /heroCarousel\.addEventListener\("animationend"/)
+  assert.match(homepage, /heroCarousel\.classList\.add\("is-hero-auto-hint"\)/)
+  assert.match(homepage, /matchMedia\("\(min-width: 1024px\)"\)/)
+  assert.match(homepage, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/)
+  assert.match(homepageStyles, /@keyframes orbea-hero-auto-nudge/)
+  assert.match(homepageStyles, /orbea-hero-auto-nudge 1s/)
+  assert.match(homepageStyles, /transition: transform 1\.5s/)
+  assert.match(homepage, /scheduleHeroAutoAdvance\(4000\)/)
+  assert.match(homepageStyles, /@media \(min-width: 1024px\) and \(prefers-reduced-motion: no-preference\)/)
 })

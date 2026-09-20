@@ -8,7 +8,7 @@ const product: Product = {
   slug: "nikass-invertor-1200",
   sku: "3204442838",
   name: "NIKASS Инвертор 1200 Вт",
-  category: "Инверторы",
+  category: "Автомобильные инверторы",
   rawCategory: "invertory",
   price: 4333,
   oldPrice: 90000,

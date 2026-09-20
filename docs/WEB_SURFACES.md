@@ -92,10 +92,11 @@ rebuilding on every small change is not a substitute for choosing the right rend
 The product owner explicitly chose guest ordering without registration on
 2026-09-08, matching PRD.md, and consolidated on 2026-09-11. The one active guest form is
 `website /checkout`; it reads the same-origin versioned cart. The earlier storefront was removed after
-consolidation, and the webapp implementation is not an active NIKASS storefront route. No account or
-online payment is required. The backend uses a private, randomly generated
+consolidation, and the webapp implementation is not an active NIKASS storefront route. No account is
+required. The backend uses a private, randomly generated
 checkout capability, kept out of URLs, and WooCommerce is the order/price/coupon
-authority.
+authority. The active local slice also supports a hosted YooKassa test payment; production fulfillment
+and the public webhook URL remain configuration-gated.
 The authenticated flow below remains the template default for other products.
 See [ORDERS.md](ORDERS.md) for activation and failure recovery.
 

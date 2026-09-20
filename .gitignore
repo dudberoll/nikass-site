@@ -6,6 +6,8 @@ dist/
 build/
 coverage/
 .vite/
+output/
+tmp/
 .scratch/
 playwright-report/
 test-results/

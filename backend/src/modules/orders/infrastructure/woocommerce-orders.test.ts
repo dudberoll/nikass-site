@@ -37,7 +37,7 @@ test('propagates Store API nonce and refreshed cart token during quote and reval
   let storeResponses = 0
   const calls: { url: URL; headers: Headers; responseHeaders?: Headers }[] = []
   const provider = createWooCommerceOrders(config, (async (url: URL, init: RequestInit) => {
-    const call = { url, headers: new Headers(init.headers) }
+    const call: { url: URL; headers: Headers; responseHeaders?: Headers } = { url, headers: new Headers(init.headers) }
     calls.push(call)
     if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple' }])
     if (url.pathname.endsWith('/orders')) return Response.json({ id: 12, number: 'N-12', status: 'pending' })
@@ -110,4 +110,22 @@ test('WooCommerce coupon restrictions block the quote without accepting a client
     return Response.json(url.pathname.endsWith('/cart') ? { items: [] } : cart, { headers: { 'Cart-Token': 'private-cart' } })
   }) as (url: URL, init?: RequestInit) => Promise<Response>)
   await expect(provider.quote(input)).rejects.toThrow('Промокод недействителен')
+})
+
+test('keeps the selected delivery method when delivery and pickup are both free', async () => {
+  let reads = 0
+  const calls: { url: URL; body: any }[] = []
+  const ratesCart = { ...cart, shipping_rates: [{ package_id: 0, shipping_rates: [{ rate_id: 'cdek:1', method_id: 'cdek', price: '0' }, { rate_id: 'local_pickup:1', method_id: 'local_pickup', price: '0' }] }] }
+  const deliveryInput = { ...input, customer: { ...input.customer, deliveryMethod: 'delivery' as const } }
+  const provider = createWooCommerceOrders(config, (async (url: URL, init: RequestInit) => {
+    calls.push({ url, body: init.body ? JSON.parse(String(init.body)) : undefined })
+    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple' }])
+    if (url.pathname.endsWith('/orders')) return Response.json({ id: 12, number: 'N-12', status: 'pending' })
+    return Response.json(url.pathname.endsWith('/cart') && reads++ === 0 ? { items: [] } : ratesCart, { headers: { 'Cart-Token': 'private-cart' } })
+  }) as (url: URL, init?: RequestInit) => Promise<Response>)
+
+  const quote = await provider.quote(deliveryInput)
+  expect(calls.find(({ url }) => url.pathname.endsWith('/cart/select-shipping-rate'))?.body).toEqual({ package_id: 0, rate_id: 'cdek:1' })
+  await provider.submit(quote.cartToken, deliveryInput, quote.totals)
+  expect(calls.at(-1)?.body.shipping_lines).toEqual([{ method_id: 'cdek', total: '0.00' }])
 })

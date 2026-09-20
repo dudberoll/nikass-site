@@ -3,13 +3,13 @@ import { expect, test } from "@playwright/test";
 test("finds by SKU and keeps a checked cart through checkout navigation", async ({ page }) => {
   await page.goto("/catalog");
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
-  await expect(page.locator("[data-product-card]")).toHaveCount(21);
+  await expect(page.locator("[data-product-card]")).toHaveCount(9);
   await page.getByLabel("Поиск по каталогу").fill("3204442838");
   await expect(page.locator("[data-product-card]")).toHaveCount(1);
+  await page.getByRole("link", { name: "Выбрать вариант" }).last().click();
   await page.getByRole("button", { name: "Добавить в корзину" }).click();
-  await expect(page.getByRole("status")).toContainText("добавлен в корзину");
-  await page.getByRole("link", { name: /Корзина 1/ }).click();
-  await expect(page.getByRole("heading", { name: "Инвертор автомобильный 1200" })).toBeVisible();
+  await page.getByLabel("Корзина").click();
+  await expect(page.getByRole("heading", { name: "NIKASS Автомобильный инвертор" })).toBeVisible();
   await page.getByRole("button", { name: "Увеличить количество" }).click();
   await expect(page.locator(".cart-summary-row").first()).toContainText("2");
   await page.getByRole("button", { name: "Перейти к оформлению" }).click();
@@ -20,7 +20,7 @@ test("finds by SKU and keeps a checked cart through checkout navigation", async 
 test("product page shows availability and related products", async ({ page }) => {
   await page.goto("/catalog");
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
-  await page.getByLabel("Поиск по каталогу").fill("3204442838");
+  await page.getByLabel("Поиск по каталогу").fill("2365402536");
   await expect(page.locator("[data-product-card]")).toHaveCount(1);
   await page.locator("[data-product-card] a[href^='/catalog/']").first().click();
   await expect(page.getByText("В наличии", { exact: true })).toBeVisible();
@@ -28,6 +28,44 @@ test("product page shows availability and related products", async ({ page }) =>
   const related = await page.locator(".product-related .orbea-bestseller-card").count();
   expect(related).toBeGreaterThan(0);
   expect(related).toBeLessThanOrEqual(4);
+});
+
+test("product page adds the selected quantity", async ({ page }) => {
+  await page.goto("/catalog");
+  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
+  await page.getByLabel("Поиск по каталогу").fill("3204442838");
+  await page.locator("[data-product-card] a[href^='/catalog/']").first().click();
+
+  const quantity = page.getByRole("group", { name: /Количество/ });
+  await quantity.getByRole("button", { name: "Увеличить количество" }).click();
+  await expect(quantity.locator("span")).toHaveText("2");
+  await page.getByRole("button", { name: "Добавить в корзину" }).click();
+  await expect(page.getByRole("status")).toContainText("2 шт.");
+});
+
+test("checkout offers delivery and pickup before the address step", async ({ page }) => {
+  await page.goto("/catalog");
+  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
+  await page.getByLabel("Поиск по каталогу").fill("3204442838");
+  await page.locator("[data-product-card] a[href^='/catalog/']").first().click();
+  await page.getByRole("button", { name: "Добавить в корзину" }).click();
+  await page.getByLabel("Корзина").click();
+  await page.getByRole("button", { name: "Перейти к оформлению" }).click();
+
+  await page.getByLabel("Имя и фамилия").fill("Анна Иванова");
+  await page.getByLabel("Телефон").fill("+7 999 123-45-67");
+  await page.getByLabel("Email").fill("anna@example.test");
+  await page.getByRole("button", { name: "Перейти к способу доставки" }).click();
+  const deliveryStep = page.locator("fieldset:not([hidden])");
+  await expect(deliveryStep).toBeVisible();
+  await expect(deliveryStep.getByRole("button", { name: /Доставка/ })).toBeVisible();
+  await expect(deliveryStep.getByRole("button", { name: /Самовывоз/ })).toBeVisible();
+  await deliveryStep.getByRole("button", { name: /Самовывоз/ }).click();
+  await page.getByRole("button", { name: "Перейти к адресу" }).click();
+  const addressStep = page.locator("fieldset:not([hidden])");
+  await expect(addressStep).toBeVisible();
+  await expect(addressStep.getByLabel("Информация о самовывозе").getByText("Москва, ул. Лесная, 3", { exact: true })).toBeVisible();
+  await expect(addressStep.locator("#addressSearch")).toHaveCount(0);
 });
 
 test("product details are collapsed and expand downward", async ({ page }) => {
@@ -38,15 +76,21 @@ test("product details are collapsed and expand downward", async ({ page }) => {
 
   const disclosures = page.locator("details.product-detail-disclosure");
   const characteristics = disclosures.nth(0);
-  const delivery = disclosures.nth(1);
+  const packageContents = disclosures.nth(1);
+  const delivery = disclosures.nth(2);
   await expect(characteristics).not.toHaveAttribute("open", "");
+  await expect(packageContents).not.toHaveAttribute("open", "");
   await expect(delivery).not.toHaveAttribute("open", "");
   await expect(characteristics.locator(".product-specs")).toBeHidden();
+  await expect(packageContents.locator("ul")).toBeHidden();
   await expect(delivery.locator("p")).toBeHidden();
 
   await characteristics.locator("summary").click();
   await expect(characteristics).toHaveAttribute("open", "");
   await expect(characteristics.locator(".product-specs")).toBeVisible();
+  await packageContents.locator("summary").click();
+  await expect(packageContents).toHaveAttribute("open", "");
+  await expect(packageContents.locator("ul")).toBeVisible();
   await delivery.locator("summary").click();
   await expect(delivery).toHaveAttribute("open", "");
   await expect(delivery.locator("p")).toBeVisible();
@@ -57,8 +101,9 @@ test("moves from personal details to the Yandex-assisted delivery address", asyn
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
   await page.getByLabel("Поиск по каталогу").fill("3204442838");
   await expect(page.locator("[data-product-card]")).toHaveCount(1);
+  await page.getByRole("link", { name: "Выбрать вариант" }).last().click();
   await page.getByRole("button", { name: "Добавить в корзину" }).click();
-  await page.getByRole("link", { name: /Корзина 1/ }).click();
+  await page.getByLabel("Корзина").click();
   await page.getByRole("button", { name: "Перейти к оформлению" }).click();
 
   await expect(page.getByRole("group", { name: "Личные данные" })).toBeVisible();
@@ -66,7 +111,7 @@ test("moves from personal details to the Yandex-assisted delivery address", asyn
   await expect(page.getByPlaceholder("Имя и фамилия")).toBeVisible();
   await expect(page.getByPlaceholder("Телефон")).toBeVisible();
   await expect(page.getByPlaceholder("Email")).toBeVisible();
-  await page.getByRole("button", { name: "Перейти к адресу" }).click();
+  await page.getByRole("button", { name: "Перейти к способу доставки" }).click();
 
   await expect(page.getByRole("alert")).toContainText("Проверьте отмеченные поля.");
   const fieldErrors = page.locator(".checkout-field-control.has-error .checkout-error");
@@ -80,10 +125,12 @@ test("moves from personal details to the Yandex-assisted delivery address", asyn
   await page.getByLabel("Имя и фамилия").fill("Анна Иванова");
   await page.getByLabel("Телефон").fill("+7 999 123-45-67");
   await page.getByLabel("Email").fill("anna@example.test");
+  await page.getByRole("button", { name: "Перейти к способу доставки" }).click();
+  await page.getByRole("button", { name: /Доставка/ }).click();
   await page.getByRole("button", { name: "Перейти к адресу" }).click();
 
   await expect(page.getByRole("group", { name: "Личные данные" })).toBeHidden();
-  await expect(page.getByRole("group", { name: "Адрес доставки" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Адрес" })).toBeVisible();
   await expect(page.locator('fieldset:not([hidden]) label[for="addressSearch"]')).toHaveCount(0);
   await expect(page.getByPlaceholder("Дом / корпус")).toBeVisible();
   await expect(page.locator('fieldset:not([hidden]) label[for="comment"]')).toBeVisible();
@@ -111,9 +158,9 @@ test("solution CTA points to the system builder", async ({ page }) => {
 test("hero carousel centers a side product before opening it", async ({ page }, testInfo) => {
   await page.goto("/");
 
-  const carousel = page.getByRole("region", { name: "Рекомендуемые товары" });
+  const carousel = page.getByRole("region", { name: "Категории товаров" });
   const products = carousel.locator("[data-hero-product]");
-  await expect(products).toHaveCount(5);
+  await expect(products).toHaveCount(4);
 
   const sideProduct = carousel.locator('[data-hero-position="1"]');
   const target = await sideProduct.getAttribute("href");
@@ -138,8 +185,15 @@ test("hero carousel centers a side product before opening it", async ({ page }, 
 test("consultation CTA opens a compact chat widget", async ({ page }) => {
   await page.goto("/");
   const widget = page.locator("[data-chat-widget]");
-  const trigger = page.getByRole("button", { name: "Получить консультацию" });
-  await expect(widget).toBeHidden();
+  const restore = page.getByRole("button", { name: "Открыть чат" });
+  const trigger = page.locator("#custom").getByRole("button", { name: "Получить консультацию" });
+  await expect(widget).toBeVisible();
+  await expect(restore).toBeVisible();
+
+  await restore.click();
+  await expect(restore).toBeHidden();
+  await page.getByRole("button", { name: "Свернуть чат" }).click();
+  await expect(restore).toBeVisible();
 
   await trigger.click();
   await expect(widget).toBeVisible();
@@ -153,7 +207,8 @@ test("consultation CTA opens a compact chat widget", async ({ page }) => {
   })).toBe(true);
 
   await page.getByRole("button", { name: "Закрыть консультанта" }).click();
-  await expect(widget).toBeHidden();
+  await expect(widget).toBeVisible();
+  await expect(restore).toBeVisible();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(trigger).toBeFocused();
 });

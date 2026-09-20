@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { OrderQuoteRequest, OrderTotals } from '@web-app-demo/contracts'
-import { OrderFailure, type OrderProvider } from '../application/ports'
+import { OrderFailure, type OrderProvider, type PaidOrderProvider } from '../application/ports'
 
 const minor = z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER))
 const cartSchema = z.object({
@@ -14,7 +14,14 @@ const orderSchema = z.object({ id: z.number().int().positive(), number: z.string
 
 type Config = { productsEndpoint: string; storeEndpoint: string; consumerKey: string; consumerSecret: string; timeoutMs: number }
 type StoreSession = { cartToken?: string; nonce?: string }
-export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, init?: RequestInit) => Promise<Response> = fetch): OrderProvider {
+type ShippingRate = { rate_id: string; price: number; method_id: string }
+const preferredFreeRate = (rates: ShippingRate[], method: OrderQuoteRequest['customer']['deliveryMethod'] = 'delivery') => {
+  const free = rates.filter((rate) => rate.price === 0)
+  return method === 'pickup'
+    ? free.find((rate) => rate.method_id === 'local_pickup')
+    : free.find((rate) => rate.method_id !== 'local_pickup') ?? free[0]
+}
+export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, init?: RequestInit) => Promise<Response> = fetch): OrderProvider & PaidOrderProvider {
   const request = async (url: URL, body?: unknown, session?: StoreSession, admin = false) => {
     let response: Response
     try {
@@ -57,6 +64,29 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
     if (parsed.data.errors.length) throw new OrderFailure('invalid', 'Проверьте наличие товаров и промокод.')
     return parsed.data
   }
+  const submitOrder = async (cartToken: string, input: OrderQuoteRequest, totals: OrderTotals, paidPaymentId?: string) => {
+    const session: StoreSession = { cartToken }
+    const fresh = parseCart((await request(storeUrl('cart'), undefined, session)).data)
+    if (fresh.totals.total_price !== totals.totalMinor || fresh.items.length !== totals.items.length || fresh.items.some((item) => !totals.items.some((line) => line.sku === item.sku && line.quantity === item.quantity && line.totalMinor === item.totals.line_total + item.totals.line_total_tax))) {
+      throw new OrderFailure('invalid', 'Цена или состав заказа изменились. Проверьте заказ заново.')
+    }
+    const { billing_address: billing, shipping_address: shipping } = addresses(input)
+    const paid = Boolean(paidPaymentId)
+    const selectedRates = fresh.shipping_rates.flatMap(({ shipping_rates }) => {
+      const rate = preferredFreeRate(shipping_rates, input.customer.deliveryMethod)
+      return rate ? [{ method_id: rate.method_id, total: '0.00' }] : []
+    })
+    const response = await request(adminUrl('orders'), {
+      status: paid ? 'processing' : 'pending', set_paid: paid, billing, shipping,
+      ...(paid ? { payment_method: 'yookassa', payment_method_title: 'ЮKassa', transaction_id: paidPaymentId, meta_data: [{ key: 'nikass_payment_id', value: paidPaymentId }] } : {}),
+      line_items: totals.items.map(({ name, quantity, totalMinor }) => ({ name, quantity, total: (totalMinor / 100).toFixed(2) })),
+      customer_note: input.customer.comment,
+      ...(selectedRates.length ? { shipping_lines: selectedRates } : {}),
+    }, undefined, true)
+    const order = orderSchema.safeParse(response.data)
+    if (!order.success) throw new OrderFailure('unavailable', 'Результат оформления требует проверки менеджером.')
+    return order.data.number ?? String(order.data.id)
+  }
   return {
     quote: async (input) => {
       const session: StoreSession = {}
@@ -83,7 +113,7 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
       }
       let cart = parseCart((await request(storeUrl('cart/update-customer'), addresses(input), session)).data)
       for (const delivery of cart.shipping_rates) {
-        const free = delivery.shipping_rates.find((rate) => rate.price === 0)
+        const free = preferredFreeRate(delivery.shipping_rates, input.customer.deliveryMethod)
         if (!free) throw new OrderFailure('unavailable', 'Бесплатная доставка в магазинe не настроена.')
         cart = parseCart((await request(storeUrl('cart/select-shipping-rate'), { package_id: delivery.package_id, rate_id: free.rate_id }, session)).data)
       }
@@ -97,24 +127,8 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
       } }
 
     },
-    submit: async (cartToken, input, totals: OrderTotals) => {
-      const session: StoreSession = { cartToken }
-      const fresh = parseCart((await request(storeUrl('cart'), undefined, session)).data)
-      if (fresh.totals.total_price !== totals.totalMinor || fresh.items.length !== totals.items.length || fresh.items.some((item) => !totals.items.some((line) => line.sku === item.sku && line.quantity === item.quantity && line.totalMinor === item.totals.line_total + item.totals.line_total_tax))) {
-        throw new OrderFailure('invalid', 'Цена или состав заказа изменились. Проверьте заказ заново.')
-      }
-      const { billing_address: billing, shipping_address: shipping } = addresses(input)
-      const response = await request(adminUrl('orders'), {
-        status: 'pending', set_paid: false, billing, shipping,
-        line_items: totals.items.map(({ name, quantity, totalMinor }) => ({ name, quantity, total: (totalMinor / 100).toFixed(2) })),
-        customer_note: input.customer.comment,
-        ...(fresh.shipping_rates.some(({ shipping_rates }) => shipping_rates.some((rate) => rate.method_id === 'local_pickup' && rate.price === 0))
-          ? { shipping_lines: [{ method_id: 'local_pickup', total: '0.00' }] } : {}),
-      }, undefined, true)
-      const order = orderSchema.safeParse(response.data)
-      if (!order.success) throw new OrderFailure('unavailable', 'Результат оформления требует проверки менеджером.')
-      return order.data.number ?? String(order.data.id)
-    },
+    submit: async (cartToken, input, totals: OrderTotals) => submitOrder(cartToken, input, totals),
+    submitPaid: async (cartToken, input, totals: OrderTotals, paymentId: string) => submitOrder(cartToken, input, totals, paymentId),
   }
 }
 

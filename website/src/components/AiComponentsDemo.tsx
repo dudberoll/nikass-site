@@ -6,15 +6,56 @@ import PromptInput from "./PromptInput";
 
 type IconName = "analytics" | "edit" | "image" | "idea" | "sparkles";
 
-const actions: Array<{ icon: IconName; label: string }> = [
-  { icon: "idea", label: "Для дома" },
-  { icon: "image", label: "Для дачи" },
-  { icon: "sparkles", label: "В поход" },
-  { icon: "analytics", label: "Промышленное оборудование" },
-  { icon: "edit", label: "Доставка и возврат" },
+export type ChatProduct = {
+  slug: string;
+  name: string;
+  category: string;
+  image: string;
+  priceLabel: string;
+  oldPriceLabel?: string;
+};
+
+const actions: Array<{ icon: IconName; label: string; prompt: string }> = [
+  { icon: "idea", label: "Для дома", prompt: "Подбери мне портативную зарядную станцию для дома на случай отключения электричества. Сначала уточни, какую технику нужно запитать, её мощность и на сколько часов должна хватить станция, а затем предложи подходящие варианты из каталога." },
+  { icon: "image", label: "Для дачи", prompt: "Подбери мне оборудование для дачи: портативную зарядную станцию для освещения, роутера и другой техники. Уточни, какие устройства я буду использовать, их мощность и нужное время работы, затем предложи подходящие варианты из каталога." },
+  { icon: "sparkles", label: "В поход", prompt: "Подбери мне компактное оборудование для походов и кемпинга: зарядную станцию или пауэрбанк для телефона, ноутбука и другой техники. Уточни, что я буду заряжать и на сколько дней нужен запас энергии." },
+  { icon: "analytics", label: "Промышленное оборудование", prompt: "Подбери мне оборудование для резервного питания промышленной техники. Сначала уточни список устройств, их рабочую и пусковую мощность, нужное время автономной работы и условия использования, а затем предложи подходящее решение из каталога." },
+  { icon: "edit", label: "Доставка и возврат", prompt: "Расскажи подробно об условиях доставки, сроках, стоимости и возврате товаров NIKASS." },
 ];
 
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string };
+
+const catalogPathPattern = /(?:https?:\/\/[^)\s/]+)?\/catalog\/([a-z0-9-]+)\/?/gi;
+const catalogLinkLinePattern = /^\s*(?:[-*+•]\s*)?(?:\[[^\]\n]+\]\()?(?:https?:\/\/[^)\s/]+)?\/catalog\/[a-z0-9-]+\/?\)?\s*$/i;
+
+export function extractCatalogProductSlugs(text: string) {
+  return [...new Set([...text.matchAll(catalogPathPattern)].map((match) => match[1]).filter((slug): slug is string => Boolean(slug)))];
+}
+
+export function removeCatalogProductLinkLines(text: string) {
+  return text.split(/\r?\n/).filter((line) => !catalogLinkLinePattern.test(line)).join("\n").trim();
+}
+
+function ProductRecommendations({ text, products }: { text: string; products: readonly ChatProduct[] }) {
+  const productsBySlug = new Map(products.map((product) => [product.slug, product]));
+  const recommended = extractCatalogProductSlugs(text)
+    .map((slug) => productsBySlug.get(slug))
+    .filter((product): product is ChatProduct => Boolean(product))
+    .slice(0, 3);
+
+  if (recommended.length === 0) return null;
+
+  return <div className="ai-recommended-products" aria-label="Рекомендованные товары">
+    {recommended.map((product) => <a className="orbea-bestseller-card ai-recommended-product" href={`/catalog/${product.slug}`} key={product.slug}>
+      <div className="orbea-bestseller-image"><img src={product.image} alt={product.name} loading="lazy" /></div>
+      <div className="orbea-bestseller-copy">
+        <p>{product.category}</p>
+        <h3>{product.name}</h3>
+        <div><strong>{product.priceLabel}</strong>{product.oldPriceLabel && <del>{product.oldPriceLabel}</del>}</div>
+      </div>
+    </a>)}
+  </div>;
+}
 
 function Icon({ name }: { name: IconName }) {
   const paths = {
@@ -28,7 +69,7 @@ function Icon({ name }: { name: IconName }) {
   return <svg aria-hidden="true" className="ai-components-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
 
-export function AssistantCard({ apiBase }: { apiBase: string }) {
+export function AssistantCard({ apiBase, products }: { apiBase: string; products: readonly ChatProduct[] }) {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
@@ -59,8 +100,19 @@ export function AssistantCard({ apiBase }: { apiBase: string }) {
       setStreaming(false);
       setTranscribing(false);
     };
+    const handleChatReset = () => {
+      handleChatClose();
+      nextMessageId.current = 0;
+      setMessages([]);
+      setDraft("");
+      setError("");
+    };
     document.addEventListener("nikass:chat-close", handleChatClose);
-    return () => document.removeEventListener("nikass:chat-close", handleChatClose);
+    document.addEventListener("nikass:chat-reset", handleChatReset);
+    return () => {
+      document.removeEventListener("nikass:chat-close", handleChatClose);
+      document.removeEventListener("nikass:chat-reset", handleChatReset);
+    };
   }, []);
 
   useEffect(() => {
@@ -154,13 +206,19 @@ export function AssistantCard({ apiBase }: { apiBase: string }) {
       <h1 id="ai-assistant-card-title">Помогу подобрать оборудование под Вашу задачу</h1>
       <p className="ai-assistant-card-description">Расскажите, что нужно запитать: дом, технику или автомобиль. Отвечу на вопросы по оборудованию, доставке и возврату.</p>
       <div className="ai-assistant-card-actions">
-        {actions.map((action) => <button key={action.label} type="button" onClick={() => setDraft(`${action.label}:`)}><Icon name={action.icon} />{action.label}</button>)}
+        {actions.map((action) => <button key={action.label} type="button" onClick={() => void sendPrompt(action.prompt)}><Icon name={action.icon} />{action.label}</button>)}
       </div>
     </div> : <div ref={conversationRef} className="ai-assistant-card-conversation" aria-live="polite" aria-busy={streaming || transcribing}>
-      {messages.map((message) => <article key={message.id} className={`ai-chat-message is-${message.role}`}>
-        <div className="ai-chat-message-avatar" aria-hidden="true">{message.role === "assistant" ? "N" : "Вы"}</div>
-        <div className="ai-chat-bubble">{message.text || "Печатает…"}</div>
-      </article>)}
+      {messages.map((message) => {
+        const visibleText = message.role === "assistant" ? removeCatalogProductLinkLines(message.text) : message.text;
+        return <article key={message.id} className={`ai-chat-message is-${message.role}`}>
+          <div className="ai-chat-message-avatar" aria-hidden="true">{message.role === "assistant" ? "N" : "Вы"}</div>
+          <div className="ai-chat-message-content">
+            {(visibleText || !message.text) && <div className="ai-chat-bubble">{visibleText || "Печатает…"}</div>}
+            {message.role === "assistant" && <ProductRecommendations text={message.text} products={products} />}
+          </div>
+        </article>;
+      })}
     </div>}
     {error && <p className="ai-chat-error" role="alert">{error}</p>}
     <div className="ai-assistant-card-composer ai-assistant-card-prompt">
@@ -169,9 +227,9 @@ export function AssistantCard({ apiBase }: { apiBase: string }) {
   </section>;
 }
 
-export default function AiComponentsDemo({ apiBase }: { apiBase: string }) {
+export default function AiComponentsDemo({ apiBase, products }: { apiBase: string; products: readonly ChatProduct[] }) {
   return <div className="ai-components-grid">
-    <AssistantCard apiBase={apiBase} />
+    <AssistantCard apiBase={apiBase} products={products} />
     <div className="ai-prompt-stage"><PromptInput /></div>
   </div>;
 }

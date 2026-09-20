@@ -14,41 +14,8 @@ export async function getStaticPaths() {
 const { product } = Astro.props as { product: Product };
 const characteristics = detailRows(product.characteristics);
 const packageContents = detailLines(product.packageContents);
+const initialVariantKey = product.variants[0]?.label.match(/\bL[1-4]\b/)?.[0] ?? "";
 const related = relatedProducts(product, await loadCatalogProducts());
-const scrollStory = product.slug === "portativnaya-zaryadnaya-stantsiya-500w-160000mah" ? [
-  {
-    number: "01",
-    title: "500 Вт для важных задач",
-    body: "Подключайте ноутбук, свет, роутер или мини-холодильник — без привязки к розетке.",
-    stat: "Мощность инвертора · 500 Вт",
-    imagePosition: "50% 18%",
-    imageScale: "1.08",
-  },
-  {
-    number: "02",
-    title: "До 10 устройств одновременно",
-    body: "AC, USB, Type-C и DC — энергия остаётся доступной для всей техники в поездке или на даче.",
-    stat: "Выходы · AC / USB / Type-C / DC",
-    imagePosition: "56% 48%",
-    imageScale: "1.02",
-  },
-  {
-    number: "03",
-    title: "Надёжность внутри",
-    body: "LiFePO4-аккумулятор, защита от перегрева, перегрузки и короткого замыкания.",
-    stat: "Ресурс · до 3500 циклов",
-    imagePosition: "62% 67%",
-    imageScale: "1.16",
-  },
-  {
-    number: "04",
-    title: "Резерв, который рядом",
-    body: "4,5 кг, встроенная ручка и компактный корпус — берите станцию в дорогу, на рыбалку или в дом.",
-    stat: "Ёмкость · 160 000 мАч",
-    imagePosition: "64% 82%",
-    imageScale: "1.1",
-  },
-] : [];
 ---
 
 <!doctype html>
@@ -63,11 +30,11 @@ const scrollStory = product.slug === "portativnaya-zaryadnaya-stantsiya-500w-160
   <body class="store-page">
     <StoreHeader />
     <main class="store-main product-page" id="main-content">
-      <p class="store-breadcrumb"><a href="/catalog">Каталог</a> / {product.category}</p>
+      <p class="store-breadcrumb"><a href="/catalog">← Вернуться назад</a></p>
       <section class="product-layout">
         <div class="product-gallery"><img src={product.image} alt={product.name} /></div>
         <div class="product-info">
-          <p class="store-eyebrow">NIKASS / {product.category}</p>
+          <p class="store-eyebrow"><a href="/catalog">Каталог</a> / {product.category}</p>
           <h1>{product.name}</h1>
           <p class="product-sku">Артикул: {product.sku}</p>
           <ProductVariantSelector {product} client:load />
@@ -75,44 +42,15 @@ const scrollStory = product.slug === "portativnaya-zaryadnaya-stantsiya-500w-160
         </div>
       </section>
 
-      {scrollStory.length > 0 && <section class="product-scroll-story" data-product-scroll-story aria-labelledby="product-scroll-story-title">
-        <div class="product-scroll-story__intro">
-          <p class="store-eyebrow">СЦЕНАРИИ ИСПОЛЬЗОВАНИЯ</p>
-          <h2 id="product-scroll-story-title">Энергия, которая меняется вместе с вашим маршрутом.</h2>
-        </div>
-
-        <div class="product-scroll-story__pin" data-story-pin>
-          <div class="product-scroll-story__visual-stack">
-            {scrollStory.map((step, index) => (
-              <figure class:list={{ "product-scroll-story__visual": true, "is-active": index === 0 }} data-story-visual={index} aria-hidden={index === 0 ? undefined : "true"}>
-                <span class="product-scroll-story__visual-label">{step.number} / 04</span>
-                <img src={product.image} alt={index === 0 ? product.name : ""} loading={index === 0 ? undefined : "lazy"} style={`--story-image-position: ${step.imagePosition}; --story-image-scale: ${step.imageScale}`} />
-              </figure>
-            ))}
-          </div>
-
-          <div class="product-scroll-story__copy-stack">
-            {scrollStory.map((step, index) => (
-              <article class:list={{ "product-scroll-story__copy": true, "is-active": index === 0 }} data-story-copy={index} aria-hidden={index === 0 ? undefined : "true"}>
-                <span class="product-scroll-story__step-number">{step.number}</span>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
-                <strong>{step.stat}</strong>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <div class="product-scroll-story__markers" aria-hidden="true">
-          {scrollStory.map((_, index) => <div class="product-scroll-story__marker" data-story-marker={index}></div>)}
-        </div>
-      </section>}
-
       <section class="product-details">
-        {characteristics.length > 0 && <details class="product-detail-disclosure"><summary><span>Характеристики</span></summary><table class="product-specs"><tbody>{characteristics.map(([label, value]) => <tr><th scope="row">{label}</th><td>{value}</td></tr>)}</tbody></table></details>}
-        {packageContents.length > 0 && <div><h2>Комплектация</h2><ul>{packageContents.map((line) => <li>{line}</li>)}</ul></div>}
+        {characteristics.length > 0 && <details class="product-detail-disclosure"><summary><span>Характеристики</span></summary><table class="product-specs"><tbody>{characteristics.map(([label, value]) => {
+          const variantKey = label.match(/\bL[123]\b/)?.[0];
+          return <tr data-product-spec-variant={variantKey} hidden={Boolean(variantKey && variantKey !== initialVariantKey)}><th scope="row">{label}</th><td>{value}</td></tr>;
+        })}</tbody></table></details>}
+        {packageContents.length > 0 && <details class="product-detail-disclosure"><summary><span>Комплектация</span></summary><ul>{packageContents.map((line) => <li>{line}</li>)}</ul></details>}
         <details class="product-detail-disclosure"><summary><span>Доставка</span></summary><p>Доставим по России. Точную стоимость и срок покажем на этапе оформления заказа.</p></details>
       </section>
+
       {related.length > 0 && <section class="product-related" aria-labelledby="related-title">
         <p class="store-eyebrow">NIKASS / СВЯЗАННЫЕ ТОВАРЫ</p><h2 id="related-title">С этим товаром покупают</h2>
         <div class="orbea-bestsellers-grid">{related.map((item) => <a class="orbea-bestseller-card" href={`/catalog/${item.slug}`}><div class="orbea-bestseller-image"><img src={item.image} alt={item.name} loading="lazy" /></div><div class="orbea-bestseller-copy"><p>{item.category}</p><h3>{item.name}</h3><div><strong>{formatPrice(item.price)}</strong>{item.oldPrice && <del>{formatPrice(item.oldPrice)}</del>}</div></div></a>)}</div>
@@ -121,43 +59,12 @@ const scrollStory = product.slug === "portativnaya-zaryadnaya-stantsiya-500w-160
     <StoreFooter />
 
     <script is:inline>
-      const story = document.querySelector("[data-product-scroll-story]");
-      if (story) {
-        const pin = story.querySelector("[data-story-pin]");
-        const markers = [...story.querySelectorAll("[data-story-marker]")];
-        const visuals = [...story.querySelectorAll("[data-story-visual]")];
-        const copies = [...story.querySelectorAll("[data-story-copy]")];
-
-        const setStoryStep = (index) => {
-          visuals.forEach((item, itemIndex) => {
-            const active = itemIndex === index;
-            item.classList.toggle("is-active", active);
-            item.setAttribute("aria-hidden", String(!active));
-          });
-          copies.forEach((item, itemIndex) => {
-            const active = itemIndex === index;
-            item.classList.toggle("is-active", active);
-            item.setAttribute("aria-hidden", String(!active));
-          });
-          pin.classList.toggle("is-reversed", index % 2 === 1);
-        };
-
-        let frame;
-        const updateStoryStep = () => {
-          cancelAnimationFrame(frame);
-          frame = requestAnimationFrame(() => {
-            const triggerLine = window.innerHeight * 0.52;
-            const activeIndex = markers.reduce((current, marker, index) => (
-              marker.getBoundingClientRect().top <= triggerLine ? index : current
-            ), 0);
-            setStoryStep(activeIndex);
-          });
-        };
-
-        window.addEventListener("scroll", updateStoryStep, { passive: true });
-        window.addEventListener("resize", updateStoryStep);
-        updateStoryStep();
-      }
+      const specificationRows = [...document.querySelectorAll("[data-product-spec-variant]")];
+      const selectModelSpecifications = (label) => {
+        const model = label.match(/\bL[1-4]\b/)?.[0] ?? "";
+        specificationRows.forEach((row) => { row.hidden = Boolean(model && row.dataset.productSpecVariant !== model); });
+      };
+      window.addEventListener("nikass:product-variant-change", (event) => selectModelSpecifications(event.detail?.label ?? ""));
     </script>
   </body>
 </html>

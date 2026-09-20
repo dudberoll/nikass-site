@@ -29,8 +29,8 @@ If no GitHub destination is chosen, the repository is left without `origin` and 
 
 | Question                                                  | Answer       |
 | --------------------------------------------------------- | ------------ |
-| What product do you want to build first?                  | Публичный storefront NIKASS на Astro + React с каталогом WooCommerce, корзиной и гостевым заказом без онлайн-оплаты. |
-| What is the first user journey that must work end to end? | Главная → каталог NIKASS → карточка товара → корзина → двухшаговое оформление → проверка цены и наличия в backend → заказ WooCommerce. AI-консультант остаётся отдельной опцией. |
+| What product do you want to build first?                  | Публичный storefront NIKASS на Astro + React с каталогом WooCommerce, корзиной, гостевым заказом и тестовой hosted-оплатой YooKassa. |
+| What is the first user journey that must work end to end? | Главная → каталог NIKASS → карточка товара → корзина → двухшаговое оформление → проверка цены и наличия в backend → hosted-тест YooKassa → подтверждение результата на checkout. Рабочий WooCommerce order подключается отдельным production-шагом. AI-консультант остаётся отдельной опцией. |
 
 ## 3. Active surfaces
 
@@ -55,14 +55,14 @@ Ask about product needs, not implementations. Mark what the first version actual
 - [ ] Accounts / sign-in
 - [ ] Saved data that survives a restart
 - [ ] File, image, or media uploads → also answer _Files, images, and media_
-- [ ] Paid subscriptions or one-off payments → also answer _Payments_
+- [x] Paid subscriptions or one-off payments → also answer _Payments_
 - [ ] Admin tools or roles
 - [x] External integrations (which: WooCommerce, Yandex Geosuggest, optional AI provider through a server-side chat-completions API)
 - [ ] Real-time chat, presence, collaboration, or live updates
 
 | Question                                                                                          | Answer       |
 | ------------------------------------------------------------------------------------------------- | ------------ |
-| What the first version explicitly should NOT do (write "nothing ruled out" if that is the answer) | Личный кабинет, онлайн-оплата, подписки, загрузка пользовательских файлов, RAG, хранение истории и операторский чат не входят в текущую версию. |
+| What the first version explicitly should NOT do (write "nothing ruled out" if that is the answer) | Личный кабинет, подписки, загрузка пользовательских файлов, RAG, хранение истории и операторский чат не входят в текущую версию; production-активация оплаты будет отдельным шагом. |
 
 ## 5. Files, images, and media
 
@@ -85,7 +85,7 @@ follow the implementation contract in `docs/WEB_SURFACES.md`.
 
 | Question                                                                                    | Answer       |
 | ------------------------------------------------------------------------------------------- | ------------ |
-| Which public product or content data comes from the backend/database at website build time? | Каталог NIKASS загружается из WooCommerce API при статической сборке website и ограничивается выбранными артикулами CSV. |
+| Which public product or content data comes from the backend/database at website build time? | Каталог NIKASS загружается из WooCommerce API при статической сборке website и ограничивается 47 товарными строками текущего CSV; старые и тестовые товары WooCommerce исключаются. |
 | How soon after that data changes must the public website show the change?                   | После следующей ручной статической сборки; автоматическая синхронизация пока не включена. |
 | Which changes require an automatic rebuild/redeploy rather than a manual release?           | Никакие в текущем локальном этапе; публикация и автоматический rebuild не запрошены. |
 
@@ -100,11 +100,11 @@ Answer these only when payments are active above; otherwise mark the rows `n/a`.
 
 | Question                                                                                                                    | Answer       |
 | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| What exactly do users pay for?                                                                                              | n/a: the current NIKASS checkout does not take online payments. |
-| Recurring subscription, one-off purchase, or both?                                                                          | n/a: the current NIKASS checkout does not take online payments. |
+| What exactly do users pay for?                                                                                              | Разовые покупки товаров NIKASS; сейчас включён только тестовый hosted-платёж YooKassa. |
+| Recurring subscription, one-off purchase, or both?                                                                          | Только разовая покупка. |
 | Does the public website need a local cart or offer selection before registration/sign-in?                                   | n/a for payments: website всё равно хранит локальную корзину до гостевого checkout. |
-| Which active surfaces need payment: browser checkout, App Store / Google Play, native card entry, Apple Pay, or Google Pay? | n/a: no payment surface is active. |
-| What stops working when someone does not pay?                                                                               | n/a: there is no paid capability in this stage. |
+| Which active surfaces need payment: browser checkout, App Store / Google Play, native card entry, Apple Pay, or Google Pay? | Browser checkout на `website`; оплата проходит на hosted-странице YooKassa. |
+| What stops working when someone does not pay?                                                                               | Страница не показывает успешное оформление и fulfillment не запускается. |
 
 Whatever this project ends up with, the ledger below is what states it. Read `docs/WEB_SURFACES.md`
 before implementing any payment surface. Browser checkout is built in authenticated `webapp` plus
@@ -180,13 +180,13 @@ A capability with no row is `absent` by default. Add the row instead of assuming
 | Static asset precompression     | included | `bun run static:precompress` writes `.br` and `.gz` next to the text assets in `webapp/dist` and `website/dist`, using `node:zlib` and no dependency. It is own-server tooling: hosted releases do not upload those sidecars and use their edge/runtime compression when available.                                                                                                                                  |
 | Storybook component catalogs    | included | Separate local React/Vite catalogs cover every `src/components/ui` module in `webapp` and `website`, with official docs/a11y addons and story-only composition examples. They are not deployed; Astro sections remain outside Storybook and the website stays static SSG.                                                                                                                                       |
 | Apple storefront prototype | removed | Старые Apple Store/Shop Mac маршруты удалены из активной website-поверхности; NIKASS использует собственные публичные маршруты. |
-| NIKASS storefront catalog | included | `/`, `/catalog`, `/catalog/[slug]`, `/cart` и `/checkout` образуют путь на данных WooCommerce API, ограниченных выбранными артикулами CSV. Корзина хранит только slug/SKU/quantity в версионированном `sessionStorage`; оплата отсутствует. |
+| NIKASS storefront catalog | included | `/`, `/catalog`, `/catalog/[slug]`, `/cart` и `/checkout` образуют путь на данных WooCommerce API, ограниченных выбранными артикулами CSV. Корзина хранит только slug/SKU/quantity в версионированном `sessionStorage`; checkout передаёт оплату на hosted YooKassa. |
 | NIKASS backend catalog and cart review | included | WooCommerce catalog API and fresh cart review; provider credentials pending. Orders are a separately configured module. |
 | AI-консультант | available | `/message-scroller` вызывает `POST /api/chat`; провайдер chat-completions подключается через серверные `AI_*`. По умолчанию отключён, история не хранится. |
 | Website build-time backend data | included | Astro загружает каталог из WooCommerce API во время сборки; при ошибке сборка останавливается, а dev-запрос может повториться после запуска API. |
 | Automatic SSG rebuild           | absent   | Durable desired/published revision state, single-flight deployment reconciliation, immutable atomic/blue-green release promotion, public-marker verification, and a provider adapter are not implemented. Yandex additionally needs a separate builder/upload component. See `docs/WEB_SURFACES.md`.                                                                                                                 |
 | Website cart handoff | included | Корзина `website` хранит только slug/SKU/quantity в версионном sessionStorage и открывает единый same-origin `/checkout`; цену и остаток повторно проверяет backend. |
-| Browser checkout / payments | included | Единый активный гостевой checkout без оплаты находится в `website`: двухшаговая форма собирает личные данные, затем адрес с подсказками Яндекса и отдельными полями дома/квартиры; далее идут согласие, промокод, серверный расчёт и WooCommerce order. Онлайн-платежи отсутствуют; ORDERS_ENABLED выключен до настройки магазина. |
+| Browser checkout / payments | available | Единый активный гостевой checkout находится в `website`: двухшаговая форма собирает данные, сервер считает итог, YooKassa возвращает hosted-ссылку и после возврата backend сверяет платёж. Локальный `YOO_KASSA_FULFILLMENT_MODE=disabled` не создаёт рабочий WooCommerce order; для production нужны миграция, HTTPS webhook и отдельная активация fulfillment. |
 | Push notifications              | absent   | No push code here. Expo Push comes from the mobile template line.                                                                                                                                                                                                                                                                                                                                                    |
 | Social sign-in (Apple / Google) | absent   | No social auth here. It comes from the mobile template line.                                                                                                                                                                                                                                                                                                                                                         |
 | Real-time / WebSockets          | absent   | Requires an explicit product need.                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -255,7 +255,24 @@ Verified by the agent during setup, not asked.
 для защиты от повторной отправки и очереди уведомлений email/Telegram.
 Настоящий магазин и документы ещё не подключены. Проверка адреса проверяет
 формат и обязательность, не существование дома в адресном справочнике.
+Checkout расширен до трёх шагов: личные данные, способ получения и адрес. На шаге способа
+получения доступны доставка СДЭК и самовывоз; адрес и график самовывоза пока являются макетными
+данными (Москва, ул. Лесная, 3; Пн–Пт, 09:00–18:00) и должны быть заменены перед публикацией.
 
 ### NIKASS storefront consolidation — 2026-09-11
 
-Astra-версия стала единым `website`: сохранены её главная и визуальный язык, а каталог переключён на build-time snapshot из WooCommerce. 24 строки CSV сопоставляются с 21 уникальной моделью; варианты, наличие, цены и связанные товары приходят из backend, а перед заказом авторитетен свежий WooCommerce review.
+Astra-версия стала единым `website`: сохранены её главная и визуальный язык, а каталог переключён на build-time snapshot из WooCommerce. 24 строки CSV сопоставляются с 21 уникальным товаром WooCommerce; в публичном каталоге совпадающие семейства отображаются как 9 карточек с вариантами мощности и ёмкости. Варианты, наличие, цены и связанные товары приходят из backend, а перед заказом авторитетен свежий WooCommerce review.
+
+### NIKASS full CSV catalog stage — 2026-09-20
+
+Публичная витрина переведена на 47 товарных строк текущего CSV вместо старой выборки. WooCommerce остаётся источником названий, цен, наличия и изображений; опубликованные старые и тестовые позиции, которых нет в CSV, не показываются. Серии SL-93, SL-69, SL-63, SL-31, инверторы, панели, AGM, LiFePO4 и Power Bank объединяются в 17 логических карточек с вариантами. Главная, связанные товары, бот-рекомендации и статья о даче используют новые внутренние карточки; характеристики по-прежнему приходят только из WooCommerce и могут быть дополнены позже.
+
+### NIKASS YooKassa test-payment stage — 2026-09-17
+
+В гостевом checkout добавлен разовый hosted-платёж через тестовый магазин YooKassa. Backend
+создаёт платёж только из сохранённого server-side quote, проверяет сумму/RUB/test-mode/metadata
+через API YooKassa после возврата и через webhook, а fulfillment идёт через durable outbox.
+Локальная конфигурация намеренно оставляет `YOO_KASSA_FULFILLMENT_MODE=disabled`: успешная
+тестовая оплата отображается на сайте, но реальный WooCommerce order не создаётся. Prisma migration
+и полный browser-pass требуют запущенного Docker PostgreSQL; внешний webhook дополнительно требует
+публичного HTTPS URL.

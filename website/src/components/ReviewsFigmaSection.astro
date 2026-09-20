@@ -1,0 +1,219 @@
+---
+import { reviews } from "../data/reviews";
+
+const reviewLinks = [
+  { label: "Более 10000 заказов", href: "#reviews-figma" },
+  { label: "10000 отзывов", href: "#reviews-figma" },
+  { label: "Все отзывы", href: "https://www.ozon.ru/brand/nikass-101253957/" },
+] as const;
+---
+
+<section class="reviews-figma" id="reviews-figma" aria-labelledby="reviews-figma-title">
+	<h2 id="reviews-figma-title">Отзывы клиентов</h2>
+	<nav class="reviews-figma-links" aria-label="Отзывы NIKASS">
+		{reviewLinks.map((link) => (
+			<a href={link.href} target={link.href.startsWith("http") ? "_blank" : undefined} rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}>
+				{link.label}
+			</a>
+		))}
+	</nav>
+	<div class="reviews-figma-track" data-reviews-figma-scroll>
+		{[...reviews, ...reviews].map((review) => (
+			<article class="reviews-figma-card">
+				<details name="reviews-figma">
+					<summary>
+						<span class="reviews-figma-rating"><strong>{review.rating}</strong></span>
+						<span class="reviews-figma-name">{review.name}</span>
+						<span class="reviews-figma-preview">{review.text}</span>
+						<span class="reviews-figma-action" aria-hidden="true"></span>
+					</summary>
+					<p class="reviews-figma-full">{review.text}</p>
+				</details>
+			</article>
+		))}
+	</div>
+</section>
+
+<script>
+	document.querySelectorAll<HTMLElement>("[data-reviews-figma-scroll]").forEach((scroller) => {
+		let pressed = false;
+		let dragging = false;
+		let touching = false;
+		let suppressClickUntil = 0;
+		let startX = 0;
+		let startLeft = 0;
+		let position = scroller.scrollLeft;
+		let previousFrame = performance.now();
+		let resumeTimer = 0;
+
+		const animate = (now: number) => {
+			const elapsed = Math.min(now - previousFrame, 50);
+			previousFrame = now;
+			if (dragging || touching || scroller.querySelector("details[open]")) {
+				position = scroller.scrollLeft;
+				requestAnimationFrame(animate);
+				return;
+			}
+			const halfway = scroller.scrollWidth / 2;
+			position = position >= halfway ? position - halfway : position + elapsed * 0.036;
+			scroller.scrollLeft = position;
+			requestAnimationFrame(animate);
+		};
+		requestAnimationFrame(animate);
+
+		const pauseTouch = () => {
+			touching = true;
+			window.clearTimeout(resumeTimer);
+		};
+		const resumeTouch = () => {
+			window.clearTimeout(resumeTimer);
+			resumeTimer = window.setTimeout(() => { touching = false; }, 1800);
+		};
+		scroller.addEventListener("touchstart", pauseTouch, { passive: true });
+		scroller.addEventListener("touchend", resumeTouch, { passive: true });
+		scroller.addEventListener("touchcancel", resumeTouch, { passive: true });
+
+		scroller.addEventListener("pointerdown", (event) => {
+			if (event.pointerType !== "mouse") return;
+			pressed = true;
+			startX = event.clientX;
+			startLeft = scroller.scrollLeft;
+		});
+
+		scroller.addEventListener("pointermove", (event) => {
+			if (event.pointerType !== "mouse" || !pressed) return;
+			const distance = event.clientX - startX;
+			if (!dragging && Math.abs(distance) < 6) return;
+			if (!dragging) {
+				dragging = true;
+				scroller.classList.add("dragging");
+				scroller.setPointerCapture(event.pointerId);
+			}
+			scroller.scrollLeft = startLeft - distance;
+		});
+
+		const stop = () => {
+			if (dragging) suppressClickUntil = performance.now() + 100;
+			pressed = false;
+			dragging = false;
+			scroller.classList.remove("dragging");
+		};
+
+		scroller.addEventListener("click", (event) => {
+			if (performance.now() >= suppressClickUntil) return;
+			event.preventDefault();
+			event.stopPropagation();
+		});
+		scroller.addEventListener("pointerup", stop);
+		scroller.addEventListener("pointercancel", stop);
+	});
+</script>
+
+<style>
+	.reviews-figma {
+		width: 100%;
+		overflow: hidden;
+		background: #f3f3f3;
+		color: #171916;
+		font-family: "Helvetica Neue", Arial, sans-serif;
+		padding: 28px 0 48px;
+	}
+
+	.reviews-figma h2 {
+		height: 36px;
+		margin: 0;
+		padding: 0 64px;
+		color: #333131;
+		font-size: 36px;
+		font-weight: 500;
+		line-height: 35.2px;
+		letter-spacing: -.64px;
+	}
+
+	.reviews-figma-links {
+		display: flex;
+		gap: 16px;
+		margin-top: 28px;
+		padding: 0 30px;
+	}
+
+	.reviews-figma-links a {
+		display: flex;
+		flex: 0 0 333px;
+		align-items: center;
+		justify-content: center;
+		height: 56px;
+		padding: 0 24px;
+		border: 1px solid #d5d5d2;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, .76);
+		color: #111;
+		font-size: 20px;
+		font-weight: 400;
+		line-height: 14px;
+		white-space: nowrap;
+		transition: border-color .15s ease, background-color .15s ease, transform .15s ease;
+	}
+
+	.reviews-figma-links a:hover { border-color: #111; background: #fff; transform: translateY(-1px); }
+	.reviews-figma-links a:active { transform: scale(.98); }
+
+	.reviews-figma-track {
+		display: flex;
+		align-items: flex-start;
+		gap: 16px;
+		margin-top: 34px;
+		overflow-x: auto;
+		overflow-y: hidden;
+		padding: 0 30px 8px;
+		scrollbar-width: none;
+		touch-action: auto;
+		user-select: none;
+		cursor: grab;
+	}
+
+	.reviews-figma-track::-webkit-scrollbar { display: none; }
+	.reviews-figma-track.dragging { cursor: grabbing; }
+
+	.reviews-figma-card {
+		flex: 0 0 333px;
+		min-height: 200.39px;
+		overflow: hidden;
+		border-radius: 16px;
+		background: rgba(255, 255, 255, .68);
+		cursor: pointer;
+		transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+	}
+
+	.reviews-figma-card details { min-height: 200.39px; }
+	.reviews-figma-card summary { min-height: 200.39px; padding: 18px 20px; list-style: none; }
+	.reviews-figma-card summary::-webkit-details-marker { display: none; }
+	.reviews-figma-card:hover { background: rgba(255, 255, 255, .82); box-shadow: 0 14px 32px rgba(38, 32, 27, .08); transform: scale(1.025); }
+
+	.reviews-figma-rating { display: flex; align-items: center; height: 20.5px; color: #888; font-size: 13px; font-weight: 500; letter-spacing: 1px; }
+	.reviews-figma-rating strong { color: #2e2b29; font-size: 16px; font-weight: 500; letter-spacing: normal; }
+	.reviews-figma-rating strong::before { margin-right: 8px; color: #888; content: "★★★★★"; font-size: 13px; letter-spacing: 1px; }
+	.reviews-figma-name { display: block; margin: 18px 0 8px; font-size: 22px; font-weight: 400; line-height: 27px; }
+	.reviews-figma-preview { display: -webkit-box; overflow: hidden; color: #47413d; font-size: 15px; line-height: 21.3px; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+	.reviews-figma-action { display: block; margin-top: 12px; color: #7a5f70; font-size: 13px; line-height: 16px; }
+	.reviews-figma-action::before { content: "Читать полностью ↓"; }
+	.reviews-figma-card details[open] .reviews-figma-preview { display: none; }
+	.reviews-figma-card details[open] .reviews-figma-action::before { content: "Свернуть ↑"; }
+	.reviews-figma-full { margin: 0; padding: 0 20px 18px; color: #47413d; font-size: 15px; line-height: 21.3px; }
+
+	@media (max-width: 900px) {
+		.reviews-figma h2 { padding-inline: 20px; font-size: 30px; }
+		.reviews-figma-links { overflow-x: auto; padding-inline: 20px; scrollbar-width: none; }
+		.reviews-figma-links::-webkit-scrollbar { display: none; }
+		.reviews-figma-links a { flex-basis: min(333px, calc(100vw - 40px)); }
+		.reviews-figma-track { gap: 12px; margin-top: 20px; padding-inline: 20px; }
+		.reviews-figma-card { flex-basis: min(333px, calc(100vw - 40px)); }
+	}
+
+	@media (max-width: 600px) {
+		.reviews-figma { padding: 24px 0 28px; }
+		.reviews-figma h2 { height: 31px; font-size: 26px; line-height: 30.8px; }
+		.reviews-figma-links { gap: 12px; margin-top: 20px; }
+		.reviews-figma-links a { height: 52px; font-size: 17px; }
+	}
+</style>

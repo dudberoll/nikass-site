@@ -41,5 +41,5 @@ test("maps the API response shape with uppercase kind arrays", () => {
     },
   };
 
-  assert.deepEqual(parseYandexAddress(suggestion), { city: "Москва", street: "Лесная улица", house: "3" });
+  assert.deepEqual(parseYandexAddress(suggestion), { region: "Москва", city: "Москва", street: "Лесная улица", house: "3" });
 });

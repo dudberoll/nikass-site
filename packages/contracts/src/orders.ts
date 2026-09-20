@@ -8,13 +8,14 @@ export const orderCustomerSchema = z.object({
     .transform((value) => value.replace(/[\s()-]/g, '').replace(/^8(?=\d{10}$)/, '+7'))
     .pipe(z.string().regex(/^\+7\d{10}$/, 'Введите российский телефон: +7 и 10 цифр')),
   email: z.string().trim().toLowerCase().email().max(254),
+  deliveryMethod: z.enum(['delivery', 'pickup']).optional(),
   region: text(2, 100),
   city: text(2, 100),
   street: text(2, 150),
   house: text(1, 30),
   apartment: text(0, 30),
-  postcode: z.string().trim().regex(/^\d{6}$/, 'Введите индекс из 6 цифр'),
-  comment: text(1, 1000),
+  postcode: z.string().trim().regex(/^(?:\d{6})?$/, 'Введите индекс из 6 цифр'),
+  comment: text(0, 1000),
   consent: z.literal(true, { error: 'Необходимо согласие с условиями покупки и обработкой данных' }),
 }).strict()
 
@@ -41,6 +42,18 @@ export const orderResultSchema = z.object({
   state: z.enum(['quoted', 'submitting', 'confirmed', 'uncertain', 'rejected']),
   orderNumber: z.string().min(1).nullable(),
 }).strict()
+export const paymentStartResponseSchema = z.object({
+  paymentId: z.string().uuid(),
+  confirmationUrl: z.string().url(),
+}).strict()
+export const paymentStatusRequestSchema = z.object({ paymentId: z.string().uuid() }).strict()
+export const paymentStatusResponseSchema = z.object({
+  paymentId: z.string().uuid(),
+  paymentState: z.enum(['not_started', 'pending', 'succeeded', 'canceled']),
+  fulfillmentState: z.enum(['not_started', 'queued', 'processing', 'confirmed', 'uncertain', 'skipped']),
+  orderNumber: z.string().min(1).nullable(),
+}).strict()
 export type OrderQuoteRequest = z.infer<typeof orderQuoteRequestSchema>
 export type OrderTotals = z.infer<typeof orderTotalsSchema>
 export type OrderResult = z.infer<typeof orderResultSchema>
+export type PaymentStatusResponse = z.infer<typeof paymentStatusResponseSchema>

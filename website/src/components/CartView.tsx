@@ -6,8 +6,10 @@ import { getCartCount, readCart, removeCartItem, saveCart, setCartItemQuantity, 
 
 function resolve(lines: CartLine[], products: Product[]) {
   return lines.flatMap((line) => {
-    const product = products.find((item) => item.slug === line.productSlug);
-    const variant = product?.variants.find((item) => item.sku === line.variantSku);
+    const product = products.find((item) => item.slug === line.productSlug
+      || item.variants.some((variant) => variant.sku === line.variantSku && (variant.sourceSlug ?? item.slug) === line.productSlug));
+    const variant = product?.variants.find((item) => item.sku === line.variantSku
+      && (product.slug === line.productSlug || (item.sourceSlug ?? product.slug) === line.productSlug));
     return product && variant ? [{ line, product, variant }] : [];
   });
 }

@@ -103,6 +103,8 @@
       "name": "@web-app-demo/website",
       "dependencies": {
         "@astrojs/react": "^6.0.2",
+        "@hugeicons/core-free-icons": "^4.2.3",
+        "@hugeicons/react": "^1.1.6",
         "@shadcn/react": "^0.2.1",
         "@web-app-demo/contracts": "workspace:*",
         "astro": "^7.2.8",

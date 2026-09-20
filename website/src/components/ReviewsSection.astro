@@ -1,146 +1,20 @@
 ---
-const reviews = [
-	{
-		name: "Михаил О.",
-		rating: "5.0",
-		text: "Инвертор 800 Вт: информативный экран, тихий вентилятор. Запускает холодильник, газовый котёл, освещение и телевизор.",
-	},
-	{
-		name: "Дима С.",
-		rating: "5.0",
-		text: "Инвертор 800 Вт — хороший аппарат с понятным дисплеем. При работе слышно лёгкое жужжание, вентиляторы включаются автоматически.",
-	},
-	{
-		name: "Марина Т.",
-		rating: "5.0",
-		text: "Инвертор 2300 Вт сначала проверили без нагрузки, а затем использовали с аккумулятором для насоса отопления во время отключения электричества. По отзывам, характеристикам соответствует.",
-	},
-	{
-		name: "Андрей М.",
-		rating: "5.0",
-		text: "Инвертор 1200 Вт пришёл вовремя, комплектация полная, болгарка на 900 Вт работает уверенно.",
-	},
-	{
-		name: "Сергей Д.",
-		rating: "5.0",
-		text: "Инвертор 1200 Вт работает, товар отличный. Покупатель благодарит продавца и советует модель.",
-	},
-	{
-		name: "Meow",
-		rating: "5.0",
-		text: "Солнечная панель 30 Вт в Подмосковье выдавала около 20–25 Вт на солнце и продолжала работать в пасмурную погоду. Панель пережила град, лёгкая, но люверсы небольшие.",
-	},
-	{
-		name: "Александр Ш.",
-		rating: "5.0",
-		text: "Солнечная панель 100 Вт исправна и заряжает портативную станцию даже в облачную погоду. Покупатель рекомендует комплект NIKASS.",
-	},
-	{
-		name: "Максим Б.",
-		rating: "5.0",
-		text: "Купил две панели по 50 Вт для станции 300 Вт. Во время отключений электричества они поддерживают интернет, ноутбук и телефон, поэтому станция всегда заряжена.",
-	},
-	{
-		name: "Альбина П.",
-		rating: "5.0",
-		text: "Солнечная панель 30 Вт на ярком летнем солнце выдаёт почти заявленную мощность и соответствует описанию.",
-	},
-	{
-		name: "Александр К.",
-		rating: "5.0",
-		text: "Солнечная панель 100 Вт проверена в беседке: работает и приносит пользу. Покупатель рекомендует.",
-	},
-	{
-		name: "Имя скрыто",
-		rating: "5.0",
-		text: "Внешний аккумулятор 60 000 мАч хорошо заряжает устройства, поддерживает быструю зарядку и имеет яркий фонарик с тремя режимами. Встроенные кабели имеют ограничения по быстрой зарядке.",
-	},
-	{
-		name: "Наталья Ш.",
-		rating: "5.0",
-		text: "Внешний аккумулятор 50 000 мАч хорошо упакован, разъёмы работают, удобно наличие встроенных проводов для разных устройств. Покупатель отдельно отмечает отсутствие инструкции и гарантийного талона.",
-	},
-	{
-		name: "Магомедрасул Х.",
-		rating: "5.0",
-		text: "Внешний аккумулятор 60 000 мАч получил удобную ручку и не слишком большой корпус. Смартфон на 5000 мАч заряжает примерно десять раз, полная зарядка занимает около 12 часов.",
-	},
-	{
-		name: "Александр К.",
-		rating: "5.0",
-		text: "Внешний аккумулятор 20 000 мАч полностью оправдал ожидания. Покупатель называет аппарат отличным и рекомендует продавца.",
-	},
-	{
-		name: "Александр",
-		rating: "5.0",
-		text: "Внешний аккумулятор 50 000 мАч покупатель называет отличным и очень ёмким пауэрбанком.",
-	},
-	{
-		name: "Юрий Ч.",
-		rating: "5.0",
-		text: "Внешний аккумулятор 20 000 мАч пришёл заряженным примерно на 70%. Есть встроенные провода, корпус тяжёлый, но покупатель надеется на долгий срок службы.",
-	},
-	{
-		name: "Ирина Б.",
-		rating: "5.0",
-		text: "Зарядная станция 300 Вт пришла вовремя и без повреждений, соответствует характеристикам, заряжается от солнечной панели. Автомобильный холодильник на 35 литров работает около пяти часов.",
-	},
-	{
-		name: "Татьяна Н.",
-		rating: "5.0",
-		text: "Зарядная станция 300 Вт используется для аккумуляторов, пилы, телефона, наушников и четырёх ламп. Полная зарядка занимает около семи часов.",
-	},
-	{
-		name: "Наталия К.",
-		rating: "5.0",
-		text: "Зарядная станция 300 Вт питала автомобильный холодильник на 45 литров около 29 часов.",
-	},
-	{
-		name: "Galina K.",
-		rating: "5.0",
-		text: "Зарядная станция 300 Вт работает, проста в управлении, в комплекте есть яркие фонарики. Покупатель доволен.",
-	},
-	{
-		name: "Алексей А.",
-		rating: "5.0",
-		text: "Зарядная станция 300 Вт после нескольких выездов на природу не потребовала повторной зарядки. Покупатель отмечает компактность, удобство и тихую работу.",
-	},
-];
+import { reviews } from "../data/reviews";
 ---
 
 <section class="reviews-standalone" id="reviews" aria-label="Отзывы клиентов">
-	<h2>Отзывы клиентов</h2>
-	<div class="reviews-trust" aria-label="Отзывы NIKASS на Ozon">
-		<div class="reviews-trust__award">
-			<svg class="reviews-trust__award-mark" viewBox="0 0 72 72" aria-hidden="true">
-				<g class="award-laurels">
-					<path d="M17.7 54.8C11 54.2 6.7 50.5 5 44.7c6.5.3 10.9 3.7 12.7 10.1Z" />
-					<path d="M15.1 45.4C9.4 43.8 6 39.9 5.2 34.4c5.8 1.3 9.2 5 9.9 11Z" />
-					<path d="M16.4 35.9c-4.2-3.2-5.7-7.5-4.4-12.6 4.4 3 5.9 7.1 4.4 12.6Z" />
-					<path d="M24.1 27.3c-2.6-4.9-1.9-9.2 1.9-12.8 2.7 4.7 2.1 9-1.9 12.8Z" />
-					<path d="M54.3 54.8C61 54.2 65.3 50.5 67 44.7c-6.5.3-10.9 3.7-12.7 10.1Z" />
-					<path d="M56.9 45.4c5.7-1.6 9.1-5.5 9.9-11-5.8 1.3-9.2 5-9.9 11Z" />
-					<path d="M55.6 35.9c4.2-3.2 5.7-7.5 4.4-12.6-4.4 3-5.9 7.1-4.4 12.6Z" />
-					<path d="M47.9 27.3c2.6-4.9 1.9-9.2-1.9-12.8-2.7 4.7-2.1 9 1.9 12.8Z" />
-				</g>
-				<path class="award-pin" d="M36 16c-11 0-19 8.6-19 19.2C17 49.7 36 62 36 62s19-12.3 19-26.8C55 24.6 47 16 36 16Zm0 27.5a8.3 8.3 0 1 1 0-16.6 8.3 8.3 0 0 1 0 16.6Z" />
-			</svg>
-			<span><strong>Отзывы NIKASS</strong><small>Покупатели на Ozon</small></span>
+	<div class="reviews-intro">
+		<div class="reviews-copy">
+			<h2>Нас выбирают.<br />Нас рекомендуют.</h2>
+			<p class="reviews-description">Тысячи клиентов делятся своими впечатлениями о наших решениях. Мы ценим каждое мнение — оно помогает нам становиться лучше.</p>
 		</div>
-		<div class="reviews-trust__rating">
-			<strong>Ozon</strong>
-			<span aria-label="Положительные отзывы покупателей">★★★★★</span>
-		</div>
-		<div class="reviews-trust__count"><strong>20</strong><span>в подборке</span></div>
-		<a
-			class="reviews-trust__link"
-			href="https://www.ozon.ru/brand/nikass-101253957/"
-			target="_blank"
-			rel="noopener noreferrer"
-		>
-			<span>Все отзывы на Ozon</span>
-			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7M4 12h12" /></svg>
-		</a>
+		<aside class="reviews-summary" aria-label="Средняя оценка отзывов">
+			<div class="reviews-score">
+				<span class="reviews-score-value"><strong>4,8</strong><span>/ 5</span></span>
+				<span class="reviews-summary-count">7 779 отзывов</span>
+			</div>
+			<span class="reviews-summary-stars" aria-label="5 из 5 звёзд">★★★★★</span>
+		</aside>
 	</div>
 	<div class="reviews-marquee" data-reviews-scroll>
 		{[...reviews, ...reviews].map((review) => (
@@ -256,120 +130,64 @@ const reviews = [
 		letter-spacing: -.02em;
 	}
 
-	.reviews-trust {
+	.reviews-intro {
 		display: grid;
-		grid-template-columns: minmax(310px, 1.65fr) auto auto minmax(310px, 1.2fr);
-		gap: 16px;
-		width: min(100% - 60px, 2000px);
-		margin: 28px auto 0;
+		grid-template-columns: minmax(0, 1.45fr) minmax(320px, .75fr);
+		align-items: start;
+		gap: 48px;
+		width: min(calc(100% - 40px), 1400px);
+		margin: 0 auto;
 	}
 
-	.reviews-trust > * {
-		box-sizing: border-box;
-		min-height: 92px;
-		border: 1px solid rgba(255, 255, 255, 0.7);
-		border-radius: 18px;
-		background: rgba(255, 255, 255, 0.68);
-		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
-	}
-
-	.reviews-trust__award,
-	.reviews-trust__rating,
-	.reviews-trust__count,
-	.reviews-trust__link {
-		display: flex;
-		align-items: center;
-	}
-
-	.reviews-trust__award {
-		gap: 14px;
-		padding: 15px 20px;
-	}
-
-	.reviews-trust__award-mark {
-		stroke: none;
-		width: 54px;
-		height: 54px;
-		flex: 0 0 auto;
-	}
-
-	.award-laurels { fill: #ffb000; }
-	.award-pin { fill: #ff5b2e; }
-
-	.reviews-trust__award span {
-		display: grid;
-		gap: 5px;
-	}
-
-	.reviews-trust__award strong {
-		color: #3285ee;
-		font-size: 18px;
+	.reviews-copy { max-width: 680px; }
+	.reviews-intro h2 {
+		margin: 0;
+		padding: 0;
+		color: #192330;
+		font-size: clamp(36px, 4.2vw, 54px);
 		font-weight: 500;
+		line-height: .99;
+		letter-spacing: -.045em;
+	}
+	.reviews-description {
+		max-width: 620px;
+		margin: 24px 0 0;
+		color: #718092;
+		font-size: 20px;
+		line-height: 1.4;
 	}
 
-	.reviews-trust__award small {
-		color: #77716d;
-		font-size: 13px;
+	.reviews-summary {
+		justify-self: end;
+		box-sizing: border-box;
+		width: min(100%, 405px);
+		min-height: 0;
+		padding: 24px 30px;
+		border: 1px solid #e0e5ed;
+		border-radius: 16px;
+		background: rgba(255, 255, 255, .82);
+		box-shadow: 0 8px 26px rgba(31, 51, 75, .04);
 	}
-
-	.reviews-trust__rating {
-		gap: 13px;
-		padding: 0 24px;
+	.reviews-score { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+	.reviews-score-value { display: flex; align-items: baseline; gap: 16px; flex: 0 0 auto; }
+	.reviews-score strong {
+		color: #17222e;
+		font-size: 76px;
+		font-weight: 500;
+		letter-spacing: -.05em;
+		line-height: 1;
+	}
+	.reviews-score-value > span { color: #7f8c9b; font-size: 45px; line-height: 1; }
+	.reviews-summary-stars {
+		display: block;
+		margin-top: 12px;
+		color: #f8bd3f;
+		font-size: 35px;
+		letter-spacing: 2px;
+		line-height: 1;
 		white-space: nowrap;
 	}
-
-	.reviews-trust__rating strong,
-	.reviews-trust__count strong {
-		color: #282522;
-		font-size: 26px;
-		font-weight: 400;
-	}
-
-	.reviews-trust__rating span {
-		color: #888;
-		font-size: 21px;
-		letter-spacing: 1px;
-	}
-
-	.reviews-trust__count {
-		gap: 6px;
-		justify-content: center;
-		padding: 0 24px;
-		white-space: nowrap;
-	}
-
-	.reviews-trust__count span {
-		color: #514b47;
-		font-size: 18px;
-	}
-
-	.reviews-trust__link {
-		justify-content: space-between;
-		gap: 20px;
-		padding: 0 28px;
-		background: rgba(255, 255, 255, 0.68);
-		color: #302b2e;
-		text-decoration: none;
-		font-size: 17px;
-		transition: box-shadow 180ms ease, transform 140ms ease;
-	}
-
-	.reviews-trust__link:hover {
-		box-shadow: 0 14px 32px rgba(82, 53, 69, 0.12);
-		transform: translateY(-2px);
-	}
-
-	.reviews-trust__link:active { transform: scale(0.98); }
-
-	.reviews-trust__link svg {
-		width: 24px;
-		height: 24px;
-		fill: none;
-		stroke: currentColor;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-		stroke-width: 1.6;
-	}
+	.reviews-summary-count { color: #8492a0; font-size: 20px; white-space: nowrap; }
 
 	.reviews-marquee {
 		display: flex;
@@ -441,41 +259,13 @@ const reviews = [
 	.review-full { margin: 0; padding: 0 20px 18px; color: #47413d; font-size: 15px; line-height: 1.42; }
 
 	@media (max-width: 900px) {
-		.reviews-trust {
-			grid-template-columns: 1fr 1fr;
-			width: min(100% - 32px, 1198px);
-		}
-		.reviews-trust__award,
-		.reviews-trust__link { grid-column: 1 / -1; }
 		.reviews-marquee { padding: 0 16px 8px; }
 		.review-card { flex-basis: min(78vw, 320px); }
-	}
-
-	@media (max-width: 520px) {
-		.reviews-trust { gap: 10px; }
-		.reviews-trust > * { min-height: 78px; border-radius: 15px; }
-		.reviews-trust__award { padding: 12px 15px; }
-		.reviews-trust__award-mark { width: 46px; height: 46px; }
-		.reviews-trust__award strong { font-size: 16px; }
-		.reviews-trust__award small { font-size: 12px; }
-		.reviews-trust__rating,
-		.reviews-trust__count { padding: 0 14px; }
-		.reviews-trust__rating { gap: 8px; }
-		.reviews-trust__rating strong,
-		.reviews-trust__count strong { font-size: 22px; }
-		.reviews-trust__rating span { font-size: 14px; letter-spacing: 0; }
-		.reviews-trust__count span { font-size: 15px; }
-		.reviews-trust__link { min-height: 82px; padding: 0 20px; font-size: 16px; }
 	}
 
 	@media (max-width: 767px) {
 		.reviews-standalone {
 			padding: 24px 0 28px;
-		}
-
-		.reviews-standalone h2 {
-			padding-inline: 20px;
-			font-size: 28px;
 		}
 
 		.reviews-marquee {
@@ -488,5 +278,28 @@ const reviews = [
 			flex-basis: min(82vw, 320px);
 			scroll-snap-align: start;
 		}
+	}
+
+	@media (max-width: 900px) {
+		.reviews-intro {
+			grid-template-columns: 1fr;
+			gap: 24px;
+		}
+		.reviews-intro h2 { padding-inline: 0; }
+		.reviews-summary {
+			justify-self: stretch;
+			width: auto;
+		}
+	}
+
+	@media (max-width: 520px) {
+		.reviews-intro { width: min(calc(100% - 32px), 1400px); }
+		.reviews-intro h2 { font-size: 34px; }
+		.reviews-description { margin-top: 18px; font-size: 17px; }
+		.reviews-summary { min-height: 0; padding: 20px 22px; }
+		.reviews-score strong { font-size: 60px; }
+		.reviews-score-value > span { font-size: 34px; }
+		.reviews-summary-stars { margin-top: 10px; font-size: 29px; }
+		.reviews-summary-count { font-size: 17px; }
 	}
 </style>

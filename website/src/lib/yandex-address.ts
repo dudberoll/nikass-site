@@ -25,9 +25,10 @@ export function parseYandexAddress(result: YandexSuggestResult): DeliveryAddress
     const componentKinds = Array.isArray(component.kind) ? component.kind : [component.kind];
     return componentKinds.some((kind) => kinds.includes(kind?.toLowerCase() ?? "")) && component.name?.trim();
   })?.name?.trim();
+  const city = value("locality");
   return Object.fromEntries([
-    ["region", value("region", "province")],
-    ["city", value("locality")],
+    ["region", value("region", "province", "area") ?? city],
+    ["city", city],
     ["street", value("street")],
     ["house", value("house")],
   ].filter(([, item]) => item)) as DeliveryAddressFields;

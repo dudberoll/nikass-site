@@ -50,6 +50,13 @@ const envSchema = z.object({
     ),
   WEBAPP_ORIGIN: optionalUrlSchema,
   ORDERS_ENABLED: booleanStringSchema,
+  YOO_KASSA_ENABLED: booleanStringSchema,
+  YOO_KASSA_TEST_MODE: booleanStringSchema,
+  YOO_KASSA_SHOP_ID: optionalStringSchema,
+  YOO_KASSA_SECRET_KEY: optionalStringSchema,
+  YOO_KASSA_API_URL: stringWithDefault('https://api.yookassa.ru'),
+  YOO_KASSA_RETURN_URL: optionalUrlSchema,
+  YOO_KASSA_FULFILLMENT_MODE: z.enum(['disabled', 'woocommerce']).default('disabled'),
   WOOCOMMERCE_STORE_ENDPOINT: optionalUrlSchema,
   ORDER_MANAGER_EMAIL: z.preprocess((v) => v === '' ? undefined : v, z.string().email().optional()),
   ORDER_TELEGRAM_BOT_TOKEN: optionalStringSchema,
@@ -135,6 +142,7 @@ const envSchema = z.object({
   validateCatalogEnv(env, ctx)
   validateAiEnv(env, ctx)
   validateOrdersEnv(env, ctx)
+  validateYooKassaEnv(env, ctx)
 })
 
 export type AppEnv = z.infer<typeof envSchema>
@@ -661,5 +669,45 @@ function validateOrdersEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx)
   if (env.WOOCOMMERCE_STORE_ENDPOINT) {
     const url = new URL(env.WOOCOMMERCE_STORE_ENDPOINT)
     if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) ctx.addIssue({ code: 'custom', path: ['WOOCOMMERCE_STORE_ENDPOINT'], message: 'Store API requires HTTPS without credentials, query or fragment' })
+  }
+}
+
+function validateYooKassaEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx) {
+  if (!env.YOO_KASSA_ENABLED) {
+    for (const key of ['YOO_KASSA_SHOP_ID', 'YOO_KASSA_SECRET_KEY', 'YOO_KASSA_RETURN_URL'] as const) {
+      if (env[key] !== undefined) ctx.addIssue({ code: 'custom', path: [key], message: `${key} is set but YOO_KASSA_ENABLED=false, so it would be ignored` })
+    }
+    if (env.YOO_KASSA_FULFILLMENT_MODE !== 'disabled') ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_FULFILLMENT_MODE'], message: 'YOO_KASSA_FULFILLMENT_MODE requires YOO_KASSA_ENABLED=true' })
+    return
+  }
+
+  for (const key of ['YOO_KASSA_SHOP_ID', 'YOO_KASSA_SECRET_KEY', 'YOO_KASSA_RETURN_URL'] as const) {
+    if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: `${key} is required when YOO_KASSA_ENABLED=true` })
+  }
+  if (env.YOO_KASSA_SHOP_ID && !/^\d+$/.test(env.YOO_KASSA_SHOP_ID)) {
+    ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_SHOP_ID'], message: 'YOO_KASSA_SHOP_ID must contain digits only' })
+  }
+  try {
+    const url = new URL(env.YOO_KASSA_API_URL)
+    if (!['http:', 'https:'].includes(url.protocol) || url.pathname !== '/' || url.search || url.hash || (env.NODE_ENV === 'production' && url.protocol !== 'https:')) {
+      ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_API_URL'], message: 'YOO_KASSA_API_URL must be an origin URL' })
+    }
+  } catch {
+    ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_API_URL'], message: 'YOO_KASSA_API_URL must be a valid URL' })
+  }
+  if (env.YOO_KASSA_RETURN_URL) {
+    const url = new URL(env.YOO_KASSA_RETURN_URL)
+    if (!['http:', 'https:'].includes(url.protocol) || (env.NODE_ENV === 'production' && url.protocol !== 'https:')) {
+      ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_RETURN_URL'], message: 'YOO_KASSA_RETURN_URL must use HTTP locally and HTTPS in production' })
+    }
+  }
+  if (env.NODE_ENV === 'production' && env.YOO_KASSA_TEST_MODE) {
+    ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_TEST_MODE'], message: 'YOO_KASSA_TEST_MODE must be false in production' })
+  }
+  if (env.NODE_ENV === 'production' && env.YOO_KASSA_FULFILLMENT_MODE !== 'woocommerce') {
+    ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_FULFILLMENT_MODE'], message: 'YOO_KASSA_FULFILLMENT_MODE must be woocommerce in production' })
+  }
+  if (env.YOO_KASSA_FULFILLMENT_MODE === 'woocommerce' && !env.ORDERS_ENABLED) {
+    ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_FULFILLMENT_MODE'], message: 'YOO_KASSA_FULFILLMENT_MODE=woocommerce requires ORDERS_ENABLED=true' })
   }
 }
