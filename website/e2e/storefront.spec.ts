@@ -212,3 +212,17 @@ test("consultation CTA opens the chat widget", async ({ page }) => {
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(trigger).toBeFocused();
 });
+
+test("empty mobile chat keeps the composer above the shortened viewport", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "mobile viewport regression");
+  await page.goto("/");
+  await page.getByRole("button", { name: "Открыть чат" }).click();
+  await page.getByRole("button", { name: "Open prompt input" }).click({ force: true });
+  await expect(page.getByRole("textbox", { name: "Prompt" })).toBeFocused();
+  await page.setViewportSize({ width: 390, height: 360 });
+  expect(await page.locator(".ai-assistant-card-composer").evaluate((composer) => {
+    const composerBox = composer.getBoundingClientRect();
+    const panelBox = composer.closest(".ai-assistant-card")?.getBoundingClientRect();
+    return panelBox ? composerBox.bottom <= panelBox.bottom + 1 : false;
+  })).toBe(true);
+});

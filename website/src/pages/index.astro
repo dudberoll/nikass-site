@@ -299,6 +299,11 @@ const heroPosition = (index: number) => {
       window.addEventListener("resize", syncChatViewport);
       window.visualViewport?.addEventListener("resize", syncChatViewport);
       window.visualViewport?.addEventListener("scroll", syncChatViewport);
+      document.addEventListener("focusin", (event) => {
+        if (!(event.target instanceof HTMLTextAreaElement) || !chatWidget || chatWidget.classList.contains("is-minimized")) return;
+        syncChatViewport();
+        window.setTimeout(syncChatViewport, 250);
+      });
       syncChatViewport();
       const trapChatFocus = (event, container) => {
         const focusable = [...container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled])')].filter((element) => element.offsetParent !== null);
