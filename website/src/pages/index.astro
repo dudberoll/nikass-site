@@ -46,7 +46,7 @@ const heroPosition = (index: number) => {
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="NIKASS — автономная энергия для дома, дороги и работы." />
     <link rel="icon" href="/favicon.ico" />
     <title>NIKASS | Автономная энергия</title>
@@ -234,7 +234,26 @@ const heroPosition = (index: number) => {
       const chatMinimize = chatWidget?.querySelector("[data-chat-minimize]");
       const chatRestore = chatWidget?.querySelector("[data-chat-restore]");
       const chatOpenButtons = [...document.querySelectorAll("[data-chat-open]")];
+      const chatMobileMedia = matchMedia("(max-width: 767px)");
+      let chatViewportFrame;
       let lastChatTrigger;
+
+      const syncChatViewport = () => {
+        if (!chatWidget || chatWidget.hidden || chatWidget.classList.contains("is-minimized") || !chatMobileMedia.matches) {
+          chatWidget?.style.removeProperty("--chat-visual-height");
+          chatWidget?.style.removeProperty("--chat-visual-top");
+          return;
+        }
+        if (chatViewportFrame !== undefined) cancelAnimationFrame(chatViewportFrame);
+        chatViewportFrame = requestAnimationFrame(() => {
+          const viewport = window.visualViewport;
+          const height = viewport?.height ?? window.innerHeight;
+          const offsetTop = Math.max(0, viewport?.offsetTop ?? 0);
+          chatWidget.style.setProperty("--chat-visual-height", `${Math.max(1, height)}px`);
+          chatWidget.style.setProperty("--chat-visual-top", `${offsetTop}px`);
+          chatViewportFrame = undefined;
+        });
+      };
 
       const setChatOpen = (open) => {
         if (!chatWidget) return;
@@ -245,6 +264,7 @@ const heroPosition = (index: number) => {
         page.inert = open;
         chatOpenButtons.forEach((button) => button.setAttribute("aria-expanded", String(open)));
         syncChatOverflow();
+        syncChatViewport();
         if (open) {
           lastChatTrigger = document.activeElement;
           requestAnimationFrame(() => chatClose?.focus());
@@ -260,6 +280,7 @@ const heroPosition = (index: number) => {
         if (chatRestore) chatRestore.hidden = !minimized;
         page.inert = !minimized;
         syncChatOverflow();
+        syncChatViewport();
         requestAnimationFrame(() => (minimized ? chatRestore : chatMinimize)?.focus());
       };
       chatOpenButtons.forEach((button) => button.addEventListener("click", () => setChatOpen(true)));
@@ -274,6 +295,11 @@ const heroPosition = (index: number) => {
         const chatIsModal = Boolean(chatWidget && !chatWidget.hidden && !chatWidget.classList.contains("is-minimized"));
         document.body.style.overflow = chatIsModal ? "hidden" : "";
       };
+      chatMobileMedia.addEventListener("change", syncChatViewport);
+      window.addEventListener("resize", syncChatViewport);
+      window.visualViewport?.addEventListener("resize", syncChatViewport);
+      window.visualViewport?.addEventListener("scroll", syncChatViewport);
+      syncChatViewport();
       const trapChatFocus = (event, container) => {
         const focusable = [...container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled])')].filter((element) => element.offsetParent !== null);
         const first = focusable[0];

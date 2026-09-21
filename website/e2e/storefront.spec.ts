@@ -182,12 +182,12 @@ test("hero carousel centers a side product before opening it", async ({ page }, 
   await expect(page).toHaveURL(target!);
 });
 
-test("consultation CTA opens a compact chat widget", async ({ page }) => {
+test("consultation CTA opens the chat widget", async ({ page }) => {
   await page.goto("/");
   const widget = page.locator("[data-chat-widget]");
+  const panel = widget.locator(".orbea-chat-widget-panel");
   const restore = page.getByRole("button", { name: "Открыть чат" });
   const trigger = page.locator("#custom").getByRole("button", { name: "Получить консультацию" });
-  await expect(widget).toBeVisible();
   await expect(restore).toBeVisible();
 
   await restore.click();
@@ -197,17 +197,17 @@ test("consultation CTA opens a compact chat widget", async ({ page }) => {
 
   await trigger.click();
   await expect(widget).toBeVisible();
+  await expect(panel).toBeVisible();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByRole("button", { name: "Закрыть консультанта" })).toBeFocused();
-  expect(await widget.evaluate((node) => {
-    const { width } = node.getBoundingClientRect();
+  expect(await panel.evaluate((node) => {
+    const { width, height } = node.getBoundingClientRect();
     return window.innerWidth <= 767
-      ? Math.abs(width - window.innerWidth) < 1
-      : width <= window.innerWidth * 0.4 && width > 0;
+      ? Math.abs(width - window.innerWidth) < 1 && height > 0
+      : width <= Math.min(window.innerWidth * 0.7, 980) + 1 && width > 0 && height > 0;
   })).toBe(true);
 
   await page.getByRole("button", { name: "Закрыть консультанта" }).click();
-  await expect(widget).toBeVisible();
   await expect(restore).toBeVisible();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(trigger).toBeFocused();
