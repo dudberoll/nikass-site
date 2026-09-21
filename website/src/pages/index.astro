@@ -66,6 +66,7 @@ const heroPosition = (index: number) => {
             </div>
           </div>
           <div class="orbea-hero-products" role="region" aria-roledescription="карусель" aria-label="Категории товаров" data-hero-carousel>
+            <p class="orbea-hero-current-category" data-hero-current-category>{heroCategories[heroInitialIndex].title}</p>
             <button class="orbea-hero-arrow orbea-hero-arrow-previous" type="button" aria-label="Предыдущая категория" aria-controls="hero-products-viewport" data-hero-previous>
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
             </button>
@@ -102,7 +103,11 @@ const heroPosition = (index: number) => {
             </div>
             <a class="orbea-button orbea-button-dark" href="/catalog">Смотреть весь каталог</a>
           </div>
-          <div class="orbea-bestsellers-grid">
+          <div class="orbea-bestsellers-carousel" data-bestsellers-carousel>
+            <button class="orbea-hero-arrow orbea-bestsellers-arrow orbea-bestsellers-arrow-previous" type="button" aria-label="Предыдущие хиты продаж" data-bestsellers-previous>
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <div class="orbea-bestsellers-grid" data-bestsellers-viewport>
             {bestSellers.map((product) => (
               <a class="orbea-bestseller-card" href={`/catalog/${product.slug}`}>
                 <div class="orbea-bestseller-image"><img src={product.image} alt={product.name} loading="lazy" /></div>
@@ -113,6 +118,10 @@ const heroPosition = (index: number) => {
                 </div>
               </a>
             ))}
+            </div>
+            <button class="orbea-hero-arrow orbea-bestsellers-arrow orbea-bestsellers-arrow-next" type="button" aria-label="Следующие хиты продаж" data-bestsellers-next>
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
+            </button>
           </div>
         </section>
 
@@ -283,6 +292,7 @@ const heroPosition = (index: number) => {
         const heroItems = [...heroCarousel.querySelectorAll("[data-hero-product]")];
         const heroViewport = heroCarousel.querySelector("[data-hero-viewport]");
         const heroStatus = heroCarousel.querySelector("[data-hero-status]");
+        const heroCurrentCategory = heroCarousel.querySelector("[data-hero-current-category]");
         let heroIndex = heroItems.findIndex((item) => item.dataset.heroPosition === "0");
         let heroPointerStart;
         let suppressHeroClick = false;
@@ -321,6 +331,7 @@ const heroPosition = (index: number) => {
             item.tabIndex = visible ? 0 : -1;
           });
           heroStatus.textContent = `${heroItems[heroIndex].dataset.productName}, ${heroIndex + 1} из ${heroItems.length}`;
+          if (heroCurrentCategory) heroCurrentCategory.textContent = heroItems[heroIndex].dataset.productName;
         };
 
         const finishHeroAutoAdvance = (event) => {
@@ -362,6 +373,13 @@ const heroPosition = (index: number) => {
           scheduleHeroAutoAdvance(2000);
           addEventListener("pagehide", cancelHeroAutoAdvance, { once: true });
         }
+      }
+
+      const bestsellersViewport = document.querySelector("[data-bestsellers-viewport]");
+      if (bestsellersViewport) {
+        const scrollBestsellers = (direction) => bestsellersViewport.scrollBy({ left: direction * bestsellersViewport.clientWidth * 0.72, behavior: "smooth" });
+        document.querySelector("[data-bestsellers-previous]")?.addEventListener("click", () => scrollBestsellers(-1));
+        document.querySelector("[data-bestsellers-next]")?.addEventListener("click", () => scrollBestsellers(1));
       }
 
     </script>
