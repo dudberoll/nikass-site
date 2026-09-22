@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { AVAILABILITY_LABELS, formatPrice, getSelectedVariant, isVariantAddable, type Product } from "../data/catalog";
+import { AVAILABILITY_LABELS, displayProductSku, formatPrice, getSelectedVariant, isVariantAddable, type Product } from "../data/catalog";
 import { addCartItem, readCart, saveCart } from "../lib/cart";
 
 const MAX_QUANTITY = 99;
@@ -24,9 +24,9 @@ export default function ProductVariantSelector({ product }: { product: Product }
 
   return <section className="product-variant-selector" aria-labelledby="variant-title">
     <h2 id="variant-title">Вариант</h2>
-    {product.variants.length > 1 && <div className="product-variant-options">{product.variants.map((item) => <button type="button" className={item.sku === variant.sku ? "is-selected" : ""} aria-pressed={item.sku === variant.sku} onClick={() => { setSku(item.sku); setQuantity(1); setMessage(""); }} key={item.sku}><span>{item.label}</span><small>{item.sku}</small><strong>{formatPrice(item.price)}</strong></button>)}</div>}
+    {product.variants.length > 1 && <div className="product-variant-options">{product.variants.map((item) => <button type="button" className={item.sku === variant.sku ? "is-selected" : ""} aria-pressed={item.sku === variant.sku} onClick={() => { setSku(item.sku); setQuantity(1); setMessage(""); }} key={item.sku}><span>{item.label}</span><small>{displayProductSku(product, item.sku)}</small><strong>{formatPrice(item.price)}</strong></button>)}</div>}
     <div className="product-variant-summary">
-      <span>{variant.label} · SKU {variant.sku}</span>
+      <span>{variant.label} · SKU {displayProductSku(product, variant.sku)}</span>
       <strong>{formatPrice(variant.price)}</strong>
       {variant.oldPrice && <del>{formatPrice(variant.oldPrice)}</del>}
       <span className={`product-availability is-${variant.availability}`}>{AVAILABILITY_LABELS[variant.availability]}</span>

@@ -20,6 +20,16 @@ export type Availability = "in-stock" | "preorder" | "unavailable";
 
 export const ALL_PRODUCTS_LABEL = "Все товары";
 
+const PORTABLE_STATION_CATEGORY = "Портативные зарядные станции";
+
+export function normalizeStationText(value: string) {
+  return value.replace(/\bSL(?=\s*[-]?\d)/gi, "NS");
+}
+
+export function displayProductSku(product: Product, sku = product.sku) {
+  return product.category === PORTABLE_STATION_CATEGORY ? normalizeStationText(sku) : sku;
+}
+
 export type ProductVariant = {
   sku: string;
   label: string;
@@ -154,8 +164,8 @@ const catalogModelGroups = [
     ],
   },
   {
-    name: "Портативная зарядная станция SL-93",
-    description: "Портативная зарядная станция SL-93 с выбором мощности и ёмкости.",
+    name: "Портативная зарядная станция NS-93",
+    description: "Портативная зарядная станция NS-93 с выбором мощности и ёмкости.",
     canonicalSlug: "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh",
     memberSlugs: [
       "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh",
@@ -164,8 +174,8 @@ const catalogModelGroups = [
     ],
   },
   {
-    name: "Портативная зарядная станция SL-69",
-    description: "Портативная зарядная станция SL-69 с выбором мощности и ёмкости.",
+    name: "Портативная зарядная станция NS-69",
+    description: "Портативная зарядная станция NS-69 с выбором мощности и ёмкости.",
     canonicalSlug: "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah",
     memberSlugs: [
       "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah",
@@ -174,8 +184,8 @@ const catalogModelGroups = [
     ],
   },
   {
-    name: "Портативная зарядная станция SL-63",
-    description: "Портативная зарядная станция SL-63 с выбором мощности.",
+    name: "Портативная зарядная станция NS-63",
+    description: "Портативная зарядная станция NS-63 с выбором мощности.",
     canonicalSlug: "portativnaya-elektrostantsiya-168000-mah-600w",
     memberSlugs: [
       "portativnaya-elektrostantsiya-168000-mah-600w",
@@ -183,8 +193,8 @@ const catalogModelGroups = [
     ],
   },
   {
-    name: "Портативная зарядная станция SL-31",
-    description: "Портативная зарядная станция SL-31 с выбором мощности и ёмкости.",
+    name: "Портативная зарядная станция NS-31",
+    description: "Портативная зарядная станция NS-31 с выбором мощности и ёмкости.",
     canonicalSlug: "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2",
     memberSlugs: [
       "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2",
@@ -278,7 +288,7 @@ const catalogModelGroups = [
   },
 ] satisfies readonly CatalogModelGroup[];
 
-const sl69Description = "Портативная зарядная станция SL-69 на LiFePO4-аккумуляторе с тремя конфигурациями: L1 — 150 Вт, L2 — 300 Вт и L4 — 500 Вт. Станция оснащена выходами AC 220 В, DC 12 В, USB-A и USB-C, позволяет подключать до 10 устройств и поддерживает сквозное питание. Она подходит для кемпинга, дачи, дома, поездок и мест без доступа к сети. Заряжать станцию можно от сети через адаптер или от солнечной панели мощностью до 200 Вт. Заявленный ресурс аккумулятора — 3500+ циклов (80%+).";
+const sl69Description = "Портативная зарядная станция NS-69 на LiFePO4-аккумуляторе с тремя конфигурациями: L1 — 150 Вт, L2 — 300 Вт и L4 — 500 Вт. Станция оснащена выходами AC 220 В, DC 12 В, USB-A и USB-C, позволяет подключать до 10 устройств и поддерживает сквозное питание. Она подходит для кемпинга, дачи, дома, поездок и мест без доступа к сети. Заряжать станцию можно от сети через адаптер или от солнечной панели мощностью до 200 Вт. Заявленный ресурс аккумулятора — 3500+ циклов (80%+).";
 const sl69PackageContents = [
   "Портативная станция питания — 1 шт.",
   "Адаптер переменного тока (AC) — 1 шт.",
@@ -339,6 +349,7 @@ const sl69Characteristics = [
   "Гарантия: 12 месяцев",
 ].join("\n");
 const sl69Image = "/assets/images/sl69-station.png";
+const sl31Image = "/assets/images/sl31-station.png";
 
 export const AVAILABILITY_LABELS: Record<Availability, string> = {
   "in-stock": "В наличии",
@@ -378,30 +389,32 @@ export function selectCatalogProducts(
 }
 
 export function mapCatalogProduct(product: CatalogApiProduct, articles: readonly string[] = []): Product {
+  const category = categoryLabel(product.category, product.name);
+  const normalize = category === PORTABLE_STATION_CATEGORY ? normalizeStationText : (value: string) => value;
   const variants = product.variants.map((variant) => ({ ...variant, sourceSlug: product.slug }));
   const primary = variants[0];
   if (!primary) throw new Error(`WooCommerce product ${product.slug} has no variants`);
   const article = articles[0] ?? primary.sku;
   const watticoRows = WATTICO_CHARACTERISTICS_BY_SKU[primary.sku as keyof typeof WATTICO_CHARACTERISTICS_BY_SKU];
   const characteristicLines = watticoRows
-    ? watticoRows.map(([label, value]) => `${label}: ${value}`)
+    ? watticoRows.map(([label, value]) => normalize(`${label}: ${value}`))
     : Object.entries(product.characteristics)
       .filter(([label]) => label !== "Артикул")
-      .map(([label, value]) => `${label}: ${value}`);
+      .map(([label, value]) => normalize(`${label}: ${value}`));
 
   return {
     slug: product.slug,
     sku: article,
-    name: product.name,
-    category: categoryLabel(product.category, product.name),
+    name: normalize(product.name),
+    category,
     rawCategory: product.category,
     price: primary.price,
     ...(primary.oldPrice !== undefined ? { oldPrice: primary.oldPrice } : {}),
-    description: stripHtml(product.description || product.shortDescription),
-    packageContents: product.packageContents.join("\n"),
+    description: normalize(stripHtml(product.description || product.shortDescription)),
+    packageContents: normalize(product.packageContents.join("\n")),
     characteristics: [
-      `Артикул: ${article}`,
-      ...(articles.length > 1 ? [`Дополнительные артикулы: ${articles.slice(1).join(", ")}`] : []),
+      normalize(`Артикул: ${article}`),
+      ...(articles.length > 1 ? [normalize(`Дополнительные артикулы: ${articles.slice(1).join(", ")}`)] : []),
       ...characteristicLines,
     ].join("\n"),
     image: product.images[0] ?? "/assets/images/gear-menu.webp",
@@ -455,6 +468,7 @@ export function groupCatalogProducts(products: Product[]) {
 function mergeModelGroup(group: CatalogModelGroup, products: Product[]): Product {
   const canonical = products.find((product) => product.slug === group.canonicalSlug) ?? products[0]!;
   const isSl69 = group.canonicalSlug === "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah";
+  const isSl31 = group.canonicalSlug === "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2";
   const candidates = products.flatMap((product) => product.variants.map((variant) => ({
     ...variant,
     sourceSlug: variant.sourceSlug ?? product.slug,
@@ -506,10 +520,10 @@ function mergeModelGroup(group: CatalogModelGroup, products: Product[]): Product
 
   return {
     ...canonical,
-    name: isSl69 ? "Портативная зарядная станция SL-69" : group.name,
+    name: isSl69 ? "Портативная зарядная станция NS-69" : group.name,
     description: isSl69 ? sl69Description : group.description,
     packageContents: isSl69 ? sl69PackageContents : canonical.packageContents,
-    image: isSl69 ? sl69Image : canonical.image,
+    image: isSl69 ? sl69Image : isSl31 ? sl31Image : canonical.image,
     price: Math.min(...variants.map((variant) => variant.price)),
     oldPrice: undefined,
     characteristics: isSl69
@@ -522,7 +536,7 @@ function mergeModelGroup(group: CatalogModelGroup, products: Product[]): Product
 
 function modelVariantLabel(product: Product, variant: ProductVariant) {
   const text = `${product.name} ${product.characteristics}`;
-  const specText = text.replace(/\bSL-\d+(?:-L\d+)?\b/gi, "");
+  const specText = text.replace(/\b(?:SL|NS)-?\d+(?:-L\d+)?\b/gi, "");
   const power = readSpec(specText, /(\d[\d\s.,]*)\s*(?:W|Вт)(?!\w)/i)
     || (product.category === "Автомобильные инверторы" ? readSpec(product.name, /(\d[\d\s.,]*)$/) : "");
   const hybridPower = readSpec(specText, /(\d[\d\s.,]*)\s*(?:kW|кВт)(?!\w)/i);

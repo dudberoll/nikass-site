@@ -346,7 +346,7 @@ export const WATTICO_CHARACTERISTICS_BY_SKU = {
   "NS-66-1000": [
     [
       "Модель",
-      "SL-66"
+      "NS-66"
     ],
     [
       "SKU",
@@ -754,7 +754,7 @@ export const WATTICO_CHARACTERISTICS_BY_SKU = {
   "NS-31-150": [
     [
       "Модель",
-      "SL-31"
+      "NS-31"
     ],
     [
       "Номинальная мощность AC",
@@ -856,7 +856,7 @@ export const WATTICO_CHARACTERISTICS_BY_SKU = {
   "NS-31-300": [
     [
       "Модель",
-      "SL-31"
+      "NS-31"
     ],
     [
       "Номинальная мощность AC",
@@ -958,7 +958,7 @@ export const WATTICO_CHARACTERISTICS_BY_SKU = {
   "NS-85-2000": [
     [
       "Модель",
-      "SL-85; в PDF также NS85-2000"
+      "NS-85; в PDF также NS85-2000"
     ],
     [
       "Номинальная мощность",
@@ -1088,7 +1088,7 @@ export const WATTICO_CHARACTERISTICS_BY_SKU = {
     ],
     [
       "Модель",
-      "SL-54"
+      "NS-54"
     ],
     [
       "Номинальная мощность",

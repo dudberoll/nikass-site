@@ -129,8 +129,12 @@ test("product details are collapsed and only one disclosure opens at a time", as
   await expect(delivery.locator("p")).toBeVisible();
 });
 
-test("SL-31 characteristics follow the selected variant", async ({ page }) => {
+test("NS-31 characteristics follow the selected variant", async ({ page }) => {
   await page.goto("/catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2");
+  await expect(page.locator(".product-gallery img")).toHaveAttribute("src", "/assets/images/sl31-station.png");
+  await expect(page.getByRole("heading", { name: "Портативная зарядная станция NS-31" })).toBeVisible();
+  await expect(page.locator(".product-sku")).toContainText("NS-31-150");
+  await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-31-150");
 
   const characteristics = page.locator(".product-characteristics-disclosure");
   await characteristics.locator("summary").click();

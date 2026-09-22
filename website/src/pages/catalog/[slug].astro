@@ -2,7 +2,7 @@
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
 import ProductVariantSelector from "../../components/ProductVariantSelector";
-import { detailLines, detailRows, formatPrice, loadCatalogProducts, relatedProducts, type Product } from "../../data/catalog";
+import { detailLines, detailRows, displayProductSku, formatPrice, loadCatalogProducts, relatedProducts, type Product } from "../../data/catalog";
 
 import "../../styles/global.css";
 
@@ -43,7 +43,7 @@ const articleLink = articleHref && `${articleHref}?from=${encodeURIComponent(`/c
         <div class="product-info">
           <p class="store-eyebrow"><a href="/catalog">Каталог</a> / {product.category}</p>
           <h1>{product.name}</h1>
-          <p class="product-sku">Артикул: {product.sku}</p>
+          <p class="product-sku">Артикул: {displayProductSku(product)}</p>
           <ProductVariantSelector {product} client:load />
           {product.description && <div class="product-description"><h2>Описание</h2><p>{product.description}</p>{articleLink && <a class="store-primary-button" href={articleLink}>Читать полностью</a>}</div>}
         </div>

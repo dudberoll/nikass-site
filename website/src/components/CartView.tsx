@@ -1,7 +1,7 @@
 import { cartReviewRequestSchema } from "@web-app-demo/contracts";
 import { useEffect, useState } from "react";
 
-import { AVAILABILITY_LABELS, formatPrice, type Product } from "../data/catalog";
+import { AVAILABILITY_LABELS, displayProductSku, formatPrice, type Product } from "../data/catalog";
 import { getCartCount, readCart, removeCartItem, saveCart, setCartItemQuantity, subscribeToCart, type CartLine, type CartStorageError } from "../lib/cart";
 
 function resolve(lines: CartLine[], products: Product[]) {
@@ -49,7 +49,7 @@ export default function CartView({ products }: { products: Product[] }) {
       <a className="cart-line-image" href={`/catalog/${product.slug}`}><img src={product.image} alt="" /></a>
       <div className="cart-line-info">
         <p className="store-product-category">{product.category}</p><h2><a href={`/catalog/${product.slug}`}>{product.name}</a></h2>
-        <p>SKU: {variant.sku} · {AVAILABILITY_LABELS[variant.availability]}</p><strong>{formatPrice(variant.price)}</strong>
+        <p>SKU: {displayProductSku(product, variant.sku)} · {AVAILABILITY_LABELS[variant.availability]}</p><strong>{formatPrice(variant.price)}</strong>
         {variant.availability === "unavailable" && <p className="cart-checkout-note">Этот вариант больше недоступен. Удалите его перед оформлением.</p>}
         <div className="cart-quantity" role="group" aria-label={`Количество ${product.name}`}>
           <button type="button" aria-label="Уменьшить количество" onClick={() => update(setCartItemQuantity(cart, line.productSlug, line.variantSku, line.quantity - 1))}>−</button>

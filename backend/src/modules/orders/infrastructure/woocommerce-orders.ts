@@ -21,6 +21,7 @@ const preferredFreeRate = (rates: ShippingRate[], method: OrderQuoteRequest['cus
     ? free.find((rate) => rate.method_id === 'local_pickup')
     : free.find((rate) => rate.method_id !== 'local_pickup') ?? free[0]
 }
+const displayProductName = (name: string) => /станц/i.test(name) ? name.replace(/\bSL(?=\s*[-]?\d)/gi, 'NS') : name
 export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, init?: RequestInit) => Promise<Response> = fetch): OrderProvider & PaidOrderProvider {
   const request = async (url: URL, body?: unknown, session?: StoreSession, admin = false) => {
     let response: Response
@@ -121,7 +122,7 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
       if (cart.totals.total_shipping !== 0 || cart.totals.total_shipping_tax !== 0) throw new OrderFailure('unavailable', 'Бесплатная доставка не настроена.')
       if (cart.items.length !== input.cart.items.length || input.cart.items.some((line) => !cart.items.some((item) => item.sku === line.sku && item.quantity === line.quantity))) throw new OrderFailure('invalid', 'Состав корзины изменился.')
       return { cartToken: session.cartToken!, totals: {
-        currency: 'RUB', items: cart.items.map((item) => ({ sku: item.sku, name: item.name, quantity: item.quantity, totalMinor: item.totals.line_total + item.totals.line_total_tax })),
+        currency: 'RUB', items: cart.items.map((item) => ({ sku: item.sku, name: displayProductName(item.name), quantity: item.quantity, totalMinor: item.totals.line_total + item.totals.line_total_tax })),
         discountMinor: cart.totals.total_discount + cart.totals.total_discount_tax,
         shippingMinor: 0, totalMinor: cart.totals.total_price,
       } }

@@ -17,13 +17,13 @@ export const NIKASS_CHAT_KNOWLEDGE = `
 Опубликованные карточки каталога:
 - Автомобильный инвертор, чистая синусоида — /catalog/invertor-avtomobilnyy-800
 - Автомобильный инвертор, модифицированная синусоида — /catalog/invertor-avtomobilnyy-600
-- Портативная зарядная станция SL-93 — /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh
-- Портативная зарядная станция SL-69 — /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah
-- Портативная зарядная станция SL-63 — /catalog/portativnaya-elektrostantsiya-168000-mah-600w
-- Портативная зарядная станция SL-31 — /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2
-- Портативная зарядная станция SL-66 — /catalog/portativnaya-elektrostantsiya-320000-mah-1000w-1024wh
-- Портативная зарядная станция SL-85 — /catalog/portativnaya-elektrostantsiya-560000-mah-2000w-1792wh
-- Портативная зарядная станция SL-54 — /catalog/portativnaya-zaryadnaya-stantsiya-sl-54-s-radio-i-bluetooth-150-vt-153-6-vt-ch
+- Портативная зарядная станция NS-93 — /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh
+- Портативная зарядная станция NS-69 — /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah
+- Портативная зарядная станция NS-63 — /catalog/portativnaya-elektrostantsiya-168000-mah-600w
+- Портативная зарядная станция NS-31 — /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2
+- Портативная зарядная станция NS-66 — /catalog/portativnaya-elektrostantsiya-320000-mah-1000w-1024wh
+- Портативная зарядная станция NS-85 — /catalog/portativnaya-elektrostantsiya-560000-mah-2000w-1792wh
+- Портативная зарядная станция NS-54 — /catalog/portativnaya-zaryadnaya-stantsiya-sl-54-s-radio-i-bluetooth-150-vt-153-6-vt-ch
 - Жёсткая солнечная панель — /catalog/portativnaya-solnechnaya-panel-30w-18-v
 - Гибкая солнечная панель — /catalog/gibkaya-solnechnaya-panel-30w-18v
 - Гибридный инвертор ИБП — /catalog/avtonomnyy-gibridnyy-invertor-ibp-1-2-kvt
@@ -35,10 +35,10 @@ export const NIKASS_CHAT_KNOWLEDGE = `
 - POWERBANK — /catalog/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy
 
 Проверенные карточки портативных станций из выгрузки:
-- SL-69 L1: SKU NS-69-150, 150 Вт / около 153 Вт·ч.
-- SL-69 L2: SKU NS-69-300, 300 Вт / около 230 Вт·ч.
-- SL-69 L4: SKU NS-69-500, 500 Вт / около 537 Вт·ч.
-- SL-93 L1/L2/L3: SKU NS-93-150, NS-93-300 и NS-93-500; у L2 около 205 Вт·ч.
+- NS-69 L1: SKU NS-69-150, 150 Вт / около 153 Вт·ч.
+- NS-69 L2: SKU NS-69-300, 300 Вт / около 230 Вт·ч.
+- NS-69 L4: SKU NS-69-500, 500 Вт / около 537 Вт·ч.
+- NS-93 L1/L2/L3: SKU NS-93-150, NS-93-300 и NS-93-500; у L2 около 205 Вт·ч.
 - Одной надписи «300 Вт» недостаточно: в выгрузке есть варианты и на 205 Wh, и на 230 Wh — попроси артикул или точную Wh.
 - В карточках встречаются 48 000/64 000/72 000/160 000 мА·ч. Для расчёта предпочитай явно указанную Wh; мА·ч нельзя бездумно сравнивать с Wh.
 - AGM 12 В 65/70/90/100/200 А·ч — отдельные аккумуляторы, не портативные станции. Для них нужны напряжение, допустимая глубина разряда, тип инвертора и его КПД.
