@@ -27,11 +27,12 @@ export const NIKASS_CHAT_KNOWLEDGE = `
 - Жёсткая солнечная панель — /catalog/portativnaya-solnechnaya-panel-30w-18-v
 - Гибкая солнечная панель — /catalog/gibkaya-solnechnaya-panel-30w-18v
 - Гибридный инвертор ИБП — /catalog/avtonomnyy-gibridnyy-invertor-ibp-1-2-kvt
+- Система хранения энергии ESS — /catalog/sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt
 - AGM аккумулятор 12 В — /catalog/svintsovo-kislotnyy-germetichnyy-akkumulyator-65ah-12v
 - LiFePO4 аккумулятор NSR 51,2 В — /catalog/litiy-zhelezo-fosfatnyy-akkumulyator-nsr-51-2-v-100-a-ch
 - LiFePO4 аккумулятор NSLFP 12,8 В — /catalog/litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-100-a-ch
 - LiFePO4 аккумулятор NSW 51,2 В — /catalog/litiy-zhelezo-fosfatnyy-akkumulyator-nsw-51-2-v-100-a-ch
-- Внешний аккумулятор Power Bank — /catalog/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy
+- POWERBANK — /catalog/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy
 
 Проверенные карточки портативных станций из выгрузки:
 - SL-69 L1: SKU NS-69-150, 150 Вт / около 153 Вт·ч.

@@ -1,0 +1,143 @@
+---
+import StoreFooter from "../components/StoreFooter.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import "../styles/global.css";
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Способы оплаты и доставки заказов NIKASS по России." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Оплата и доставка — NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main info-page" id="main-content">
+      <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <span>Оплата и доставка</span></nav>
+
+      <section class="store-intro info-intro">
+        <p class="store-eyebrow">NIKASS / УСЛОВИЯ ЗАКАЗА</p>
+        <h1>Оплата и доставка</h1>
+        <p>Быстрая и безопасная доставка портативных зарядных станций, солнечных панелей и комплектов автономного энергоснабжения по всей России со склада в Москве.</p>
+      </section>
+
+      <div class="info-sections">
+        <section class="info-section" aria-labelledby="payment-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">01 / ОПЛАТА</p>
+            <h2 id="payment-title">Способы оплаты</h2>
+          </div>
+          <div class="info-card-grid info-card-grid-payment">
+            <article class="info-card">
+              <h3>Онлайн-оплата на сайте</h3>
+              <ul class="info-list">
+                <li>Банковские карты Visa, MasterCard и Мир</li>
+                <li>СБП — Система быстрых платежей</li>
+                <li>Защищённый платёжный шлюз</li>
+              </ul>
+              <p>Все платежи проходят по защищённому соединению. Данные карт не сохраняются и не передаются третьим лицам.</p>
+            </article>
+            <article class="info-card">
+              <h3>Оплата при получении</h3>
+              <p>Наличными или картой при доставке, если такая возможность доступна у выбранной службы доставки и в вашем регионе.</p>
+            </article>
+            <article class="info-card">
+              <h3>Для организаций</h3>
+              <ul class="info-list">
+                <li>Выставление счёта и оплата по реквизитам</li>
+                <li>Закрывающие документы</li>
+                <li>Возможна работа по договору</li>
+              </ul>
+            </article>
+          </div>
+          <p class="info-note">После оформления и оплаты заказа вы получите подтверждение по email или телефону.</p>
+        </section>
+
+        <section class="info-section" aria-labelledby="delivery-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">02 / ДОСТАВКА</p>
+            <h2 id="delivery-title">Доставка по России</h2>
+            <p>Оборудование упаковывается с учётом требований к перевозке электрооборудования и аккумуляторных устройств.</p>
+          </div>
+          <div class="info-card-grid info-card-grid-delivery">
+            <article class="info-card">
+              <h3>Курьерская доставка</h3>
+              <p>До двери в городах и крупных населённых пунктах. Возможен выбор службы доставки.</p>
+            </article>
+            <article class="info-card">
+              <h3>Пункты выдачи</h3>
+              <p>Удобное получение в ПВЗ, выгодная стоимость и возможность забрать заказ в удобное время.</p>
+            </article>
+            <article class="info-card">
+              <h3>Транспортные компании</h3>
+              <p>Для крупногабаритных заказов и комплектов энергоснабжения — до терминала или до адреса.</p>
+            </article>
+            <article class="info-card">
+              <h3>Почтовая доставка</h3>
+              <p>Для удалённых населённых пунктов с отслеживанием по трек-номеру.</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="info-columns">
+          <section class="info-section info-section-compact" aria-labelledby="timing-title">
+            <div class="info-section-heading">
+              <p class="store-eyebrow">03 / СРОКИ</p>
+              <h2 id="timing-title">Обработка и отправка</h2>
+            </div>
+            <ul class="info-list info-list-large">
+              <li><strong>Обработка заказа:</strong> в день оформления или на следующий рабочий день</li>
+              <li><strong>Отправка:</strong> после подтверждения заказа и оплаты, если выбрана предоплата</li>
+              <li><strong>Доставка:</strong> срок зависит от региона и выбранной службы</li>
+              <li><strong>Трек-номер:</strong> предоставляется после отгрузки</li>
+            </ul>
+            <p class="info-note">Заказы на портативные электростанции и солнечные панели проходят дополнительную проверку комплектации.</p>
+          </section>
+
+          <section class="info-section info-section-compact" aria-labelledby="cost-title">
+            <div class="info-section-heading">
+              <p class="store-eyebrow">04 / СТОИМОСТЬ</p>
+              <h2 id="cost-title">Стоимость доставки</h2>
+              <p>Рассчитывается автоматически при оформлении заказа.</p>
+            </div>
+            <ul class="info-list info-list-large">
+              <li>Регион доставки</li>
+              <li>Вес и габариты оборудования</li>
+              <li>Класс груза, включая аккумуляторные устройства</li>
+              <li>Выбранная служба доставки</li>
+            </ul>
+            <p class="info-note">Для части товаров и акций может действовать бесплатная доставка — актуальные условия отображаются в корзине.</p>
+          </section>
+        </div>
+
+        <aside class="info-callout" aria-labelledby="receiving-title">
+          <div>
+            <p class="store-eyebrow">05 / ПОЛУЧЕНИЕ</p>
+            <h2 id="receiving-title">Важно при получении оборудования</h2>
+          </div>
+          <ul class="info-list info-list-light">
+            <li>Проверьте целостность упаковки</li>
+            <li>Убедитесь в отсутствии внешних повреждений</li>
+            <li>Сверьте комплектность</li>
+            <li>При повреждениях зафиксируйте их в акте у перевозчика</li>
+          </ul>
+        </aside>
+
+        <section class="info-contact" aria-labelledby="contact-title">
+          <div>
+            <p class="store-eyebrow">ПОМОЩЬ С ДОСТАВКОЙ</p>
+            <h2 id="contact-title">Подберём оптимальный способ доставки</h2>
+            <p>Если заказ включает зарядные станции, солнечные панели или комплект автономного питания, наши специалисты подскажут лучший вариант по срокам и стоимости.</p>
+          </div>
+          <div class="info-contact-actions">
+            <a class="store-primary-button" href="mailto:hello@nikass.ru">Связаться с нами</a>
+            <a class="info-back-link" href="/catalog">Вернуться в каталог ↗</a>
+          </div>
+        </section>
+      </div>
+    </main>
+    <StoreFooter />
+  </body>
+</html>

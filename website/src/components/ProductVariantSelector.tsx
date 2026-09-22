@@ -11,7 +11,7 @@ export default function ProductVariantSelector({ product }: { product: Product }
   const [message, setMessage] = useState("");
   const variant = getSelectedVariant(product, sku);
   useEffect(() => {
-    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label } }));
+    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku } }));
   }, [variant?.sku]);
   if (!variant) return <p>Варианты пока не добавлены.</p>;
 

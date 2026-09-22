@@ -18,13 +18,20 @@ const bikes = [
 ];
 
 const stories = storyEntries;
+const mobileStories = storyEntries.filter((story) => !["backup-power-for-work", "more-autonomy-less-dependence"].includes(story.slug));
 
 const footerGroups = [
   { title: "Магазин", links: [{ label: "Каталог", href: "/catalog" }, { label: "Блог", href: "/blog" }, { label: "Корзина", href: "/cart" }] },
-  { title: "Поддержка", links: [{ label: "Написать нам", href: "mailto:hello@nikass.ru" }] },
+  { title: "Поддержка", links: [{ label: "Оплата и доставка", href: "/payment-and-delivery" }, { label: "Политика возврата", href: "/return-policy" }, { label: "Написать нам", href: "mailto:hello@nikass.ru" }] },
 ];
 
-const bestSellers = products.slice(0, 4);
+const bestSellerSlugs = [
+  "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah",
+  "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh",
+  "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2",
+  "portativnaya-elektrostantsiya-168000-mah-600w",
+];
+const bestSellers = bestSellerSlugs.flatMap((slug) => products.filter((product) => product.slug === slug));
 const chatProducts = products.map(({ slug, name, category, image, price, oldPrice }) => ({
   slug,
   name,
@@ -84,7 +91,7 @@ const heroPosition = (index: number) => {
                 data-hero-position={heroPosition(index)}
               >
                 <span class="orbea-hero-product-media"><img src={category.image} alt={category.title} loading={index === heroInitialIndex ? "eager" : "lazy"} decoding="async" /></span>
-                <span class="orbea-hero-product-name">{category.title}</span>
+                <span class="orbea-hero-product-name">{category.title === "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS" ? <><span>СИСТЕМЫ ХРАНЕНИЯ</span><span>ЭНЕРГИИ ESS</span></> : category.title}</span>
               </a>
             ))}
             </div>
@@ -155,7 +162,7 @@ const heroPosition = (index: number) => {
             <p>Разбираем реальные сценарии: как пережить отключение, зарядить технику в дороге и собрать систему под свои задачи.</p>
             <a class="orbea-button orbea-button-dark" href="/blog"><span>↗</span> Все статьи</a>
           </div>
-          <div class="orbea-story-row" role="region" aria-label="Статьи блога" tabindex="0">
+          <div class="orbea-story-row orbea-story-row-desktop" role="region" aria-label="Статьи блога" tabindex="0">
             {stories.map((story, index) => {
               const title = index === 1 ? "В дорогу" : story.title;
               return (
@@ -167,8 +174,20 @@ const heroPosition = (index: number) => {
               );
             })}
           </div>
+          <div class="orbea-story-row orbea-story-row-mobile" role="region" aria-label="Статьи блога" tabindex="0">
+            {mobileStories.map((story, index) => {
+              const title = index === 1 ? "В дорогу" : story.title;
+              return (
+              <a class="orbea-story-card" href={`/blog/${story.slug}`} aria-label={`Открыть статью: ${title}`} style={`background-image:url('/assets/images/${story.image}')`}>
+                <div class="orbea-story-shade"></div>
+                <div class="orbea-story-meta"><span>{story.date}</span>{story.tag && <span>{story.tag}</span>}</div>
+                <h3>{title}</h3>
+              </a>
+              );
+            })}
+          </div>
         </section>
-        <AboutSection />
+        <AboutSection compact />
         <ReviewsSection />
         <section class="orbea-contact-cta" id="contacts" aria-labelledby="orbea-contact-title">
           <div class="orbea-contact-copy">

@@ -9,7 +9,17 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
       <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16" /></svg>
     </button>
     <nav class="orbea-desktop-nav" aria-label="Основная навигация">
-      <button type="button" data-open-menu="Gear">Каталог</button>
+      <div class="orbea-catalog-menu" data-catalog-menu>
+        <button type="button" data-catalog-dropdown-toggle aria-expanded="false" aria-controls="orbea-catalog-dropdown">
+          Каталог <span class="orbea-catalog-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="orbea-catalog-dropdown" id="orbea-catalog-dropdown" hidden data-catalog-dropdown>
+          <div class="orbea-catalog-dropdown-list">
+            <a class="orbea-catalog-dropdown-link orbea-catalog-dropdown-all" href="/catalog" data-catalog-dropdown-link><span>{ALL_PRODUCTS_LABEL}</span><span aria-hidden="true">↗</span></a>
+            {HERO_CATEGORIES.map((category) => <a class="orbea-catalog-dropdown-link" href={`/catalog?category=${encodeURIComponent(category.label)}`} data-catalog-dropdown-link><span class="orbea-catalog-dropdown-label"><img src={category.icon} alt="" aria-hidden="true" /><span>{category.label}</span></span><span aria-hidden="true">›</span></a>)}
+          </div>
+        </div>
+      </div>
       <a href="/blog">Блог</a>
       <a href="/#custom">Как выбрать</a>
       <button type="button" data-open-menu="Commitment">О NIKASS</button>
@@ -41,7 +51,7 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
       <strong class="orbea-menu-title">NIKASS</strong>
       <button class="orbea-icon-button" type="button" aria-label="Закрыть" data-menu-close>×</button>
     </div>
-    <div class="orbea-menu-root" data-menu-root data-all-products-label={ALL_PRODUCTS_LABEL} data-category-items={JSON.stringify([ALL_PRODUCTS_LABEL, ...HERO_CATEGORIES.map(({ label }) => label)])}>
+    <div class="orbea-menu-root" data-menu-root data-all-products-label={ALL_PRODUCTS_LABEL} data-category-items={JSON.stringify([ALL_PRODUCTS_LABEL, ...HERO_CATEGORIES.map(({ label }) => label)])} data-category-icons={JSON.stringify(Object.fromEntries(HERO_CATEGORIES.map(({ label, icon }) => [label, icon])))}>
       <button class="orbea-menu-root-link" type="button" data-menu-section="Gear">Каталог <span>›</span></button>
       <a class="orbea-menu-root-link" href="/blog" data-menu-anchor>Блог</a>
       <a class="orbea-menu-root-link" href="/#custom" data-menu-anchor>Как выбрать</a>
@@ -68,17 +78,35 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
   const menuBack = document.querySelector("[data-menu-back]");
   const menuTitle = document.querySelector(".orbea-menu-title");
   const allProductsLabel = menuRoot.dataset.allProductsLabel || "";
+  const categoryIcons = JSON.parse(menuRoot.dataset.categoryIcons || "{}");
   const menuClose = document.querySelector("[data-menu-close]");
   const mobileMenuButton = document.querySelector(".orbea-mobile-menu-button");
   const pageRoot = header.closest(".orbea-page") || document.body;
   const searchPanel = document.querySelector("[data-search-panel]");
   const searchInput = document.querySelector("#orbea-search");
   const searchOpenButton = document.querySelector("[data-search-open]");
+  const catalogDropdown = document.querySelector("[data-catalog-dropdown]");
+  const catalogDropdownToggle = document.querySelector("[data-catalog-dropdown-toggle]");
   let lastMenuTrigger;
   let lastSearchTrigger;
 
   const pageChildren = () => [...pageRoot.children].filter((element) => element !== menuBackdrop);
   const syncOverflow = () => { document.body.style.overflow = !menuBackdrop.hidden || !searchPanel.hidden ? "hidden" : ""; };
+  const closeCatalogDropdown = () => {
+    if (!catalogDropdown || catalogDropdown.hidden) return;
+    catalogDropdown.hidden = true;
+    catalogDropdownToggle?.setAttribute("aria-expanded", "false");
+  };
+  catalogDropdownToggle?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isOpen = !catalogDropdown.hidden;
+    closeCatalogDropdown();
+    if (!isOpen) {
+      catalogDropdown.hidden = false;
+      catalogDropdownToggle.setAttribute("aria-expanded", "true");
+    }
+  });
+  catalogDropdown?.querySelectorAll("[data-catalog-dropdown-link]").forEach((link) => link.addEventListener("click", closeCatalogDropdown));
   const showMenuRoot = () => {
     menuTitle.textContent = "NIKASS";
     menuBack.hidden = true;
@@ -92,10 +120,11 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
     menuDetail.hidden = false;
     menuPromo.hidden = section !== "Gear";
     const items = section === "Gear" ? JSON.parse(menuRoot.dataset.categoryItems || "[]") : ["О компании", "Поддержка"];
-    menuList.innerHTML = items.map((item) => `<a class="orbea-menu-detail-link" href="${section === "Commitment" ? (item === "О компании" ? "/#about" : "/#footer") : item === allProductsLabel ? "/catalog" : `/catalog?category=${encodeURIComponent(item)}`}" data-menu-anchor><span>${item}</span><span>›</span></a>`).join("");
+    menuList.innerHTML = items.map((item) => `<a class="orbea-menu-detail-link" href="${section === "Commitment" ? (item === "О компании" ? "/about" : "/#footer") : item === allProductsLabel ? "/catalog" : `/catalog?category=${encodeURIComponent(item)}`}" data-menu-anchor><span class="orbea-menu-detail-label">${categoryIcons[item] ? `<img src="${categoryIcons[item]}" alt="" aria-hidden="true">` : ""}<span>${item}</span></span><span>›</span></a>`).join("");
     menuList.querySelectorAll("[data-menu-anchor]").forEach((link) => link.addEventListener("click", closeMenu));
   };
   const openMenu = (section) => {
+    closeCatalogDropdown();
     lastMenuTrigger = document.activeElement;
     menuBackdrop.hidden = false;
     pageChildren().forEach((element) => { element.inert = true; });
@@ -120,6 +149,10 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
   menuBack.addEventListener("click", showMenuRoot);
   menuBackdrop.addEventListener("click", closeMenu);
   menuPanel.addEventListener("click", (event) => event.stopPropagation());
+  document.addEventListener("click", (event) => {
+    if (!catalogDropdown || catalogDropdown.hidden || !(event.target instanceof Node)) return;
+    if (!catalogDropdown.contains(event.target) && event.target !== catalogDropdownToggle) closeCatalogDropdown();
+  });
 
   const trapFocus = (event, container) => {
     const focusable = [...container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled])')].filter((element) => element.offsetParent !== null);
@@ -138,6 +171,7 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
   };
   searchOpenButton.addEventListener("click", () => {
     if (!searchPanel.hidden) return closeSearch();
+    closeCatalogDropdown();
     lastSearchTrigger = document.activeElement;
     searchPanel.hidden = false;
     syncOverflow();
@@ -146,7 +180,7 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
   document.querySelector("[data-search-close]").addEventListener("click", closeSearch);
   document.addEventListener("keydown", (event) => {
     if (event.key === "Tab" && !menuBackdrop.hidden) trapFocus(event, menuPanel);
-    if (event.key === "Escape") { closeMenu(); closeSearch(); }
+    if (event.key === "Escape") { closeMenu(); closeSearch(); closeCatalogDropdown(); }
   });
   const updateHeader = () => header.classList.toggle("is-scrolled", scrollY > 24);
   addEventListener("scroll", updateHeader, { passive: true });

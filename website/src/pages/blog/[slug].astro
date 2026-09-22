@@ -30,6 +30,7 @@ const recommendedProducts = [
   <body class="store-page">
     <StoreHeader />
     <main class="store-main blog-article-page" id="main-content">
+      <a class="store-primary-button blog-return-button" href="/catalog" hidden data-return-to-product>Вернуться в каталог</a>
       <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <a href="/blog">Блог</a> / <span>{entry.title}</span></nav>
       <article class="blog-article">
         <header class="blog-article-header">
@@ -85,5 +86,20 @@ const recommendedProducts = [
       </article>
     </main>
     <StoreFooter />
+    <script is:inline>
+      const returnToProduct = document.querySelector("[data-return-to-product]");
+      const from = new URLSearchParams(window.location.search).get("from");
+      if (returnToProduct && from) {
+        try {
+          const returnUrl = new URL(from, window.location.origin);
+          if (returnUrl.origin === window.location.origin && returnUrl.pathname.startsWith("/catalog/")) {
+            returnToProduct.href = `${returnUrl.pathname}${returnUrl.search}`;
+            returnToProduct.hidden = false;
+          }
+        } catch {
+          // Ignore malformed return URLs and keep the button hidden.
+        }
+      }
+    </script>
   </body>
 </html>

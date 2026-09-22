@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
 
-type PromptInputMeta = { model: string; effort: string; attachments: File[] };
+type PromptInputMeta = { attachments: File[] };
 
 export interface PromptInputProps {
   onSubmit?: (value: string, meta: PromptInputMeta) => void;
   placeholder?: string;
   className?: string;
-  models?: string[];
-  efforts?: string[];
   defaultValue?: string;
   value?: string;
   onChange?: (value: string) => void;
@@ -19,14 +17,6 @@ export interface PromptInputProps {
 type Attachment = { id: string; file: File; url: string; name: string; width: number; height: number };
 type IconName = "arrow" | "attach" | "mic" | "plus" | "stop";
 
-const modelIcons: Record<string, string> = {
-  "Composer 2.5": "https://cdn.21st.dev/assets/mirror/7d/7dc00bc09f225fcda46cbc9c6b669c69c025a231877d6c17baa6a003f04f02b2.svg",
-  "Gemini 3.5 Flash": "https://cdn.21st.dev/assets/mirror/cd/cda2df6631d5fa227de3fa04ed78cf354f910ba92a9f086e7455655c10ad9d09.svg",
-  "GPT 5.5": "https://cdn.21st.dev/assets/mirror/b9/b93fa7942be639a1dae60194ff12141145d7d9fd59581582d6ff23335755f19c.svg",
-  "Opus 4.8": "https://cdn.21st.dev/assets/mirror/5d/5de1221c77cc91e748066fd642ad0eee1c1fa65328814f5178166f901e599709.svg",
-  "GLM 5.2": "https://cdn.21st.dev/assets/mirror/b2/b2a6c0ff63efd8a555edf8a174ea6fcfeca120ac1595a2d461ca11d3ae89276c.svg",
-};
-
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactElement> = {
     arrow: <path d="m4 8 4-4 4 4M8 4v8" />,
@@ -36,17 +26,6 @@ function Icon({ name }: { name: IconName }) {
     stop: <rect x="4.5" y="4.5" width="7" height="7" rx="1" fill="currentColor" stroke="none" />,
   };
   return <svg className="prompt-input-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
-}
-
-function ModelIcon({ model }: { model: string }) {
-  return modelIcons[model] ? <img src={modelIcons[model]} alt="" /> : <span>{model.slice(0, 1)}</span>;
-}
-
-function MorphingText({ text }: { text: string }) {
-  const [width, setWidth] = useState<number | "auto">("auto");
-  const ref = useRef<HTMLSpanElement>(null);
-  useEffect(() => { if (ref.current) setWidth(ref.current.offsetWidth); }, [text]);
-  return <span className="prompt-input-morph" style={{ width }}><span ref={ref} aria-hidden="true">{text}</span><span key={text}>{text}</span></span>;
 }
 
 function AttachmentGallery({ attachment, originRect, onClose }: { attachment: Attachment; originRect: DOMRect; onClose: () => void }) {
@@ -76,8 +55,6 @@ export default function PromptInput({
   onSubmit,
   placeholder = "Ask anything",
   className = "",
-  models = ["GPT 5.5", "Opus 4.8", "Gemini 3.5 Flash", "Composer 2.5", "GLM 5.2"],
-  efforts = ["Low", "Medium", "Max Effort"],
   defaultValue = "",
   value: controlledValue,
   onChange,
@@ -87,9 +64,6 @@ export default function PromptInput({
 }: PromptInputProps) {
   const [localValue, setLocalValue] = useState(defaultValue);
   const [expanded, setExpanded] = useState(false);
-  const [model, setModel] = useState(models[0] ?? "GPT 5.5");
-  const [effortIndex, setEffortIndex] = useState(1);
-  const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [activeAttachment, setActiveAttachment] = useState<{ attachment: Attachment; rect: DOMRect } | null>(null);
   const [recording, setRecording] = useState(false);
@@ -222,12 +196,11 @@ export default function PromptInput({
 
   const submit = () => {
     if (!hasValue || recording || disabled) return;
-    onSubmit?.(currentValue, { model, effort: efforts[effortIndex] ?? "Medium", attachments: attachments.map(({ file }) => file) });
+    onSubmit?.(currentValue, { attachments: attachments.map(({ file }) => file) });
     setCurrentValue("");
     attachments.forEach(({ url }) => URL.revokeObjectURL(url));
     setAttachments([]);
     setExpanded(false);
-    setModelMenuOpen(false);
   };
 
   const chooseFiles = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -244,7 +217,7 @@ export default function PromptInput({
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); }
-    if (event.key === "Escape" && !hasValue) { setExpanded(false); setModelMenuOpen(false); }
+    if (event.key === "Escape" && !hasValue) setExpanded(false);
   };
 
   const openPrompt = () => {
@@ -264,13 +237,6 @@ export default function PromptInput({
       <textarea ref={textareaRef} value={currentValue} onChange={(event) => setCurrentValue(event.target.value)} onKeyDown={handleKeyDown} placeholder={placeholder} aria-label="Prompt" disabled={recording || disabled} className={`prompt-input-textarea ${expanded ? "is-visible" : ""}`} />
       <button type="button" className={`prompt-input-placeholder ${expanded ? "is-hidden" : ""}`} onClick={openPrompt} aria-label="Open prompt input" disabled={disabled}>{placeholder}</button>
       <div className={`prompt-input-bottom-actions ${expanded && !recording && !disabled ? "is-visible" : ""}`}>
-        <div className="prompt-input-model-wrap">
-          <button type="button" className="prompt-input-control" onClick={(event) => { event.stopPropagation(); setModelMenuOpen((open) => !open); }} aria-label={`Select model. Current: ${model}`}><ModelIcon model={model} /><MorphingText text={model} /></button>
-          <div className={`prompt-input-model-menu ${modelMenuOpen ? "is-visible" : ""}`}>
-            {models.map((item) => <button key={item} type="button" onClick={() => { setModel(item); setModelMenuOpen(false); }}><ModelIcon model={item} />{item}</button>)}
-          </div>
-        </div>
-        <button type="button" className="prompt-input-control" onClick={() => setEffortIndex((index) => (index + 1) % efforts.length)}><span className="prompt-input-bars">{[0, 1, 2].map((bar) => <i key={bar} className={(bar <= effortIndex ? "is-on" : "")} />)}</span><MorphingText text={efforts[effortIndex] ?? "Medium"} /></button>
         <button type="button" className="prompt-input-control prompt-input-plus" onClick={() => fileInputRef.current?.click()} disabled={attachments.length >= maxAttachments} aria-label="Attach image"><Icon name="plus" /></button>
       </div>
       <div className={`prompt-input-wave ${recording ? "is-visible" : ""}`}>{audioData.map((height, index) => <i key={index} style={{ height: `${Math.max(4, height * 28)}px` }} />)}</div>

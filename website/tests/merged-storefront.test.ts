@@ -77,8 +77,8 @@ test('characteristics become name-value rows', () => {
 
   assert.deepEqual(rows.slice(0, 3), [
     ['Артикул', '3204442838'],
-    ['Тип', 'Инвертор автомобильный'],
-    ['Мощность', '1200 Вт'],
+    ['Тип товара', 'Автомобильный инвертор 12 В DC → 220 В AC'],
+    ['Модель', 'WJF-1200MX'],
   ])
 })
 
@@ -89,8 +89,13 @@ test('homepage CTA contracts use the system builder and chat widget', () => {
   assert.match(homepage, /aria-label="Открыть чат" data-chat-restore/)
 })
 
+test('homepage bestsellers use the first four Drive model series', () => {
+  assert.match(homepage, /const bestSellerSlugs = \[[\s\S]*?portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah[\s\S]*?portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh[\s\S]*?portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2[\s\S]*?portativnaya-elektrostantsiya-168000-mah-600w/)
+  assert.match(homepage, /const bestSellers = bestSellerSlugs\.flatMap\(/)
+})
+
 test('homepage hero exposes the supplied categories in the requested order', () => {
-  assert.equal(HERO_CATEGORIES.length, 7)
+  assert.equal(HERO_CATEGORIES.length, 8)
   assert.deepEqual(HERO_CATEGORIES.map(({ title }) => title), [
     'АВТОМОБИЛЬНЫЕ ИНВЕРТОРЫ',
     'ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ',
@@ -98,7 +103,8 @@ test('homepage hero exposes the supplied categories in the requested order', () 
     'AGM АККУМУЛЯТОРЫ',
     'LiFePO4 АККУМУЛЯТОРЫ',
     'ГИБРИДНЫЕ ИНВЕРТОРЫ',
-    'ПАУЭРБАНКИ',
+    'СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS',
+    'POWERBANK',
   ])
   assert.deepEqual(HERO_CATEGORIES.map(({ label }) => label), [
     'Автомобильные инверторы',
@@ -107,7 +113,8 @@ test('homepage hero exposes the supplied categories in the requested order', () 
     'AGM аккумуляторы',
     'LiFePO4 аккумуляторы',
     'Гибридные инверторы',
-    'Пауэрбанки',
+    'Системы хранения энергии ESS',
+    'POWERBANK',
   ])
   assert.match(homepage, /const heroCategories = HERO_CATEGORIES/)
   assert.match(homepage, /const heroInitialIndex = 0/)

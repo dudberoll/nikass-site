@@ -36,7 +36,7 @@ export default function CatalogExplorer({ products, categories }: { products: Pr
       {categories.map((item) => <button className={category === item.title ? "is-active" : ""} type="button" aria-pressed={category === item.title} onClick={() => setCategory(category === item.title ? "" : item.title)} key={item.title}>{item.label}</button>)}
     </nav>
     <section className="catalog-toolbar" aria-label="Фильтры каталога">
-      <label className="catalog-search"><input type="search" aria-label="Поиск по каталогу" list="catalog-search-suggestions" placeholder="Название или артикул" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+      <label className="catalog-search"><input type="search" aria-label="Поиск по каталогу" list="catalog-search-suggestions" placeholder="Поиск" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
       <datalist id="catalog-search-suggestions">{searchSuggestions.map((suggestion) => <option value={suggestion} key={suggestion} />)}</datalist>
       <label><select aria-label="Сортировка товаров" value={sort} onChange={(event) => setSort(event.target.value)}><option value="default">Хиты продаж</option><option value="price-asc">Сначала дешевле</option><option value="price-desc">Сначала дороже</option><option value="name">По названию</option></select></label>
     </section>

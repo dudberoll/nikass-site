@@ -12,10 +12,17 @@ export async function getStaticPaths() {
 }
 
 const { product } = Astro.props as { product: Product };
-const characteristics = detailRows(product.characteristics);
+const characteristicSets = product.variantCharacteristics
+  ? Object.entries(product.variantCharacteristics)
+  : [[product.variants[0]?.sku ?? "default", product.characteristics] as const];
 const packageContents = detailLines(product.packageContents);
-const initialVariantKey = product.variants[0]?.label.match(/\bL[1-4]\b/)?.[0] ?? "";
+const initialVariantSku = product.variants[0]?.sku ?? "default";
 const related = relatedProducts(product, await loadCatalogProducts());
+const articleHrefByCategory: Record<string, string> = {
+  "Портативные зарядные станции": "/blog/energy-at-dacha",
+};
+const articleHref = articleHrefByCategory[product.category];
+const articleLink = articleHref && `${articleHref}?from=${encodeURIComponent(`/catalog/${product.slug}`)}`;
 ---
 
 <!doctype html>
@@ -38,17 +45,14 @@ const related = relatedProducts(product, await loadCatalogProducts());
           <h1>{product.name}</h1>
           <p class="product-sku">Артикул: {product.sku}</p>
           <ProductVariantSelector {product} client:load />
-          {product.description && <div class="product-description"><h2>Описание</h2><p>{product.description}</p></div>}
+          {product.description && <div class="product-description"><h2>Описание</h2><p>{product.description}</p>{articleLink && <a class="store-primary-button" href={articleLink}>Читать полностью</a>}</div>}
         </div>
       </section>
 
       <section class="product-details">
-        {characteristics.length > 0 && <details class="product-detail-disclosure"><summary><span>Характеристики</span></summary><table class="product-specs"><tbody>{characteristics.map(([label, value]) => {
-          const variantKey = label.match(/\bL[123]\b/)?.[0];
-          return <tr data-product-spec-variant={variantKey} hidden={Boolean(variantKey && variantKey !== initialVariantKey)}><th scope="row">{label}</th><td>{value}</td></tr>;
-        })}</tbody></table></details>}
-        {packageContents.length > 0 && <details class="product-detail-disclosure"><summary><span>Комплектация</span></summary><ul>{packageContents.map((line) => <li>{line}</li>)}</ul></details>}
-        <details class="product-detail-disclosure"><summary><span>Доставка</span></summary><p>Доставим по России. Точную стоимость и срок покажем на этапе оформления заказа.</p></details>
+        {characteristicSets.some(([, value]) => detailRows(value).length > 0) && <details class="product-detail-disclosure product-characteristics-disclosure" name="product-details"><summary><span>Характеристики</span></summary>{characteristicSets.map(([sku, value]) => <table class="product-specs" data-product-specs-sku={sku} hidden={sku !== initialVariantSku}><tbody>{detailRows(value).map(([label, rowValue]) => <tr><th scope="row">{label}</th><td>{rowValue}</td></tr>)}</tbody></table>)}</details>}
+        {packageContents.length > 0 && <details class="product-detail-disclosure" name="product-details"><summary><span>Комплектация</span></summary><ul>{packageContents.map((line) => <li>{line}</li>)}</ul></details>}
+        <details class="product-detail-disclosure" name="product-details"><summary><span>Доставка</span></summary><p>Доставим по России. Точную стоимость и срок покажем на этапе оформления заказа.</p></details>
       </section>
 
       {related.length > 0 && <section class="product-related" aria-labelledby="related-title">
@@ -59,12 +63,12 @@ const related = relatedProducts(product, await loadCatalogProducts());
     <StoreFooter />
 
     <script is:inline>
-      const specificationRows = [...document.querySelectorAll("[data-product-spec-variant]")];
-      const selectModelSpecifications = (label) => {
-        const model = label.match(/\bL[1-4]\b/)?.[0] ?? "";
-        specificationRows.forEach((row) => { row.hidden = Boolean(model && row.dataset.productSpecVariant !== model); });
+      const specificationTables = [...document.querySelectorAll("[data-product-specs-sku]")];
+      const selectModelSpecifications = (sku) => {
+        const selected = specificationTables.find((table) => table.dataset.productSpecsSku === sku) ?? specificationTables[0];
+        specificationTables.forEach((table) => { table.hidden = table !== selected; });
       };
-      window.addEventListener("nikass:product-variant-change", (event) => selectModelSpecifications(event.detail?.label ?? ""));
+      window.addEventListener("nikass:product-variant-change", (event) => selectModelSpecifications(event.detail?.sku ?? ""));
     </script>
   </body>
 </html>

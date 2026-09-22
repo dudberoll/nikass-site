@@ -1,3 +1,5 @@
+import { WATTICO_CHARACTERISTICS_BY_SKU, WATTICO_SHARED_SL69_CHARACTERISTICS } from "./wattico-characteristics";
+
 export type Product = {
   slug: string;
   sku: string;
@@ -9,6 +11,7 @@ export type Product = {
   description: string;
   packageContents: string;
   characteristics: string;
+  variantCharacteristics?: Record<string, string>;
   image: string;
   variants: ProductVariant[];
 };
@@ -27,13 +30,14 @@ export type ProductVariant = {
 };
 
 export const HERO_CATEGORIES = [
-  { title: "АВТОМОБИЛЬНЫЕ ИНВЕРТОРЫ", label: "Автомобильные инверторы", category: "Автомобильные инверторы", image: "/assets/images/category-automotive-inverters.webp" },
-  { title: "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ", label: "Портативные зарядные станции", category: "Портативные зарядные станции", image: "/assets/images/category-portable-charging-stations.webp" },
-  { title: "СОЛНЕЧНЫЕ ПАНЕЛИ", label: "Солнечные панели", category: "Солнечные панели", image: "/assets/images/category-solar-panels.webp" },
-  { title: "AGM АККУМУЛЯТОРЫ", label: "AGM аккумуляторы", category: "AGM аккумуляторы", image: "/assets/images/category-agm-batteries.webp" },
-  { title: "LiFePO4 АККУМУЛЯТОРЫ", label: "LiFePO4 аккумуляторы", category: "LiFePO4 аккумуляторы", image: "/assets/images/category-lifepo4-batteries.webp" },
-  { title: "ГИБРИДНЫЕ ИНВЕРТОРЫ", label: "Гибридные инверторы", category: "Гибридные инверторы", image: "/assets/images/category-hybrid-inverters.webp" },
-  { title: "ПАУЭРБАНКИ", label: "Пауэрбанки", category: "Пауэрбанки", image: "/assets/images/category-powerbanks.webp" },
+  { title: "АВТОМОБИЛЬНЫЕ ИНВЕРТОРЫ", label: "Автомобильные инверторы", category: "Автомобильные инверторы", image: "/assets/images/category-automotive-inverters.webp", icon: "/assets/images/category-icons/automotive-inverter.png" },
+  { title: "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ", label: "Портативные зарядные станции", category: "Портативные зарядные станции", image: "/assets/images/category-portable-charging-stations.webp", icon: "/assets/images/category-icons/portable-charging-station.png" },
+  { title: "СОЛНЕЧНЫЕ ПАНЕЛИ", label: "Солнечные панели", category: "Солнечные панели", image: "/assets/images/category-solar-panels.webp", icon: "/assets/images/category-icons/solar-panel.png" },
+  { title: "AGM АККУМУЛЯТОРЫ", label: "AGM аккумуляторы", category: "AGM аккумуляторы", image: "/assets/images/category-agm-batteries.webp", icon: "/assets/images/category-icons/agm-battery.png" },
+  { title: "LiFePO4 АККУМУЛЯТОРЫ", label: "LiFePO4 аккумуляторы", category: "LiFePO4 аккумуляторы", image: "/assets/images/category-lifepo4-batteries.webp", icon: "/assets/images/category-icons/lifepo4-battery.png" },
+  { title: "ГИБРИДНЫЕ ИНВЕРТОРЫ", label: "Гибридные инверторы", category: "Гибридные инверторы", image: "/assets/images/category-hybrid-inverters.webp", icon: "/assets/images/category-icons/hybrid-inverter.png" },
+  { title: "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS", label: "Системы хранения энергии ESS", category: "Системы хранения энергии ESS", image: "/assets/images/category-portable-charging-stations.webp", icon: "/assets/images/category-icons/energy-storage-ess.png" },
+  { title: "POWERBANK", label: "POWERBANK", category: "POWERBANK", image: "/assets/images/category-powerbanks.webp", icon: "/assets/images/category-icons/powerbank.png" },
 ] as const;
 
 export type CatalogApiProduct = {
@@ -60,7 +64,7 @@ type CatalogApiResponse = {
 
 type CatalogSelection = Record<string, readonly string[]>;
 
-// The CSV contains 47 catalog rows. Product data still comes only from WooCommerce;
+// The CSV contains 53 catalog rows. Product data still comes only from WooCommerce;
 // this allow-list excludes unrelated legacy and test products that are also published there.
 const catalogArticlesBySlug: CatalogSelection = Object.fromEntries([
   "invertor-avtomobilnyy-3500",
@@ -76,6 +80,12 @@ const catalogArticlesBySlug: CatalogSelection = Object.fromEntries([
   "portativnaya-solnechnaya-panel-30w-18-v",
   "gibkaya-solnechnaya-panel-210w-33-9v",
   "portativnaya-solnechnaya-panel-100w-20v",
+  "solnechnaya-panel-450-vt-41-v",
+  "sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt",
+  "sistema-hraneniya-energii-ess-2-560-vt-ch-1-200-vt",
+  "sistema-hraneniya-energii-ess-2-560-vt-ch-3-5-kvt",
+  "sistema-hraneniya-energii-ess-5-120-vt-ch-6-2-kvt",
+  "sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt",
   "gibkaya-solnechnaya-panel-30w-18v",
   "gibkaya-solnechnaya-panel-100w-17v",
   "gibkaya-solnechnaya-panel-50w-18v",
@@ -189,6 +199,7 @@ const catalogModelGroups = [
       "portativnaya-solnechnaya-panel-30w-18-v",
       "portativnaya-solnechnaya-panel-50w-18v",
       "portativnaya-solnechnaya-panel-100w-20v",
+      "solnechnaya-panel-450-vt-41-v",
     ],
   },
   {
@@ -211,6 +222,18 @@ const catalogModelGroups = [
       "avtonomnyy-gibridnyy-invertor-ibp-3-6-kvt",
       "avtonomnyy-gibridnyy-invertor-ibp-6-5-kvt",
       "avtonomnyy-gibridnyy-invertor-ibp-12-kvt",
+    ],
+  },
+  {
+    name: "Система хранения энергии ESS",
+    description: "Система хранения энергии ESS с выбором мощности и ёмкости.",
+    canonicalSlug: "sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt",
+    memberSlugs: [
+      "sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt",
+      "sistema-hraneniya-energii-ess-2-560-vt-ch-1-200-vt",
+      "sistema-hraneniya-energii-ess-2-560-vt-ch-3-5-kvt",
+      "sistema-hraneniya-energii-ess-5-120-vt-ch-6-2-kvt",
+      "sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt",
     ],
   },
   {
@@ -244,8 +267,8 @@ const catalogModelGroups = [
     ],
   },
   {
-    name: "Внешний аккумулятор Power Bank",
-    description: "Внешний аккумулятор с выбором ёмкости.",
+    name: "POWERBANK",
+    description: "POWERBANK с выбором ёмкости.",
     canonicalSlug: "vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy",
     memberSlugs: [
       "vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy",
@@ -359,11 +382,12 @@ export function mapCatalogProduct(product: CatalogApiProduct, articles: readonly
   const primary = variants[0];
   if (!primary) throw new Error(`WooCommerce product ${product.slug} has no variants`);
   const article = articles[0] ?? primary.sku;
-  const characteristics = {
-    "Артикул": article,
-    ...(articles.length > 1 ? { "Дополнительные артикулы": articles.slice(1).join(", ") } : {}),
-    ...Object.fromEntries(Object.entries(product.characteristics).filter(([label]) => label !== "Артикул")),
-  };
+  const watticoRows = WATTICO_CHARACTERISTICS_BY_SKU[primary.sku as keyof typeof WATTICO_CHARACTERISTICS_BY_SKU];
+  const characteristicLines = watticoRows
+    ? watticoRows.map(([label, value]) => `${label}: ${value}`)
+    : Object.entries(product.characteristics)
+      .filter(([label]) => label !== "Артикул")
+      .map(([label, value]) => `${label}: ${value}`);
 
   return {
     slug: product.slug,
@@ -375,9 +399,11 @@ export function mapCatalogProduct(product: CatalogApiProduct, articles: readonly
     ...(primary.oldPrice !== undefined ? { oldPrice: primary.oldPrice } : {}),
     description: stripHtml(product.description || product.shortDescription),
     packageContents: product.packageContents.join("\n"),
-    characteristics: Object.entries(characteristics)
-      .map(([label, value]) => `${label}: ${value}`)
-      .join("\n"),
+    characteristics: [
+      `Артикул: ${article}`,
+      ...(articles.length > 1 ? [`Дополнительные артикулы: ${articles.slice(1).join(", ")}`] : []),
+      ...characteristicLines,
+    ].join("\n"),
     image: product.images[0] ?? "/assets/images/gear-menu.webp",
     variants,
   };
@@ -391,7 +417,9 @@ function categoryLabel(value: string, name = "") {
     "charging-stations": "Портативные зарядные станции",
     "portativnye-stantsii": "Портативные зарядные станции",
     gibkie: "Солнечные панели",
-    "power-bank": "Пауэрбанки",
+    "power-bank": "POWERBANK",
+    "gibridnye-invertory": "Гибридные инверторы",
+    "sistema-hraneniya-energii-ess": "Системы хранения энергии ESS",
     "solnechnye-paneli": "Солнечные панели",
     "zaryadnye-stantsii": "Портативные зарядные станции",
   };
@@ -456,6 +484,25 @@ function mergeModelGroup(group: CatalogModelGroup, products: Product[]): Product
     .flatMap(([, value]) => value.split(",").map((article) => article.trim()))))];
 
   const articlesLine = articles.length > 0 ? `Артикулы: ${articles.join(", ")}` : "";
+  const sourceCharacteristics = products.map((product) => {
+    const lines = product.characteristics
+      .split(/\r?\n/)
+      .filter((line) => !line.startsWith("Артикул:") && !line.startsWith("Дополнительные артикулы:"));
+    return `${product.sku}:\n${lines.join("\n")}`;
+  });
+  const sl69WatticoCharacteristics = [
+    ...WATTICO_SHARED_SL69_CHARACTERISTICS.map(([label, value]) => `${label}: ${value}`),
+    ...sourceCharacteristics,
+  ].join("\n");
+  const variantCharacteristics = Object.fromEntries(products.flatMap((product) => product.variants.map((variant) => [
+    variant.sku,
+    isSl69
+      ? [
+        ...WATTICO_SHARED_SL69_CHARACTERISTICS.map(([label, value]) => `${label}: ${value}`),
+        product.characteristics,
+      ].join("\n")
+      : product.characteristics,
+  ]))) as Record<string, string>;
 
   return {
     ...canonical,
@@ -466,19 +513,20 @@ function mergeModelGroup(group: CatalogModelGroup, products: Product[]): Product
     price: Math.min(...variants.map((variant) => variant.price)),
     oldPrice: undefined,
     characteristics: isSl69
-      ? [articlesLine, sl69Characteristics].filter(Boolean).join("\n")
-      : [articlesLine, ...variants.map((variant, index) => `Вариант ${index + 1}: ${variant.label}`)].filter(Boolean).join("\n"),
+      ? [articlesLine, sl69WatticoCharacteristics || sl69Characteristics].filter(Boolean).join("\n")
+      : [articlesLine, ...sourceCharacteristics].filter(Boolean).join("\n"),
+    variantCharacteristics,
     variants,
   };
 }
 
 function modelVariantLabel(product: Product, variant: ProductVariant) {
   const text = `${product.name} ${product.characteristics}`;
-  const specText = text.replace(/\bSL-\d+-L\d+\b/gi, "");
+  const specText = text.replace(/\bSL-\d+(?:-L\d+)?\b/gi, "");
   const power = readSpec(specText, /(\d[\d\s.,]*)\s*(?:W|Вт)(?!\w)/i)
     || (product.category === "Автомобильные инверторы" ? readSpec(product.name, /(\d[\d\s.,]*)$/) : "");
   const hybridPower = readSpec(specText, /(\d[\d\s.,]*)\s*(?:kW|кВт)(?!\w)/i);
-  const capacity = readSpec(specText, /(\d[\d\s.,]*)\s*(?:mAh|мАч|Ah|А(?:·)?ч)(?!\w)/i);
+  const capacity = readSpec(specText, /(\d[\d\s.,]*)\s*(?:mAh|мА(?:·)?ч|Ah|А(?:·)?ч)(?!\w)/i);
   const energy = readSpec(specText, /(\d[\d\s.,]*)\s*(?:Wh|Втч|Вт[·.]?ч)(?!\w)/i);
   const weight = readSpec(specText, /(\d[\d\s.,]*)\s*(?:kg|кг|g|г)(?!\w)/i);
 
@@ -486,7 +534,7 @@ function modelVariantLabel(product: Product, variant: ProductVariant) {
   if (product.category === "Гибридные инверторы" && hybridPower) return `${hybridPower} кВт`;
   if ((product.category === "AGM аккумуляторы" || product.category === "LiFePO4 аккумуляторы") && capacity) return `${capacity} А·ч`;
   if (product.category === "Солнечные панели" && power) return `${power} Вт${weight ? ` · ${weight}` : ""}`;
-  if (product.category === "Пауэрбанки" && capacity) return `${capacity} мАч`;
+  if (product.category === "POWERBANK" && capacity) return `${capacity} мАч`;
   if (product.category === "Портативные зарядные станции" && power) {
     return [
       `${power} Вт`,
@@ -501,7 +549,7 @@ function modelVariantIdentity(product: Product, variant: ProductVariant) {
   const label = modelVariantLabel(product, variant);
   const parts = label.split(" · ");
   if (product.category === "Автомобильные инверторы" || product.category === "Гибридные инверторы") return parts[0] ?? label;
-  if (product.category === "AGM аккумуляторы" || product.category === "LiFePO4 аккумуляторы" || product.category === "Пауэрбанки") return parts[0] ?? label;
+  if (product.category === "AGM аккумуляторы" || product.category === "LiFePO4 аккумуляторы" || product.category === "POWERBANK") return parts[0] ?? label;
   if (product.category === "Портативные зарядные станции") return `${parts[0] ?? ""}|${parts[1] ?? ""}`;
   if (product.category === "Солнечные панели") return label;
   return label;

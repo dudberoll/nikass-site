@@ -1,0 +1,157 @@
+---
+import StoreFooter from "../components/StoreFooter.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import "../styles/global.css";
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Политика возврата и гарантийные условия NIKASS." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Политика возврата — NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main info-page return-page" id="main-content">
+      <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <span>Политика возврата</span></nav>
+
+      <section class="store-intro info-intro">
+        <p class="store-eyebrow">NIKASS / ПОДДЕРЖКА</p>
+        <h1>Политика возврата</h1>
+        <p>Мы стремимся обеспечить высокое качество оборудования и сервиса. Возврат и обмен осуществляются в соответствии с законодательством РФ о дистанционной торговле.</p>
+      </section>
+
+      <div class="info-sections">
+        <section class="info-section" aria-labelledby="quality-return-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">01 / ТОВАР НАДЛЕЖАЩЕГО КАЧЕСТВА</p>
+            <h2 id="quality-return-title">Возврат товара надлежащего качества</h2>
+            <p>Покупатель вправе отказаться от товара, приобретённого дистанционным способом, в течение 7 дней с момента получения.</p>
+          </div>
+          <div class="info-columns">
+            <article class="info-card">
+              <h3>Условия возврата</h3>
+              <ul class="info-list">
+                <li>Сохранён товарный вид и потребительские свойства</li>
+                <li>Отсутствуют следы эксплуатации и подключения</li>
+                <li>Сохранены пломбы, защитные элементы и заводская упаковка</li>
+                <li>Сохранён полный комплект поставки</li>
+                <li>Есть документ, подтверждающий покупку</li>
+              </ul>
+              <p class="return-warning">⚠️ Портативные электростанции, аккумуляторные устройства и энергетическое оборудование относятся к технически сложным товарам. Если товар был введён в эксплуатацию, подключён или имеет следы использования, возврат как товара надлежащего качества может быть отклонён.</p>
+            </article>
+            <article class="info-card">
+              <h3>Товары, не подлежащие возврату при отсутствии брака</h3>
+              <ul class="info-list">
+                <li>Оборудование было в использовании</li>
+                <li>Нарушена комплектация</li>
+                <li>Повреждена упаковка или серийные номера</li>
+                <li>Отсутствуют элементы комплекта</li>
+                <li>Товар изготовлен или укомплектован под индивидуальный заказ</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="info-section" aria-labelledby="defective-return-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">02 / ТОВАР НЕНАДЛЕЖАЩЕГО КАЧЕСТВА</p>
+            <h2 id="defective-return-title">Возврат товара ненадлежащего качества</h2>
+            <p>Если в товаре обнаружен производственный дефект, покупатель вправе потребовать:</p>
+          </div>
+          <div class="info-columns">
+            <article class="info-card">
+              <h3>Возможные требования</h3>
+              <ul class="info-list">
+                <li>Замена товара</li>
+                <li>Бесплатный ремонт по гарантии</li>
+                <li>Соразмерное уменьшение цены</li>
+                <li>Возврат денежных средств</li>
+              </ul>
+            </article>
+            <article class="info-card">
+              <h3>Проверка качества</h3>
+              <p>Для рассмотрения обращения может потребоваться диагностика оборудования, проверка условий эксплуатации и техническая экспертиза.</p>
+              <p class="info-note">Срок проверки качества — в пределах сроков, установленных законодательством РФ.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="info-section" aria-labelledby="warranty-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">03 / ГАРАНТИЯ</p>
+            <h2 id="warranty-title">Гарантийные случаи</h2>
+          </div>
+          <div class="info-columns">
+            <article class="info-card">
+              <h3>Гарантия распространяется</h3>
+              <p>На заводские дефекты и неисправности при соблюдении правил эксплуатации.</p>
+            </article>
+            <article class="info-card">
+              <h3>Гарантия не распространяется</h3>
+              <ul class="info-list">
+                <li>Повреждения из-за неправильного подключения</li>
+                <li>Использование неподходящих зарядных устройств или нагрузок</li>
+                <li>Механические повреждения</li>
+                <li>Следы влаги или вскрытия корпуса</li>
+                <li>Нарушения инструкций по эксплуатации</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="info-section" aria-labelledby="return-process-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">04 / ПОРЯДОК</p>
+            <h2 id="return-process-title">Порядок оформления возврата</h2>
+          </div>
+          <ol class="return-steps">
+            <li class="return-step"><strong>Свяжитесь с нами</strong><span>По контактам магазина</span></li>
+            <li class="return-step"><strong>Сообщите данные</strong><span>Номер заказа и причину обращения</span></li>
+            <li class="return-step"><strong>Приложите материалы</strong><span>Фото или видео при наличии дефекта</span></li>
+            <li class="return-step"><strong>Дождитесь согласования</strong><span>Мы подтвердим возможность возврата</span></li>
+            <li class="return-step"><strong>Отправьте товар</strong><span>По указанному адресу</span></li>
+          </ol>
+          <p class="info-note">Возврат без предварительного согласования может быть не принят.</p>
+        </section>
+
+        <div class="info-columns">
+          <section class="info-section info-section-compact" aria-labelledby="return-shipping-title">
+            <div class="info-section-heading">
+              <p class="store-eyebrow">05 / ДОСТАВКА</p>
+              <h2 id="return-shipping-title">Расходы на доставку при возврате</h2>
+            </div>
+            <ul class="info-list info-list-large">
+              <li><strong>Товар надлежащего качества:</strong> доставку оплачивает покупатель</li>
+              <li><strong>Подтверждённый брак или ошибка комплектации:</strong> доставку оплачивает продавец</li>
+            </ul>
+          </section>
+
+          <section class="info-section info-section-compact" aria-labelledby="refund-title">
+            <div class="info-section-heading">
+              <p class="store-eyebrow">06 / ДЕНЕЖНЫЕ СРЕДСТВА</p>
+              <h2 id="refund-title">Возврат денежных средств</h2>
+            </div>
+            <p>Возврат осуществляется тем же способом, которым была произведена оплата, если иное не согласовано дополнительно.</p>
+            <p class="info-note"><strong>Срок возврата средств:</strong> до 10 рабочих дней после получения и проверки товара на складе.</p>
+          </section>
+        </div>
+
+        <section class="info-contact" aria-labelledby="support-title">
+          <div>
+            <p class="store-eyebrow">07 / ПОДДЕРЖКА</p>
+            <h2 id="support-title">Поможем оформить обращение</h2>
+            <p>Если у вас возникли вопросы по возврату или гарантии, свяжитесь с нашей службой поддержки. Мы подскажем оптимальное решение.</p>
+          </div>
+          <div class="info-contact-actions">
+            <a class="store-primary-button" href="mailto:hello@nikass.ru">Связаться с нами</a>
+            <a class="info-back-link" href="/catalog">Вернуться в каталог ↗</a>
+          </div>
+        </section>
+      </div>
+    </main>
+    <StoreFooter />
+  </body>
+</html>

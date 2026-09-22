@@ -1,5 +1,22 @@
 import { expect, test } from "@playwright/test";
 
+test("catalog opens below the desktop header trigger", async ({ page }) => {
+  await page.goto("/");
+
+  const catalogTrigger = page.getByRole("button", { name: "Каталог" });
+  await expect(catalogTrigger).toHaveAttribute("aria-expanded", "false");
+  await catalogTrigger.click();
+
+  await expect(catalogTrigger).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("[data-catalog-dropdown]")).toBeVisible();
+  await expect(page.locator("[data-menu-backdrop]")).toBeHidden();
+  await expect(page.getByRole("link", { name: /Все товары/ })).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(page.locator("[data-catalog-dropdown]")).toBeHidden();
+  await expect(catalogTrigger).toHaveAttribute("aria-expanded", "false");
+});
+
 test("finds by SKU and keeps a checked cart through checkout navigation", async ({ page }) => {
   await page.goto("/catalog");
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
@@ -28,6 +45,22 @@ test("product page shows availability and related products", async ({ page }) =>
   const related = await page.locator(".product-related .orbea-bestseller-card").count();
   expect(related).toBeGreaterThan(0);
   expect(related).toBeLessThanOrEqual(4);
+});
+
+test("portable station description opens the dacha article", async ({ page }) => {
+  const productPath = "/catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah";
+  await page.goto(productPath);
+
+  await page.getByRole("link", { name: "Читать полностью" }).click();
+  await expect(page).toHaveURL(/\/blog\/energy-at-dacha\?from=%2Fcatalog%2F/);
+  const returnLink = page.getByRole("link", { name: "Вернуться в каталог" });
+  await expect(returnLink).toBeVisible();
+  await expect(returnLink).toHaveAttribute("href", productPath);
+  await returnLink.click();
+  await expect(page).toHaveURL(new RegExp(`${productPath}$`));
+
+  await page.goto("/blog/energy-at-dacha");
+  await expect(page.getByRole("link", { name: "Вернуться в каталог" })).toBeHidden();
 });
 
 test("product page adds the selected quantity", async ({ page }) => {
@@ -68,11 +101,8 @@ test("checkout offers delivery and pickup before the address step", async ({ pag
   await expect(addressStep.locator("#addressSearch")).toHaveCount(0);
 });
 
-test("product details are collapsed and expand downward", async ({ page }) => {
-  await page.goto("/catalog");
-  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
-  await page.getByLabel("Поиск по каталогу").fill("3204442838");
-  await page.locator("[data-product-card] a[href^='/catalog/']").first().click();
+test("product details are collapsed and only one disclosure opens at a time", async ({ page }) => {
+  await page.goto("/catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah");
 
   const disclosures = page.locator("details.product-detail-disclosure");
   const characteristics = disclosures.nth(0);
@@ -81,19 +111,39 @@ test("product details are collapsed and expand downward", async ({ page }) => {
   await expect(characteristics).not.toHaveAttribute("open", "");
   await expect(packageContents).not.toHaveAttribute("open", "");
   await expect(delivery).not.toHaveAttribute("open", "");
-  await expect(characteristics.locator(".product-specs")).toBeHidden();
+  await expect(characteristics.locator(".product-specs:visible")).toHaveCount(0);
   await expect(packageContents.locator("ul")).toBeHidden();
   await expect(delivery.locator("p")).toBeHidden();
 
   await characteristics.locator("summary").click();
   await expect(characteristics).toHaveAttribute("open", "");
-  await expect(characteristics.locator(".product-specs")).toBeVisible();
+  await expect(characteristics.locator(".product-specs:visible")).toBeVisible();
+  expect(await characteristics.locator(".product-specs:visible tbody").evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(3);
   await packageContents.locator("summary").click();
+  await expect(characteristics).not.toHaveAttribute("open", "");
   await expect(packageContents).toHaveAttribute("open", "");
   await expect(packageContents.locator("ul")).toBeVisible();
   await delivery.locator("summary").click();
+  await expect(packageContents).not.toHaveAttribute("open", "");
   await expect(delivery).toHaveAttribute("open", "");
   await expect(delivery.locator("p")).toBeVisible();
+});
+
+test("SL-31 characteristics follow the selected variant", async ({ page }) => {
+  await page.goto("/catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2");
+
+  const characteristics = page.locator(".product-characteristics-disclosure");
+  await characteristics.locator("summary").click();
+  const visibleSpecs = characteristics.locator(".product-specs:visible");
+  await expect(visibleSpecs).toContainText("150 Вт");
+  await expect(visibleSpecs).toContainText("230 × 130 × 220 мм");
+  await expect(visibleSpecs).not.toContainText("IP21");
+
+  await page.getByRole("button", { name: /300 Вт/ }).click();
+  await expect(visibleSpecs).toContainText("300 Вт");
+  await expect(visibleSpecs).toContainText("230 × 135 × 220 мм");
+  await expect(visibleSpecs).toContainText("IP21");
+  await expect(visibleSpecs).not.toContainText("230 × 130 × 220 мм");
 });
 
 test("moves from personal details to the Yandex-assisted delivery address", async ({ page }) => {
