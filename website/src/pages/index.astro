@@ -22,7 +22,7 @@ const mobileStories = storyEntries.filter((story) => !["backup-power-for-work", 
 
 const footerGroups = [
   { title: "Магазин", links: [{ label: "Каталог", href: "/catalog" }, { label: "Блог", href: "/blog" }, { label: "Корзина", href: "/cart" }] },
-  { title: "Поддержка", links: [{ label: "Оплата и доставка", href: "/payment-and-delivery" }, { label: "Политика возврата", href: "/return-policy" }, { label: "Написать нам", href: "mailto:hello@nikass.ru" }] },
+  { title: "Поддержка", links: [{ label: "Оплата и доставка", href: "/payment-and-delivery" }, { label: "Политика возврата", href: "/return-policy" }] },
 ];
 
 const bestSellerSlugs = [
@@ -40,7 +40,18 @@ const chatProducts = products.map(({ slug, name, category, image, price, oldPric
   priceLabel: formatPrice(price),
   ...(oldPrice !== undefined ? { oldPriceLabel: formatPrice(oldPrice) } : {}),
 }));
-const heroCategories = HERO_CATEGORIES;
+const heroCategoryOrder = [
+  "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ",
+  "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS",
+  "AGM АККУМУЛЯТОРЫ",
+  "LiFePO4 АККУМУЛЯТОРЫ",
+  "АВТОМОБИЛЬНЫЕ ИНВЕРТОРЫ",
+  "ГИБРИДНЫЕ ИНВЕРТОРЫ",
+  "СОЛНЕЧНЫЕ ПАНЕЛИ",
+  "POWERBANK",
+];
+const heroCategories = [...HERO_CATEGORIES].sort((left, right) => heroCategoryOrder.indexOf(left.title) - heroCategoryOrder.indexOf(right.title));
+const formatHeroTitle = (title: string) => title.replace("LiFePO4", "LiFePO₄");
 const heroInitialIndex = 0;
 const heroPosition = (index: number) => {
   let position = index - heroInitialIndex;
@@ -73,7 +84,7 @@ const heroPosition = (index: number) => {
             </div>
           </div>
           <div class="orbea-hero-products" role="region" aria-roledescription="карусель" aria-label="Категории товаров" data-hero-carousel>
-            <p class="orbea-hero-current-category" data-hero-current-category>{heroCategories[heroInitialIndex].title}</p>
+            <p class="orbea-hero-current-category" data-hero-current-category>{formatHeroTitle(heroCategories[heroInitialIndex].title)}</p>
             <button class="orbea-hero-arrow orbea-hero-arrow-previous" type="button" aria-label="Предыдущая категория" aria-controls="hero-products-viewport" data-hero-previous>
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
             </button>
@@ -82,23 +93,23 @@ const heroPosition = (index: number) => {
               <a
                 class="orbea-hero-product-card"
                 href={`/catalog?category=${encodeURIComponent(category.title)}`}
-                aria-label={`${index === heroInitialIndex ? "Открыть" : "Показать"} категорию «${category.title}»`}
+                aria-label={`${index === heroInitialIndex ? "Открыть" : "Показать"} категорию «${formatHeroTitle(category.title)}»`}
                 aria-current={index === heroInitialIndex ? "true" : undefined}
                 aria-hidden={Math.abs(heroPosition(index)) > 1 ? "true" : undefined}
                 tabindex={Math.abs(heroPosition(index)) > 1 ? -1 : undefined}
                 data-hero-product
-                data-product-name={category.title}
+                data-product-name={formatHeroTitle(category.title)}
                 data-hero-position={heroPosition(index)}
               >
-                <span class="orbea-hero-product-media"><img src={category.image} alt={category.title} loading={index === heroInitialIndex ? "eager" : "lazy"} decoding="async" /></span>
-                <span class="orbea-hero-product-name">{category.title === "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS" ? <><span>СИСТЕМЫ ХРАНЕНИЯ</span><span>ЭНЕРГИИ ESS</span></> : category.title}</span>
+                <span class="orbea-hero-product-media"><img src={category.image} alt={formatHeroTitle(category.title)} loading={index === heroInitialIndex ? "eager" : "lazy"} decoding="async" /></span>
+                <span class="orbea-hero-product-name">{category.title === "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS" ? <><span>СИСТЕМЫ ХРАНЕНИЯ</span><span>ЭНЕРГИИ ESS</span></> : formatHeroTitle(category.title)}</span>
               </a>
             ))}
             </div>
             <button class="orbea-hero-arrow orbea-hero-arrow-next" type="button" aria-label="Следующая категория" aria-controls="hero-products-viewport" data-hero-next>
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
             </button>
-            <span class="sr-only" aria-live="polite" data-hero-status>{heroCategories[heroInitialIndex].title}, {heroInitialIndex + 1} из {heroCategories.length}</span>
+            <span class="sr-only" aria-live="polite" data-hero-status>{formatHeroTitle(heroCategories[heroInitialIndex].title)}, {heroInitialIndex + 1} из {heroCategories.length}</span>
           </div>
         </section>
 
@@ -213,9 +224,6 @@ const heroPosition = (index: number) => {
         </div>
         <div class="orbea-footer-links">
           {footerGroups.map((group) => <div><h3>{group.title}</h3><ul>{group.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul></div>)}
-        </div>
-        <div class="orbea-footer-bottom">
-          <div class="orbea-footer-location"><span>◎ Россия</span></div>
         </div>
         <div class="orbea-legal"><span>© 2026 NIKASS. Россия</span></div>
       </footer>

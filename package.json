@@ -51,6 +51,7 @@
     "build": "bun run --filter '*' --sequential build",
     "build:webapp": "bun run --cwd webapp build",
     "build:website": "bun run --cwd website build",
+    "catalog:editor:package": "bun run build:website && bun run --cwd website package:catalog-editor",
     "build:backend": "bun run --cwd backend build",
     "check": "bun run template:check && bun run architecture:check && bun run audit && bun run typecheck && bun run lint && bun run test && bun run test:build-contracts",
     "template:check": "bun scripts/template-check.mjs",

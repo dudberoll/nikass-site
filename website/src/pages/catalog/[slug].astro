@@ -36,7 +36,7 @@ const articleLink = articleHref && `${articleHref}?from=${encodeURIComponent(`/c
   </head>
   <body class="store-page">
     <StoreHeader />
-    <main class="store-main product-page" id="main-content">
+    <main class="store-main product-page" id="main-content" data-product-slug={product.slug}>
       <p class="store-breadcrumb"><a href="/catalog">← Вернуться назад</a></p>
       <section class="product-layout">
         <div class="product-gallery"><img src={product.image} alt={product.name} /></div>
@@ -69,6 +69,34 @@ const articleLink = articleHref && `${articleHref}?from=${encodeURIComponent(`/c
         specificationTables.forEach((table) => { table.hidden = table !== selected; });
       };
       window.addEventListener("nikass:product-variant-change", (event) => selectModelSpecifications(event.detail?.sku ?? ""));
+    </script>
+
+    <script>
+      import { loadCatalogEdits } from "../../data/catalog-editor";
+
+      const productSlug = document.querySelector<HTMLElement>("[data-product-slug]")?.dataset.productSlug ?? "";
+      const updateSpecifications = () => {
+        const edits = loadCatalogEdits().edits.products[productSlug]?.characteristics;
+        for (const table of document.querySelectorAll<HTMLTableElement>("[data-product-specs-sku]")) {
+          const rows = edits?.[table.dataset.productSpecsSku ?? ""];
+          const body = table.tBodies[0];
+          if (!rows || !body) continue;
+          body.replaceChildren(...rows.map(({ label, value }) => {
+            const row = document.createElement("tr");
+            const name = document.createElement("th");
+            const content = document.createElement("td");
+            name.scope = "row";
+            name.textContent = label;
+            content.textContent = value;
+            row.append(name, content);
+            return row;
+          }));
+        }
+      };
+
+      updateSpecifications();
+      window.addEventListener("storage", updateSpecifications);
+      window.addEventListener("nikass:catalog-edits-change", updateSpecifications);
     </script>
   </body>
 </html>

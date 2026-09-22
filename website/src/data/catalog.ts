@@ -46,7 +46,7 @@ export const HERO_CATEGORIES = [
   { title: "AGM АККУМУЛЯТОРЫ", label: "AGM аккумуляторы", category: "AGM аккумуляторы", image: "/assets/images/category-agm-batteries.webp", icon: "/assets/images/category-icons/agm-battery.png" },
   { title: "LiFePO4 АККУМУЛЯТОРЫ", label: "LiFePO4 аккумуляторы", category: "LiFePO4 аккумуляторы", image: "/assets/images/category-lifepo4-batteries.webp", icon: "/assets/images/category-icons/lifepo4-battery.png" },
   { title: "ГИБРИДНЫЕ ИНВЕРТОРЫ", label: "Гибридные инверторы", category: "Гибридные инверторы", image: "/assets/images/category-hybrid-inverters.webp", icon: "/assets/images/category-icons/hybrid-inverter.png" },
-  { title: "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS", label: "Системы хранения энергии ESS", category: "Системы хранения энергии ESS", image: "/assets/images/category-portable-charging-stations.webp", icon: "/assets/images/category-icons/energy-storage-ess.png" },
+  { title: "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS", label: "Системы хранения энергии ESS", category: "Системы хранения энергии ESS", image: "/assets/images/category-energy-storage-ess.webp", icon: "/assets/images/category-icons/energy-storage-ess.png" },
   { title: "POWERBANK", label: "POWERBANK", category: "POWERBANK", image: "/assets/images/category-powerbanks.webp", icon: "/assets/images/category-icons/powerbank.png" },
 ] as const;
 

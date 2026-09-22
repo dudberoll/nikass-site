@@ -13,6 +13,7 @@ playwright-report/
 test-results/
 webapp/e2e/.artifacts/
 website/e2e/.artifacts/
+website/nikass-catalog-editor.zip
 mobile/.expo/
 mobile/.maestro/reports/
 mobile/expo-env.d.ts
