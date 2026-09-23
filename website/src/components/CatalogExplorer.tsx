@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { defaultCardDescription, emptyCatalogEdits, loadCatalogEdits } from "../data/catalog-editor";
 import { ALL_PRODUCTS_LABEL, AVAILABILITY_LABELS, formatPrice, HERO_CATEGORIES, productAvailability, type Product } from "../data/catalog";
 
 type CatalogCategory = (typeof HERO_CATEGORIES)[number];
@@ -9,6 +10,7 @@ export default function CatalogExplorer({ products, categories }: { products: Pr
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("default");
   const [hydrated, setHydrated] = useState(false);
+  const [edits, setEdits] = useState(emptyCatalogEdits);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -16,8 +18,15 @@ export default function CatalogExplorer({ products, categories }: { products: Pr
     const requestedCategory = params.get("category") ?? "";
     const requested = categories.find((item) => item.title === requestedCategory || item.label === requestedCategory || item.category === requestedCategory);
     setCategory(requested?.title ?? "");
+    const syncEdits = () => setEdits(loadCatalogEdits(products).edits);
+    syncEdits();
+    window.addEventListener("storage", syncEdits);
+    return () => window.removeEventListener("storage", syncEdits);
+  }, [categories, products]);
+
+  useEffect(() => {
     setHydrated(true);
-  }, [categories]);
+  }, []);
 
   const visible = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("ru-RU");
@@ -45,11 +54,13 @@ export default function CatalogExplorer({ products, categories }: { products: Pr
         const variant = product.variants[0];
         const availability = productAvailability(product);
         const lowestPrice = Math.min(...product.variants.map((item) => item.price));
+        const description = edits.products[product.slug]?.cardDescription ?? defaultCardDescription(product);
         return <article className="store-product-card" data-product-card data-variant-count={product.variants.length} key={product.slug}>
           <a className="store-product-image" href={`/catalog/${product.slug}`}><img src={product.image} alt={product.name} loading="lazy" /></a>
           <div className="store-product-card-body">
             <p className="store-product-category">{product.category}</p>
             <h2><a href={`/catalog/${product.slug}`}>{product.name}</a></h2>
+            {description && <p className="store-product-card-description">{description}</p>}
             {product.variants.length > 1 && <p className="store-product-variants">Варианты: {product.variants.length} · <a href={`/catalog/${product.slug}`}>Выбрать вариант</a></p>}
             <span className={`product-availability is-${availability}`}>{AVAILABILITY_LABELS[availability]}</span>
             <div className="store-product-bottom"><strong>{product.variants.length > 1 ? "от " : ""}{formatPrice(lowestPrice)}</strong>{product.variants.length === 1 && variant?.oldPrice && <del>{formatPrice(variant.oldPrice)}</del>}</div>

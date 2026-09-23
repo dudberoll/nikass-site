@@ -1,0 +1,49 @@
+---
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import CatalogEditor from "../components/CatalogEditor";
+import StoreFooter from "../components/StoreFooter.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import { loadCatalogProducts } from "../data/catalog";
+import "../styles/global.css";
+
+const publicDirectory = fileURLToPath(new URL("../../public/", import.meta.url));
+const products = (await loadCatalogProducts()).map((product) => {
+  const sku = /^[a-z\d_-]+$/i.test(product.sku) ? product.sku : "";
+  const candidates = sku
+    ? [
+      ["products_clean", sku, "product.webp"],
+      ["products_clean", sku, "product.png"],
+      ["products", `${sku}.webp`],
+      ["products", `${sku}.png`],
+    ]
+    : [];
+  const localImage = candidates.find((parts) => existsSync(join(publicDirectory, ...parts)));
+  return localImage ? { ...product, image: `/${localImage.join("/")}` } : product;
+});
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Локальный редактор описаний и характеристик каталога NIKASS." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Редактор каталога — NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main catalog-editor-page" id="main-content">
+      <section class="store-intro catalog-editor-intro">
+        <p class="store-eyebrow">NIKASS / ЛОКАЛЬНЫЙ ЧЕРНОВИК</p>
+        <h1>Редактор каталога</h1>
+        <p>Меняйте короткие описания и характеристики. Правки сохраняются в этом браузере; JSON-файл можно перенести на другой компьютер.</p>
+      </section>
+      <CatalogEditor products={products} client:only="react" />
+    </main>
+    <StoreFooter />
+  </body>
+</html>
