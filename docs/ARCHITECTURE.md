@@ -117,7 +117,7 @@ The webapp follows these client rules:
 - `src/platform/intl` owns the locale-pinned formatters shared across features (today: dates).
 - `src/features/<context>` owns endpoint paths, schemas, server-state adapters, providers, and product UI for that context.
 - Routes and `src/main.tsx` are thin composition files and import features through their public `index.ts`.
-- `src/components/ui` and `src/platform` never import product features. Features may use platform code and UI primitives; cross-feature imports must use the target feature's public index.
+- Shared primitive modules (the flat shadcn-derived set enforced by `scripts/architecture-check.mjs`) and code in `src/platform` never import product features. Features may use platform code and shared primitives; cross-feature imports must use the target feature's public index.
 
 Auth in `src/features/auth` is the client golden path: its API adapter owns auth endpoints and refresh/retry, its provider exposes only auth behavior, and pages never receive a universal API service locator. Future providers should receive narrow context APIs such as `BillingApi` or `NotificationsApi` from composition.
 
@@ -131,18 +131,17 @@ test pins that table to the routes registered under each workspace layout and
 rejects route shapes the matcher does not understand; the sidebar menu is a
 presentation subset of it. The shared workspace shell owns the full shadcn
 dashboard-01 sidebar/inset visual unit; role navigation is a pure feature-owned
-map. Shared shell building blocks live in `src/components/dashboard`, while
+map. Shared shell building blocks live flat in `src/components`, while
 account and admin panels stay with their owning feature. Dashboard metrics and
 tables render only contract-validated API state; the template does not ship fake
 analytics or demo chart data.
 
-UI primitives in `src/components/ui` are the complete local shadcn library and
-remain available for future product work. Closed product components own their
-visual surface and accept semantic data, state, and callbacks rather than
-`className` or `style`. Routes/pages compose them through layout wrappers.
-Low-level UI and explicit layout primitives are the only styling-prop boundary.
-Product components expose semantic data, state, and callbacks; inherited DOM
-contracts must be narrowed locally instead of forwarding `className` or `style`.
+The complete local shadcn library now lives flat in `src/components`. Its public
+component APIs reject visual overrides; variants belong to each component,
+while `Wrapper` owns layout placement. Routes/pages compose shared components
+and feature UI through those boundaries. Product components expose semantic
+data, state, and callbacks; inherited DOM contracts must be narrowed locally
+instead of forwarding `className` or `style`.
 
 The `mobile` branch selects cookie auth for Expo Web and token auth for native
 iOS/Android. Browser refresh credentials must never be persisted in

@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
-import { Empty } from '../src/components/ui/empty'
+import { Empty } from '../src/components/empty'
 import { SessionLoadingSection } from '../src/components/WebRouteSections'
 
 function emptySlot(markup: string) {

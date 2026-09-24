@@ -41,7 +41,7 @@ bun run storybook:build
 
 From the repository root, use `bun run dev:webapp`, `bun run build:webapp`, `bun run typecheck:webapp`, `bun run test:webapp`, `bun run e2e:webapp`, `bun run storybook:webapp`, and `bun run storybook:build:webapp`.
 
-Storybook runs locally on port `6006`. It catalogs every module in `src/components/ui`, reusable
+Storybook runs locally on port `6006`. It catalogs every flat component module in `src/components`, reusable
 route-independent components such as typography and dashboard composition, plus non-production
 examples of common forms, metrics, tables, and data states. Stories use the real global CSS,
 theme switcher, fonts, tooltips, and portals, but deliberately exclude routes, auth/API state, and
@@ -99,13 +99,13 @@ update only the current-user query. Role mutations invalidate only admin
 dashboard/directory queries; a target user’s revoked session is observed by that
 client on its next authenticated request or bootstrap.
 
-Keep raw fetch, base URL handling, and shared error parsing in the endpoint-agnostic `src/platform/api`. Each `src/features/<context>` owns its paths, schemas, queries, and provider. Pages import features only through public `index.ts`; features use platform and UI primitives; platform and `src/components/ui` never import product features. Run `bun run architecture:check` after changing boundaries.
+Keep raw fetch, base URL handling, and shared error parsing in the endpoint-agnostic `src/platform/api`. Each `src/features/<context>` owns its paths, schemas, queries, and provider. Pages import features only through public `index.ts`; features use platform and UI primitives; platform and the shadcn-derived shared primitive modules never import product features. Run `bun run architecture:check` after changing boundaries.
 
-Use shadcn/ui for web interface primitives. Treat `src/components/ui` as official shadcn registry output that can be regenerated as a unit. Keep app-specific composition and wrappers outside that directory: project typography lives at `src/components/typography.tsx`, shared dashboard composition at `src/components/dashboard`, and product panels beside their owning feature state. Import registry primitives through `@/components/ui/*`.
+Use shadcn/ui for web interface primitives. All shared components live flat in `src/components`, including registry primitives and dashboard composition. `components.json` points the local shadcn generator at that directory. Product panels remain beside their owning feature state. Import shared components from `@/components/<name>`.
 
 Product components own their surface, padding, radius, internal spacing, typography, responsive behavior, and control sizing. Their public props are semantic data, states, and callbacks—never cosmetic `className` or `style` escape hatches. Pages may arrange closed product components with layout wrappers; only low-level UI and explicit layout primitives accept constrained styling props. Narrow inherited DOM props locally with literal `Pick`/`Omit`, as `DashboardLink` does, and keep product-component props explicit. Avoid one-off global CSS classes for product UI; component-owned visuals use Tailwind utilities and the shadcn theme tokens from `src/index.css`.
 
-Product typography goes through `src/components/typography.tsx`. Use `Typography` for page copy, headings `h1` through `h6`, captions, emphasis, shortcuts, code/kbd text, and screen-reader-only text. The local ESLint policy enforces this in application code while excluding official generated `src/components/ui` files.
+Product typography goes through `src/components/typography.tsx`. Use `Typography` for page copy, headings `h1` through `h6`, captions, emphasis, shortcuts, code/kbd text, and screen-reader-only text. The local ESLint policy enforces this in application code and excludes the generated primitive modules by filename.
 
 The current shadcn configuration is `radix-vega` with the `hugeicons` icon library and CSS variables, as recorded in `components.json`. The registry was refreshed from the official CLI with `npx shadcn@latest add --all -c webapp --overwrite -y`; the auth composition comes from `login-02` and `signup-02`. Generated inputs use the standard Vega `rounded-md` primitive. The authenticated shell keeps real product/API state rather than registry demo data. Do not add community registries or custom generator output unless the product asks for them.
 
@@ -116,7 +116,7 @@ bun run --cwd webapp ui:info
 bun run --cwd webapp ui:add -- <component>
 ```
 
-Use the local `shadcn` devDependency pinned in `webapp/package.json` and `bun.lock`; do not use `shadcn@latest` for routine refreshes because it can produce registry output that no longer matches this template. If generated files need compatibility fixes for current package versions, keep the edits small and leave app-specific composition outside `src/components/ui`.
+Use the local `shadcn` devDependency pinned in `webapp/package.json` and `bun.lock`; do not use `shadcn@latest` for routine refreshes because it can produce registry output that no longer matches this template. If generated files need compatibility fixes for current package versions, keep the edits small and keep feature-owned behavior in its feature module.
 
 ## E2E
 

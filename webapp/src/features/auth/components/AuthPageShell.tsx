@@ -10,13 +10,15 @@ export function AuthPageShell({ children }: { children: ReactNode }) {
     <main className="grid min-h-svh lg:grid-cols-2">
       <section className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
-          <Link className="flex items-center gap-2" search={{ returnTo: undefined }} to="/login">
-            <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <HugeiconsIcon aria-hidden icon={GalleryVerticalEndIcon} size={16} strokeWidth={2} />
+          <Link search={{ returnTo: undefined }} to="/login">
+            <span className="flex items-center gap-2">
+              <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                <HugeiconsIcon aria-hidden icon={GalleryVerticalEndIcon} size={16} strokeWidth={2} />
+              </span>
+              <Typography as="span" variant="control">
+                web_app_demo
+              </Typography>
             </span>
-            <Typography as="span" variant="control">
-              web_app_demo
-            </Typography>
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center py-8">

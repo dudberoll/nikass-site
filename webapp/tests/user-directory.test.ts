@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../src/components/ui/table'
+} from '../src/components/table'
 import { adminUsersQueryOptions } from '../src/features/admin/queries'
 import { UserDirectory } from '../src/features/admin/UserDirectory'
 import { AuthContext, type AuthContextValue } from '../src/features/auth/context'

@@ -25,3 +25,14 @@ export const Scale: Story = {
     </div>
   ),
 }
+
+export const SemanticStyles: Story = {
+  render: () => (
+    <div className="grid max-w-md gap-3 p-5">
+      <Typography as="a" href="#" variant="link">Product link</Typography>
+      <Typography as="a" href="#" variant="linkSm">Compact link</Typography>
+      <Typography numeric variant="h3">12,345.67</Typography>
+      <Typography role="alert" tone="destructive" variant="bodySm">Something needs attention.</Typography>
+    </div>
+  ),
+}

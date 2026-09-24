@@ -1,8 +1,5 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
-
-import { cn } from "@/lib/utils"
 
 const typographyVariants = cva("min-w-0 tracking-normal", {
   variants: {
@@ -13,6 +10,8 @@ const typographyVariants = cva("min-w-0 tracking-normal", {
       h4: "font-heading text-xl leading-snug font-semibold",
       h5: "font-heading text-lg leading-snug font-medium",
       h6: "font-heading text-base leading-snug font-medium",
+      link: "text-base leading-7 font-normal underline underline-offset-4",
+      linkSm: "text-sm leading-normal font-normal underline-offset-4 hover:underline",
       lead: "text-lg leading-7 font-normal",
       body: "text-base leading-7 font-normal",
       bodySm: "text-sm leading-normal font-normal",
@@ -50,24 +49,8 @@ const typographyVariants = cva("min-w-0 tracking-normal", {
       sidebar: "text-sidebar-foreground",
       inverse: "text-background",
     },
-    align: {
-      start: "text-left",
-      center: "text-center",
-      end: "text-right",
-    },
-    balance: {
-      true: "text-balance",
-    },
-    pretty: {
-      true: "text-pretty",
-    },
-    truncate: {
-      true: "truncate",
-    },
-    wrap: {
-      normal: "",
-      nowrap: "whitespace-nowrap",
-      break: "break-all",
+    numeric: {
+      true: "tabular-nums",
     },
   },
   defaultVariants: {
@@ -87,6 +70,8 @@ const defaultElementByVariant: Record<TypographyVariant, React.ElementType> = {
   h4: "h4",
   h5: "h5",
   h6: "h6",
+  link: "a",
+  linkSm: "a",
   lead: "p",
   body: "p",
   bodySm: "p",
@@ -112,49 +97,30 @@ const defaultElementByVariant: Record<TypographyVariant, React.ElementType> = {
 type TypographyOwnProps<TElement extends React.ElementType = "span"> =
   VariantProps<typeof typographyVariants> & {
     as?: TElement
-    asChild?: boolean
   }
 
 type TypographyProps<TElement extends React.ElementType = "span"> =
   TypographyOwnProps<TElement> &
     Omit<
       React.ComponentPropsWithoutRef<TElement>,
-      keyof TypographyOwnProps<TElement>
+      keyof TypographyOwnProps<TElement> | "className" | "style"
     >
 
 function Typography<TElement extends React.ElementType = "span">({
   as,
-  asChild = false,
-  className,
   variant,
   tone,
-  align,
-  balance,
-  pretty,
-  truncate,
-  wrap,
+  numeric,
   ...props
 }: TypographyProps<TElement>) {
   const resolvedVariant = variant ?? "body"
-  const Comp = asChild ? Slot.Root : (as ?? defaultElementByVariant[resolvedVariant])
-  const slotProps = asChild ? {} : { "data-slot": "typography" }
+  const Comp = as ?? defaultElementByVariant[resolvedVariant]
 
   return (
     <Comp
-      {...slotProps}
+      data-slot="typography"
       data-variant={resolvedVariant}
-      className={cn(
-        typographyVariants({
-          variant: resolvedVariant,
-          tone,
-          align,
-          balance,
-          pretty,
-          truncate,
-          wrap,
-        }),
-        className
-      )}
+      className={typographyVariants({ variant: resolvedVariant, tone, numeric })}
       {...props}
     />
   )

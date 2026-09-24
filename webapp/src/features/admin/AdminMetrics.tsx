@@ -10,9 +10,9 @@ import {
   AlertAction,
   AlertDescription,
   AlertTitle,
-} from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+} from '@/components/alert'
+import { Button } from '@/components/button'
+import { Skeleton } from '@/components/skeleton'
 import { useAdminDashboardQuery } from './queries'
 
 export function AdminMetrics() {
@@ -25,9 +25,9 @@ export function AdminMetrics() {
         className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
         role="status"
       >
-        <Skeleton className="h-40 rounded-4xl" />
-        <Skeleton className="h-40 rounded-4xl" />
-        <Skeleton className="h-40 rounded-4xl" />
+        <Skeleton variant="metric" />
+        <Skeleton variant="metric" />
+        <Skeleton variant="metric" />
       </div>
     )
   }

@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "storybook": "storybook dev --port 6007 --no-open",
+    "storybook:build": "storybook build --output-dir storybook-static",
     "package:catalog-editor": "python3 scripts/package_catalog_editor.py",
     "check": "astro check",
     "typecheck": "astro check",

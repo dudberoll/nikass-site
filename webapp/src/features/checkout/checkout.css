@@ -1,9 +1,7 @@
 .nikass-checkout { max-width: 760px; margin: 0 auto; padding: 40px 24px; }
 .nikass-checkout fieldset { display: grid; gap: 16px; min-width: 0; }
 .nikass-checkout label { display: block; margin-bottom: 8px; }
-.nikass-checkout a { text-decoration: underline; }
 .checkout-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.checkout-error { color: #b42318; font-size: 14px; }
 .nikass-checkout .checkout-consent { display: flex; align-items: start; gap: 12px; }
 .checkout-consent input { width: 22px; height: 22px; flex-shrink: 0; }
 .checkout-actions { display: flex; flex-wrap: wrap; gap: 12px; }

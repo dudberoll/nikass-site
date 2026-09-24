@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode, type SubmitEvent } from "react";
-import { MessageScroller } from "@shadcn/react/message-scroller";
+import { MessageScroller } from "./MessageScroller";
 import { chatResponseSchema, chatTranscriptionResponseSchema } from "@web-app-demo/contracts";
 import { convertAudioToWav } from "../lib/audio";
 
@@ -275,10 +275,10 @@ function MessageScrollerPanel({
 
     <div className="message-scroller-body">
       {error && <p className="message-scroller-error" role="alert">{error}</p>}
-      <MessageScroller.Root className="message-scroller-root">
-        <MessageScroller.Viewport className="message-scroller-viewport">
-          <MessageScroller.Content className="message-scroller-content" aria-busy={streaming}>
-            {messages.map((message) => <MessageScroller.Item className="message-scroller-row" key={message.id} messageId={message.id} scrollAnchor={message.role === "user"}>
+      <MessageScroller.Root>
+        <MessageScroller.Viewport>
+          <MessageScroller.Content aria-busy={streaming}>
+            {messages.map((message) => <MessageScroller.Item key={message.id} messageId={message.id} scrollAnchor={message.role === "user"}>
               <article className={`message-scroller-message is-${message.role}`}>
                 <div className="message-scroller-avatar" aria-hidden="true">{message.role === "user" ? <HumanAvatar /> : "N"}</div>
                 <div className="message-scroller-bubble">
@@ -289,7 +289,7 @@ function MessageScrollerPanel({
             </MessageScroller.Item>)}
           </MessageScroller.Content>
         </MessageScroller.Viewport>
-        <MessageScroller.Button className="message-scroller-end-button" direction="end" aria-label="К последнему сообщению"><SendIcon direction="down" /></MessageScroller.Button>
+          <MessageScroller.Button direction="end" aria-label="К последнему сообщению"><SendIcon direction="down" /></MessageScroller.Button>
         {messages.length === 0 && <EmptyState />}
       </MessageScroller.Root>
     </div>

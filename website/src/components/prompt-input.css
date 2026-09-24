@@ -1,0 +1,46 @@
+.prompt-input-root { position: relative; display: flex; width: 100%; max-width: 320px; flex-direction: column; transition: max-width .4s cubic-bezier(.22, 1, .36, 1); }
+.prompt-input-root[data-expanded="true"] { max-width: 480px; }
+.prompt-input-root[data-variant="embedded"] { max-width: none; }
+.prompt-input-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.prompt-input-attachments { position: relative; z-index: 1; display: flex; gap: 8px; height: 0; margin: 0 20px; overflow: hidden; opacity: 0; transform: translateY(100%); transition: height .4s cubic-bezier(.22, 1, .36, 1), opacity .2s ease, transform .4s cubic-bezier(.22, 1, .36, 1); }
+.prompt-input-attachments.is-visible { height: 68px; opacity: 1; transform: translateY(0); }
+.prompt-input-thumb { position: relative; flex: 0 0 48px; width: 48px; height: 48px; margin-top: 10px; overflow: visible; border: 1px solid #deded9; border-radius: 12px; background: #fff; animation: prompt-input-in .4s both; }
+.prompt-input-thumb > button:first-child { display: block; width: 100%; height: 100%; padding: 0; overflow: hidden; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
+.prompt-input-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.prompt-input-remove { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: #111; color: #fff; font: inherit; font-size: 14px; line-height: 1; cursor: pointer; }
+.prompt-input-surface { position: relative; z-index: 2; width: 100%; overflow: hidden; border: 1px solid #deded9; border-radius: 24px; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .08); transition: height .4s cubic-bezier(.22, 1, .36, 1), border-color .2s ease, box-shadow .2s ease; }
+.prompt-input-surface.is-expanded { overflow: visible; }
+.prompt-input-surface:focus-within { border-color: #deded9; box-shadow: 0 0 0 2px #ecece8; }
+.prompt-input-textarea { position: absolute; inset: 0 0 auto; z-index: 1; width: 100%; min-height: 68px; max-height: 160px; padding: 14px 48px 42px 16px; border: 0; resize: none; background: transparent; color: #111; font: inherit; font-size: 14px; line-height: 22px; outline: 0; opacity: 0; transform: scale(.95) translateY(-4px); pointer-events: none; transition: opacity .3s ease, transform .3s ease, height .4s cubic-bezier(.22, 1, .36, 1); }
+.prompt-input-textarea.is-visible { opacity: 1; transform: none; pointer-events: auto; }
+.prompt-input-textarea:focus-visible, .prompt-input-placeholder:focus-visible { outline: 0 !important; box-shadow: none !important; }
+.prompt-input-placeholder { position: absolute; inset: 0; z-index: 1; width: 100%; padding: 15px 48px 15px 16px; border: 0; background: transparent; color: #666; font: inherit; font-size: 14px; text-align: left; cursor: text; transition: opacity .3s ease, transform .3s ease; }
+.prompt-input-placeholder.is-hidden { opacity: 0; transform: translateY(4px) scale(1.05); pointer-events: none; }
+.prompt-input-bottom-actions { position: absolute; right: 48px; bottom: 8px; left: 12px; z-index: 3; display: flex; align-items: center; gap: 4px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .3s ease, transform .3s ease; }
+.prompt-input-bottom-actions.is-visible { opacity: 1; transform: none; pointer-events: auto; }
+.prompt-input-control { display: inline-flex; align-items: center; min-height: 28px; padding: 4px 8px; border: 0; border-radius: 99px; background: transparent; color: #555; font: inherit; font-size: 12px; cursor: pointer; }
+.prompt-input-control:disabled { cursor: not-allowed; opacity: .4; }
+.prompt-input-plus { width: 28px; margin-left: auto; padding: 0; justify-content: center; }
+.prompt-input-wave { position: absolute; right: 48px; bottom: 8px; z-index: 3; display: flex; width: 0; height: 28px; align-items: center; justify-content: flex-end; gap: 3px; overflow: hidden; opacity: 0; transform: translateX(12px); transition: width .4s cubic-bezier(.22, 1, .36, 1), opacity .3s ease, transform .4s cubic-bezier(.22, 1, .36, 1); }
+.prompt-input-wave.is-visible { width: 64px; opacity: 1; transform: none; }
+.prompt-input-wave i { display: block; width: 4px; min-height: 4px; border-radius: 3px; background: #111; transition: height .075s ease-out; }
+.prompt-input-action { position: absolute; right: 8px; bottom: 8px; z-index: 4; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: #111; color: #fff; cursor: pointer; transition: opacity .2s ease, transform .2s ease; }
+.prompt-input-action:hover { opacity: .85; }
+.prompt-input-action:active { transform: scale(.94); }
+.prompt-input-action > span { position: absolute; display: grid; place-items: center; opacity: 0; transform: scale(.5) rotate(45deg); filter: blur(1px); transition: opacity .3s ease, transform .3s ease, filter .3s ease; }
+.prompt-input-action > span.is-visible { opacity: 1; transform: none; filter: none; }
+.prompt-input-icon { width: 14px; height: 14px; }
+.prompt-input-error { margin: 8px 16px 0; color: #b42318; font-size: 12px; line-height: 1.35; }
+.prompt-input-gallery { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; }
+.prompt-input-gallery-backdrop { position: absolute; inset: 0; background: rgba(17, 17, 17, .7); backdrop-filter: blur(10px); transition: opacity .4s ease; }
+.prompt-input-gallery-image { position: fixed; z-index: 1; object-fit: contain; border-radius: 20px; background: #ecece8; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); transition: top .45s cubic-bezier(.22, 1, .36, 1), left .45s cubic-bezier(.22, 1, .36, 1), width .45s cubic-bezier(.22, 1, .36, 1), height .45s cubic-bezier(.22, 1, .36, 1), transform .45s cubic-bezier(.22, 1, .36, 1); }
+.prompt-input-gallery-close { position: fixed; top: 16px; right: 16px; z-index: 2; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: #fff; color: #111; font: inherit; font-size: 24px; line-height: 1; cursor: pointer; }
+@keyframes prompt-input-in { from { opacity: 0; transform: translateY(-12px) scale(.9); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt-input-root *, .prompt-input-root *::before, .prompt-input-root *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+
+@media (max-width: 600px) {
+  .prompt-input-root { max-width: 100%; }
+}

@@ -4,9 +4,10 @@ import { passwordResetConfirmRequestSchema } from '@web-app-demo/contracts'
 import { useId, useState } from 'react'
 
 import { Typography } from '@/components/typography'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { PasswordInput } from '@/components/PasswordInput'
+import { Alert, AlertDescription, AlertTitle } from '@/components/alert'
+import { Button } from '@/components/button'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/field'
 import { ApiRequestError } from '@/platform/api'
 import { useAuth } from '../use-auth'
 import { FormAlert } from './form-errors'
@@ -18,7 +19,6 @@ import {
   passwordConfirmationErrors,
   toValidationErrors,
 } from './form-validation'
-import { PasswordInput } from './PasswordInput'
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const auth = useAuth()
@@ -79,10 +79,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
     >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <Typography as="h1" variant="h3" balance>
+          <Typography as="h1" variant="h3">
             Choose a new password
           </Typography>
-          <Typography variant="bodySm" tone="muted" balance>
+          <Typography variant="bodySm" tone="muted">
             Your new password will sign out every existing session
           </Typography>
         </div>
@@ -104,7 +104,6 @@ export function ResetPasswordForm({ token }: { token: string }) {
                   ].filter(Boolean).join(' ')}
                   aria-invalid={hasErrors(fieldErrors.password)}
                   autoComplete="new-password"
-                  className="bg-background"
                   id={passwordId}
                   name={field.name}
                   onBlur={field.handleBlur}
@@ -133,7 +132,6 @@ export function ResetPasswordForm({ token }: { token: string }) {
                   aria-describedby={errorId(fieldErrors.confirmPassword, confirmPasswordErrorId)}
                   aria-invalid={hasErrors(fieldErrors.confirmPassword)}
                   autoComplete="new-password"
-                  className="bg-background"
                   id={confirmPasswordId}
                   name={field.name}
                   onBlur={field.handleBlur}
@@ -163,11 +161,11 @@ export function ResetPasswordForm({ token }: { token: string }) {
           </>
         )}
 
-        <Typography align="center" variant="bodySm">
-          <Link className="underline underline-offset-4" search={{ returnTo: undefined }} to="/login">
-            Back to login
+        <div className="text-center">
+          <Link search={{ returnTo: undefined }} to="/login">
+            <Typography as="span" variant="linkSm">Back to login</Typography>
           </Link>
-        </Typography>
+        </div>
       </FieldGroup>
     </form>
   )

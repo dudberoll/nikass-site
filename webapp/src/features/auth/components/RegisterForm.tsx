@@ -4,9 +4,10 @@ import { registerRequestSchema, type RegisterRequest } from '@web-app-demo/contr
 import { useId, useState } from 'react'
 
 import { Typography } from '@/components/typography'
-import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/PasswordInput'
+import { Button } from '@/components/button'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/field'
+import { Input } from '@/components/input'
 import { ApiRequestError } from '@/platform/api'
 import { useAuth } from '../use-auth'
 import { FormAlert } from './form-errors'
@@ -18,7 +19,6 @@ import {
   passwordConfirmationErrors,
   toValidationErrors,
 } from './form-validation'
-import { PasswordInput } from './PasswordInput'
 
 export function RegisterForm({ returnTo }: { returnTo?: string }) {
   const auth = useAuth()
@@ -75,12 +75,12 @@ export function RegisterForm({ returnTo }: { returnTo?: string }) {
         void form.handleSubmit()
       }}
     >
-      <FieldGroup className="gap-5">
+      <FieldGroup variant="form">
         <div className="flex flex-col items-center gap-1 text-center">
-          <Typography as="h1" variant="h3" balance>
+          <Typography as="h1" variant="h3">
             Create your account
           </Typography>
-          <Typography variant="bodySm" tone="muted" balance>
+          <Typography variant="bodySm" tone="muted">
             Fill in the form below to create your account
           </Typography>
         </div>
@@ -92,9 +92,9 @@ export function RegisterForm({ returnTo }: { returnTo?: string }) {
               aria-describedby={errorId(fieldErrors.displayName, displayNameErrorId)}
               aria-invalid={hasErrors(fieldErrors.displayName)}
               autoComplete="name"
-              className="bg-background"
               id={displayNameId}
               name={field.name}
+              variant="surface"
               onBlur={field.handleBlur}
               onChange={(event) => {
                 field.handleChange(event.target.value)
@@ -116,10 +116,10 @@ export function RegisterForm({ returnTo }: { returnTo?: string }) {
               aria-describedby={errorId(fieldErrors.email, emailErrorId)}
               aria-invalid={hasErrors(fieldErrors.email)}
               autoComplete="email"
-              className="bg-background"
               id={emailId}
               inputMode="email"
               name={field.name}
+              variant="surface"
               onBlur={field.handleBlur}
               onChange={(event) => {
                 field.handleChange(event.target.value)
@@ -145,7 +145,6 @@ export function RegisterForm({ returnTo }: { returnTo?: string }) {
               ].filter(Boolean).join(' ')}
               aria-invalid={hasErrors(fieldErrors.password)}
               autoComplete="new-password"
-              className="bg-background"
               id={passwordId}
               name={field.name}
               onBlur={field.handleBlur}
@@ -171,7 +170,6 @@ export function RegisterForm({ returnTo }: { returnTo?: string }) {
               aria-describedby={errorId(fieldErrors.confirmPassword, confirmPasswordErrorId)}
               aria-invalid={hasErrors(fieldErrors.confirmPassword)}
               autoComplete="new-password"
-              className="bg-background"
               id={confirmPasswordId}
               name={field.name}
               onBlur={field.handleBlur}
@@ -198,12 +196,14 @@ export function RegisterForm({ returnTo }: { returnTo?: string }) {
           )} />
         </Field>
 
-        <FieldDescription className="text-center">
-          Already have an account?{' '}
-          <Link search={{ returnTo }} to="/login">
-            Sign in
-          </Link>
-        </FieldDescription>
+        <div className="text-center">
+          <FieldDescription>
+            Already have an account?{' '}
+            <Link search={{ returnTo }} to="/login">
+              Sign in
+            </Link>
+          </FieldDescription>
+        </div>
       </FieldGroup>
     </form>
   )

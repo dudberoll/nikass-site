@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
+import "./prompt-input.css";
 
 type PromptInputMeta = { attachments: File[] };
 
 export interface PromptInputProps {
   onSubmit?: (value: string, meta: PromptInputMeta) => void;
   placeholder?: string;
-  className?: string;
+  variant?: "default" | "embedded";
   defaultValue?: string;
   value?: string;
   onChange?: (value: string) => void;
@@ -54,7 +55,7 @@ function AttachmentGallery({ attachment, originRect, onClose }: { attachment: At
 export default function PromptInput({
   onSubmit,
   placeholder = "Ask anything",
-  className = "",
+  variant = "default",
   defaultValue = "",
   value: controlledValue,
   onChange,
@@ -225,7 +226,7 @@ export default function PromptInput({
     requestAnimationFrame(() => textareaRef.current?.focus());
   };
 
-  return <div className={`prompt-input-root ${className}`} style={{ maxWidth: expanded ? 480 : 320 }}>
+  return <div className="prompt-input-root" data-variant={variant} data-expanded={expanded}>
     <input ref={fileInputRef} className="prompt-input-hidden" type="file" accept="image/*" multiple onChange={chooseFiles} />
     <div className={`prompt-input-attachments ${attachments.length && expanded ? "is-visible" : ""}`}>
       {attachments.map((attachment, index) => <div key={attachment.id} className="prompt-input-thumb" style={{ animationDelay: `${index * 35}ms` }}>

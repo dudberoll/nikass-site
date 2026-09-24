@@ -14,7 +14,7 @@ import {
   type DashboardNavigationItem,
   SiteHeader,
 } from '@/components/dashboard'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/sidebar'
 import {
   homePathForRole,
   navigationItemsForRole,

@@ -4,15 +4,15 @@ import { loginRequestSchema, type LoginRequest } from '@web-app-demo/contracts'
 import { useId, useState } from 'react'
 
 import { Typography } from '@/components/typography'
-import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/PasswordInput'
+import { Button } from '@/components/button'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/field'
+import { Input } from '@/components/input'
 import { ApiRequestError } from '@/platform/api'
 import { useAuth } from '../use-auth'
 import { FormAlert } from './form-errors'
 import type { FieldErrors } from './form-model'
 import { clearFieldError, errorId, hasErrors, toValidationErrors } from './form-validation'
-import { PasswordInput } from './PasswordInput'
 
 export function LoginForm({ returnTo }: { returnTo?: string }) {
   const auth = useAuth()
@@ -54,12 +54,12 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
         void form.handleSubmit()
       }}
     >
-      <FieldGroup className="gap-5">
+      <FieldGroup variant="form">
         <div className="flex flex-col items-center gap-1 text-center">
-          <Typography as="h1" variant="h3" balance>
+          <Typography as="h1" variant="h3">
             Login to your account
           </Typography>
-          <Typography variant="bodySm" tone="muted" balance>
+          <Typography variant="bodySm" tone="muted">
             Enter your email below to login to your account
           </Typography>
         </div>
@@ -73,10 +73,10 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
                 aria-describedby={errorId(fieldErrors.email, emailErrorId)}
                 aria-invalid={hasErrors(fieldErrors.email)}
                 autoComplete="email"
-                className="bg-background"
                 id={emailId}
                 inputMode="email"
                 name={field.name}
+                variant="surface"
                 onBlur={field.handleBlur}
                 onChange={(event) => {
                   field.handleChange(event.target.value)
@@ -98,17 +98,16 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
             <Field data-invalid={hasErrors(fieldErrors.password)}>
               <div className="flex items-center">
                 <FieldLabel htmlFor={passwordId}>Password</FieldLabel>
-                <Typography asChild variant="bodySm">
-                  <Link className="ml-auto underline-offset-4 hover:underline" to="/forgot-password">
-                    Forgot your password?
+                <span className="ml-auto">
+                  <Link to="/forgot-password">
+                    <Typography as="span" variant="linkSm">Forgot your password?</Typography>
                   </Link>
-                </Typography>
+                </span>
               </div>
               <PasswordInput
                 aria-describedby={errorId(fieldErrors.password, passwordErrorId)}
                 aria-invalid={hasErrors(fieldErrors.password)}
                 autoComplete="current-password"
-                className="bg-background"
                 id={passwordId}
                 name={field.name}
                 onBlur={field.handleBlur}
@@ -137,12 +136,14 @@ export function LoginForm({ returnTo }: { returnTo?: string }) {
           />
         </Field>
 
-        <FieldDescription className="text-center">
-          Don&apos;t have an account?{' '}
-          <Link search={{ returnTo }} to="/signup">
-            Sign up
-          </Link>
-        </FieldDescription>
+        <div className="text-center">
+          <FieldDescription>
+            Don&apos;t have an account?{' '}
+            <Link search={{ returnTo }} to="/signup">
+              Sign up
+            </Link>
+          </FieldDescription>
+        </div>
       </FieldGroup>
     </form>
   )

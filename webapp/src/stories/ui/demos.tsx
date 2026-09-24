@@ -7,61 +7,62 @@ import {
 } from 'recharts'
 import { toast } from 'sonner'
 
-import * as AccordionUi from '@/components/ui/accordion'
-import * as AlertDialogUi from '@/components/ui/alert-dialog'
-import * as AlertUi from '@/components/ui/alert'
-import * as AspectRatioUi from '@/components/ui/aspect-ratio'
-import * as AvatarUi from '@/components/ui/avatar'
-import * as BadgeUi from '@/components/ui/badge'
-import * as BreadcrumbUi from '@/components/ui/breadcrumb'
-import * as ButtonGroupUi from '@/components/ui/button-group'
-import * as ButtonUi from '@/components/ui/button'
-import * as CalendarUi from '@/components/ui/calendar'
-import * as CardUi from '@/components/ui/card'
-import * as CarouselUi from '@/components/ui/carousel'
-import * as ChartUi from '@/components/ui/chart'
-import * as CheckboxUi from '@/components/ui/checkbox'
-import * as CollapsibleUi from '@/components/ui/collapsible'
-import * as ComboboxUi from '@/components/ui/combobox'
-import * as CommandUi from '@/components/ui/command'
-import * as ContextMenuUi from '@/components/ui/context-menu'
-import * as DialogUi from '@/components/ui/dialog'
-import * as DirectionUi from '@/components/ui/direction'
-import * as DrawerUi from '@/components/ui/drawer'
-import * as DropdownMenuUi from '@/components/ui/dropdown-menu'
-import * as EmptyUi from '@/components/ui/empty'
-import * as FieldUi from '@/components/ui/field'
-import * as HoverCardUi from '@/components/ui/hover-card'
-import * as InputGroupUi from '@/components/ui/input-group'
-import * as InputOtpUi from '@/components/ui/input-otp'
-import * as InputUi from '@/components/ui/input'
-import * as ItemUi from '@/components/ui/item'
-import * as KbdUi from '@/components/ui/kbd'
-import * as LabelUi from '@/components/ui/label'
-import * as MenubarUi from '@/components/ui/menubar'
-import * as NativeSelectUi from '@/components/ui/native-select'
-import * as NavigationMenuUi from '@/components/ui/navigation-menu'
-import * as PaginationUi from '@/components/ui/pagination'
-import * as PopoverUi from '@/components/ui/popover'
-import * as ProgressUi from '@/components/ui/progress'
-import * as RadioGroupUi from '@/components/ui/radio-group'
-import * as ResizableUi from '@/components/ui/resizable'
-import * as ScrollAreaUi from '@/components/ui/scroll-area'
-import * as SelectUi from '@/components/ui/select'
-import * as SeparatorUi from '@/components/ui/separator'
-import * as SheetUi from '@/components/ui/sheet'
-import * as SidebarUi from '@/components/ui/sidebar'
-import * as SkeletonUi from '@/components/ui/skeleton'
-import * as SliderUi from '@/components/ui/slider'
-import * as SonnerUi from '@/components/ui/sonner'
-import * as SpinnerUi from '@/components/ui/spinner'
-import * as SwitchUi from '@/components/ui/switch'
-import * as TableUi from '@/components/ui/table'
-import * as TabsUi from '@/components/ui/tabs'
-import * as TextareaUi from '@/components/ui/textarea'
-import * as ToggleGroupUi from '@/components/ui/toggle-group'
-import * as ToggleUi from '@/components/ui/toggle'
-import * as TooltipUi from '@/components/ui/tooltip'
+import * as AccordionUi from '@/components/accordion'
+import * as AlertDialogUi from '@/components/alert-dialog'
+import * as AlertUi from '@/components/alert'
+import * as AspectRatioUi from '@/components/aspect-ratio'
+import * as AvatarUi from '@/components/avatar'
+import * as BadgeUi from '@/components/badge'
+import * as BreadcrumbUi from '@/components/breadcrumb'
+import * as ButtonGroupUi from '@/components/button-group'
+import * as ButtonUi from '@/components/button'
+import * as CalendarUi from '@/components/calendar'
+import * as CardUi from '@/components/card'
+import * as CarouselUi from '@/components/carousel'
+import * as ChartUi from '@/components/chart'
+import * as CheckboxUi from '@/components/checkbox'
+import * as CollapsibleUi from '@/components/collapsible'
+import * as ComboboxUi from '@/components/combobox'
+import * as CommandUi from '@/components/command'
+import * as ContextMenuUi from '@/components/context-menu'
+import * as DialogUi from '@/components/dialog'
+import * as DirectionUi from '@/components/direction'
+import * as DrawerUi from '@/components/drawer'
+import * as DropdownMenuUi from '@/components/dropdown-menu'
+import * as EmptyUi from '@/components/empty'
+import * as FieldUi from '@/components/field'
+import * as HoverCardUi from '@/components/hover-card'
+import * as InputGroupUi from '@/components/input-group'
+import * as InputOtpUi from '@/components/input-otp'
+import * as InputUi from '@/components/input'
+import * as ItemUi from '@/components/item'
+import * as KbdUi from '@/components/kbd'
+import * as LabelUi from '@/components/label'
+import * as MenubarUi from '@/components/menubar'
+import * as NativeSelectUi from '@/components/native-select'
+import * as NavigationMenuUi from '@/components/navigation-menu'
+import * as PaginationUi from '@/components/pagination'
+import * as PopoverUi from '@/components/popover'
+import * as ProgressUi from '@/components/progress'
+import * as RadioGroupUi from '@/components/radio-group'
+import * as ResizableUi from '@/components/resizable'
+import * as ScrollAreaUi from '@/components/scroll-area'
+import * as SelectUi from '@/components/select'
+import * as SeparatorUi from '@/components/separator'
+import * as SheetUi from '@/components/sheet'
+import * as SidebarUi from '@/components/sidebar'
+import * as SkeletonUi from '@/components/skeleton'
+import * as SliderUi from '@/components/slider'
+import * as SonnerUi from '@/components/sonner'
+import * as SpinnerUi from '@/components/spinner'
+import * as SwitchUi from '@/components/switch'
+import * as TableUi from '@/components/table'
+import * as TabsUi from '@/components/tabs'
+import * as TextareaUi from '@/components/textarea'
+import * as ToggleGroupUi from '@/components/toggle-group'
+import * as ToggleUi from '@/components/toggle'
+import * as TooltipUi from '@/components/tooltip'
+import { Wrapper } from '@/components/Wrapper'
 
 const options = ['Design', 'Engineering', 'Product']
 const chartData = [
@@ -134,7 +135,7 @@ function AlertDialogDemo({ defaultOpen = false }: { defaultOpen?: boolean }) {
 function AspectRatioDemo() {
   return (
     <DemoSurface>
-      <AspectRatioUi.AspectRatio className="overflow-hidden rounded-xl border bg-muted" ratio={16 / 9}>
+      <AspectRatioUi.AspectRatio variant="framed" ratio={16 / 9}>
         <div className="grid size-full place-items-center text-sm text-foreground">16:9 media</div>
       </AspectRatioUi.AspectRatio>
     </DemoSurface>
@@ -150,6 +151,9 @@ function AvatarDemo() {
             <AvatarUi.AvatarFallback>{label}</AvatarUi.AvatarFallback>
           </AvatarUi.Avatar>
         ))}
+        <AvatarUi.Avatar shape="rounded" size="lg">
+          <AvatarUi.AvatarFallback>NX</AvatarUi.AvatarFallback>
+        </AvatarUi.Avatar>
         <AvatarUi.AvatarGroupCount>+4</AvatarUi.AvatarGroupCount>
       </AvatarUi.AvatarGroup>
     </DemoSurface>
@@ -160,7 +164,7 @@ function BadgeDemo() {
   return (
     <DemoSurface>
       <div className="flex flex-wrap gap-2">
-        {(['default', 'secondary', 'outline', 'destructive', 'ghost', 'link'] as const).map((variant) => (
+        {(['default', 'secondary', 'outline', 'role', 'destructive', 'ghost', 'link'] as const).map((variant) => (
           <BadgeUi.Badge key={variant} variant={variant}>{variant}</BadgeUi.Badge>
         ))}
       </div>
@@ -189,7 +193,7 @@ function ButtonDemo() {
     <DemoSurface>
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          {(['default', 'secondary', 'outline', 'ghost', 'destructive', 'link'] as const).map((variant) => (
+          {(['default', 'secondary', 'outline', 'ghost', 'destructive', 'fieldAction', 'link'] as const).map((variant) => (
             <ButtonUi.Button key={variant} variant={variant}>{variant}</ButtonUi.Button>
           ))}
         </div>
@@ -231,7 +235,7 @@ function CardDemo() {
           <CardUi.CardAction><BadgeUi.Badge variant="secondary">New</BadgeUi.Badge></CardUi.CardAction>
         </CardUi.CardHeader>
         <CardUi.CardContent><p className="text-sm">Content remains readable at every viewport.</p></CardUi.CardContent>
-        <CardUi.CardFooter className="border-t"><ButtonUi.Button size="sm">Continue</ButtonUi.Button></CardUi.CardFooter>
+        <CardUi.CardFooter variant="actions"><ButtonUi.Button size="sm">Continue</ButtonUi.Button></CardUi.CardFooter>
       </CardUi.Card>
     </DemoSurface>
   )
@@ -240,17 +244,19 @@ function CardDemo() {
 function CarouselDemo() {
   return (
     <DemoSurface>
-      <CarouselUi.Carousel className="mx-auto w-[calc(100%-6rem)]" opts={{ loop: true }}>
+      <Wrapper width="carousel" align="center">
+      <CarouselUi.Carousel opts={{ loop: true }}>
         <CarouselUi.CarouselContent>
           {[1, 2, 3].map((item) => (
             <CarouselUi.CarouselItem key={item}>
-              <CardUi.Card><CardUi.CardContent className="grid aspect-video place-items-center text-3xl font-semibold">{item}</CardUi.CardContent></CardUi.Card>
+              <CardUi.Card><CardUi.CardContent><div className="grid aspect-video place-items-center text-3xl font-semibold">{item}</div></CardUi.CardContent></CardUi.Card>
             </CarouselUi.CarouselItem>
           ))}
         </CarouselUi.CarouselContent>
         <CarouselUi.CarouselPrevious />
         <CarouselUi.CarouselNext />
       </CarouselUi.Carousel>
+      </Wrapper>
     </DemoSurface>
   )
 }
@@ -258,7 +264,7 @@ function CarouselDemo() {
 function ChartDemo() {
   return (
     <DemoSurface>
-      <ChartUi.ChartContainer className="h-64 w-full" config={{ total: { color: 'var(--primary)', label: 'Total' } }}>
+      <ChartUi.ChartContainer size="fixed" config={{ total: { color: 'var(--primary)', label: 'Total' } }}>
         <BarChart data={chartData} accessibilityLayer>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="month" tickLine={false} axisLine={false} />
@@ -286,10 +292,12 @@ function CheckboxDemo() {
 function CollapsibleDemo() {
   return (
     <DemoSurface>
-      <CollapsibleUi.Collapsible className="grid gap-2" defaultOpen>
+      <Wrapper gap="sm">
+      <CollapsibleUi.Collapsible defaultOpen>
         <CollapsibleUi.CollapsibleTrigger asChild><ButtonUi.Button variant="outline">Toggle details</ButtonUi.Button></CollapsibleUi.CollapsibleTrigger>
-        <CollapsibleUi.CollapsibleContent className="rounded-lg border bg-muted/40 p-4 text-sm">Additional content stays grouped with its trigger.</CollapsibleUi.CollapsibleContent>
+        <CollapsibleUi.CollapsibleContent variant="surface">Additional content stays grouped with its trigger.</CollapsibleUi.CollapsibleContent>
       </CollapsibleUi.Collapsible>
+      </Wrapper>
     </DemoSurface>
   )
 }
@@ -298,7 +306,7 @@ function ComboboxDemo() {
   return (
     <DemoSurface>
       <ComboboxUi.Combobox items={options}>
-        <ComboboxUi.ComboboxInput className="w-64" placeholder="Choose a team" showClear />
+        <Wrapper width="wide"><ComboboxUi.ComboboxInput placeholder="Choose a team" showClear /></Wrapper>
         <ComboboxUi.ComboboxContent>
           <ComboboxUi.ComboboxEmpty>No team found.</ComboboxUi.ComboboxEmpty>
           <ComboboxUi.ComboboxList>
@@ -313,7 +321,7 @@ function ComboboxDemo() {
 function CommandDemo() {
   return (
     <DemoSurface>
-      <CommandUi.Command className="rounded-lg border shadow-sm">
+      <CommandUi.Command variant="standalone">
         <CommandUi.CommandInput placeholder="Search commands" />
         <CommandUi.CommandList>
           <CommandUi.CommandEmpty>No results.</CommandUi.CommandEmpty>
@@ -331,7 +339,7 @@ function ContextMenuDemo() {
   return (
     <DemoSurface>
       <ContextMenuUi.ContextMenu>
-        <ContextMenuUi.ContextMenuTrigger className="grid h-40 place-items-center rounded-xl border border-dashed text-sm text-muted-foreground">Right-click this area</ContextMenuUi.ContextMenuTrigger>
+        <ContextMenuUi.ContextMenuTrigger variant="target">Right-click this area</ContextMenuUi.ContextMenuTrigger>
         <ContextMenuUi.ContextMenuContent>
           <ContextMenuUi.ContextMenuItem>Open</ContextMenuUi.ContextMenuItem>
           <ContextMenuUi.ContextMenuItem>Duplicate<ContextMenuUi.ContextMenuShortcut>⌘D</ContextMenuUi.ContextMenuShortcut></ContextMenuUi.ContextMenuItem>
@@ -380,7 +388,7 @@ function DropdownMenuDemo({ defaultOpen = false }: { defaultOpen?: boolean }) {
   return (
     <DemoSurface>
       <DropdownMenuUi.DropdownMenu defaultOpen={defaultOpen}>
-        <DropdownMenuUi.DropdownMenuTrigger asChild><ButtonUi.Button className={defaultOpen ? "disabled:opacity-100" : undefined} disabled={defaultOpen} variant="outline">Open menu</ButtonUi.Button></DropdownMenuUi.DropdownMenuTrigger>
+        <DropdownMenuUi.DropdownMenuTrigger asChild><ButtonUi.Button variant="outline">Open menu</ButtonUi.Button></DropdownMenuUi.DropdownMenuTrigger>
         <DropdownMenuUi.DropdownMenuContent>
           <DropdownMenuUi.DropdownMenuLabel>Actions</DropdownMenuUi.DropdownMenuLabel>
           <DropdownMenuUi.DropdownMenuItem>Edit<DropdownMenuUi.DropdownMenuShortcut>⌘E</DropdownMenuUi.DropdownMenuShortcut></DropdownMenuUi.DropdownMenuItem>
@@ -396,7 +404,7 @@ function DropdownMenuDemo({ defaultOpen = false }: { defaultOpen?: boolean }) {
 function EmptyDemo() {
   return (
     <DemoSurface>
-      <EmptyUi.Empty className="border">
+      <EmptyUi.Empty variant="outlined">
         <EmptyUi.EmptyHeader><EmptyUi.EmptyMedia variant="icon">∅</EmptyUi.EmptyMedia><EmptyUi.EmptyTitle>No projects yet</EmptyUi.EmptyTitle><EmptyUi.EmptyDescription>Create the first project to start working.</EmptyUi.EmptyDescription></EmptyUi.EmptyHeader>
         <EmptyUi.EmptyContent><ButtonUi.Button>Create project</ButtonUi.Button></EmptyUi.EmptyContent>
       </EmptyUi.Empty>
@@ -427,7 +435,7 @@ function HoverCardDemo({ defaultOpen = false }: { defaultOpen?: boolean }) {
 }
 
 function InputDemo() {
-  return <DemoSurface><div className="grid gap-3"><InputUi.Input aria-label="Default input" placeholder="Default input" /><InputUi.Input aria-invalid aria-label="Invalid input" defaultValue="Invalid value" /><InputUi.Input aria-label="Disabled input" disabled placeholder="Disabled input" /></div></DemoSurface>
+  return <DemoSurface><div className="grid gap-3"><InputUi.Input aria-label="Default input" placeholder="Default input" /><InputUi.Input aria-label="Surface input" placeholder="Surface input" variant="surface" /><InputUi.Input aria-invalid aria-label="Invalid input" defaultValue="Invalid value" /><InputUi.Input aria-label="Disabled input" disabled placeholder="Disabled input" /></div></DemoSurface>
 }
 
 function InputGroupDemo() {
@@ -486,8 +494,8 @@ function NavigationMenuDemo() {
     <DemoSurface>
       <NavigationMenuUi.NavigationMenu>
         <NavigationMenuUi.NavigationMenuList>
-          <NavigationMenuUi.NavigationMenuItem><NavigationMenuUi.NavigationMenuLink href="#" className={NavigationMenuUi.navigationMenuTriggerStyle()}>Overview</NavigationMenuUi.NavigationMenuLink></NavigationMenuUi.NavigationMenuItem>
-          <NavigationMenuUi.NavigationMenuItem><NavigationMenuUi.NavigationMenuTrigger>Resources</NavigationMenuUi.NavigationMenuTrigger><NavigationMenuUi.NavigationMenuContent><div className="grid w-72 gap-2 p-3"><NavigationMenuUi.NavigationMenuLink href="#" className="rounded-md p-3 hover:bg-accent">Documentation</NavigationMenuUi.NavigationMenuLink><NavigationMenuUi.NavigationMenuLink href="#" className="rounded-md p-3 hover:bg-accent">Examples</NavigationMenuUi.NavigationMenuLink></div></NavigationMenuUi.NavigationMenuContent></NavigationMenuUi.NavigationMenuItem>
+          <NavigationMenuUi.NavigationMenuItem><NavigationMenuUi.NavigationMenuLink href="#" variant="trigger">Overview</NavigationMenuUi.NavigationMenuLink></NavigationMenuUi.NavigationMenuItem>
+          <NavigationMenuUi.NavigationMenuItem><NavigationMenuUi.NavigationMenuTrigger>Resources</NavigationMenuUi.NavigationMenuTrigger><NavigationMenuUi.NavigationMenuContent><Wrapper width="reading" gap="sm" padding="sm"><NavigationMenuUi.NavigationMenuLink href="#" variant="card">Documentation</NavigationMenuUi.NavigationMenuLink><NavigationMenuUi.NavigationMenuLink href="#" variant="card">Examples</NavigationMenuUi.NavigationMenuLink></Wrapper></NavigationMenuUi.NavigationMenuContent></NavigationMenuUi.NavigationMenuItem>
         </NavigationMenuUi.NavigationMenuList>
       </NavigationMenuUi.NavigationMenu>
     </DemoSurface>
@@ -507,19 +515,19 @@ function ProgressDemo() {
 }
 
 function RadioGroupDemo() {
-  return <DemoSurface><RadioGroupUi.RadioGroup defaultValue="system" className="grid gap-3">{['system', 'light', 'dark'].map((value) => <label className="flex items-center gap-3 text-sm capitalize" key={value}><RadioGroupUi.RadioGroupItem value={value} />{value}</label>)}</RadioGroupUi.RadioGroup></DemoSurface>
+  return <DemoSurface><Wrapper gap="sm"><RadioGroupUi.RadioGroup defaultValue="system">{['system', 'light', 'dark'].map((value) => <label className="flex items-center gap-3 text-sm capitalize" key={value}><RadioGroupUi.RadioGroupItem value={value} />{value}</label>)}</RadioGroupUi.RadioGroup></Wrapper></DemoSurface>
 }
 
 function ResizableDemo() {
-  return <DemoSurface><ResizableUi.ResizablePanelGroup className="h-48 overflow-hidden rounded-xl border" orientation="horizontal"><ResizableUi.ResizablePanel defaultSize="35%"><div className="grid size-full place-items-center bg-muted/40 text-sm">Sidebar</div></ResizableUi.ResizablePanel><ResizableUi.ResizableHandle withHandle /><ResizableUi.ResizablePanel><div className="grid size-full place-items-center text-sm">Content</div></ResizableUi.ResizablePanel></ResizableUi.ResizablePanelGroup></DemoSurface>
+  return <DemoSurface><Wrapper height="medium"><ResizableUi.ResizablePanelGroup variant="framed" orientation="horizontal"><ResizableUi.ResizablePanel defaultSize="35%"><div className="grid size-full place-items-center bg-muted/40 text-sm">Sidebar</div></ResizableUi.ResizablePanel><ResizableUi.ResizableHandle withHandle /><ResizableUi.ResizablePanel><div className="grid size-full place-items-center text-sm">Content</div></ResizableUi.ResizablePanel></ResizableUi.ResizablePanelGroup></Wrapper></DemoSurface>
 }
 
 function ScrollAreaDemo() {
-  return <DemoSurface><ScrollAreaUi.ScrollArea className="h-48 rounded-xl border"><div className="grid gap-3 p-4">{Array.from({ length: 12 }, (_, index) => <div className="border-b pb-3 text-sm" key={index}>Scrollable item {index + 1}</div>)}</div><ScrollAreaUi.ScrollBar /></ScrollAreaUi.ScrollArea></DemoSurface>
+  return <DemoSurface><Wrapper height="medium"><ScrollAreaUi.ScrollArea variant="framed"><div className="grid gap-3 p-4">{Array.from({ length: 12 }, (_, index) => <div className="border-b pb-3 text-sm" key={index}>Scrollable item {index + 1}</div>)}</div><ScrollAreaUi.ScrollBar /></ScrollAreaUi.ScrollArea></Wrapper></DemoSurface>
 }
 
 function SelectDemo({ defaultOpen = false }: { defaultOpen?: boolean }) {
-  return <DemoSurface><SelectUi.Select defaultOpen={defaultOpen} defaultValue="product"><SelectUi.SelectTrigger aria-label="Team" className="w-64" tabIndex={defaultOpen ? -1 : undefined}><SelectUi.SelectValue placeholder="Choose a team" /></SelectUi.SelectTrigger><SelectUi.SelectContent><SelectUi.SelectGroup><SelectUi.SelectLabel>Teams</SelectUi.SelectLabel>{options.map((option) => <SelectUi.SelectItem key={option} value={option.toLowerCase()}>{option}</SelectUi.SelectItem>)}</SelectUi.SelectGroup></SelectUi.SelectContent></SelectUi.Select></DemoSurface>
+  return <DemoSurface><Wrapper width="wide"><SelectUi.Select defaultOpen={defaultOpen} defaultValue="product"><SelectUi.SelectTrigger aria-label="Team" tabIndex={defaultOpen ? -1 : undefined}><SelectUi.SelectValue placeholder="Choose a team" /></SelectUi.SelectTrigger><SelectUi.SelectContent><SelectUi.SelectGroup><SelectUi.SelectLabel>Teams</SelectUi.SelectLabel>{options.map((option) => <SelectUi.SelectItem key={option} value={option.toLowerCase()}>{option}</SelectUi.SelectItem>)}</SelectUi.SelectGroup></SelectUi.SelectContent></SelectUi.Select></Wrapper></DemoSurface>
 }
 
 function SeparatorDemo() {
@@ -547,7 +555,7 @@ function SidebarDemo() {
 }
 
 function SkeletonDemo() {
-  return <DemoSurface><div className="flex items-center gap-4"><SkeletonUi.Skeleton className="size-12 rounded-full" /><div className="grid flex-1 gap-2"><SkeletonUi.Skeleton className="h-4 w-2/5" /><SkeletonUi.Skeleton className="h-4 w-4/5" /></div></div></DemoSurface>
+  return <DemoSurface><div className="flex items-center gap-4"><SkeletonUi.Skeleton variant="avatar" /><div className="grid flex-1 gap-2"><div className="w-2/5"><SkeletonUi.Skeleton variant="text" /></div><div className="w-4/5"><SkeletonUi.Skeleton variant="text" /></div></div></div></DemoSurface>
 }
 
 function SliderDemo() {
@@ -567,11 +575,11 @@ function SwitchDemo() {
 }
 
 function TableDemo() {
-  return <DemoSurface><TableUi.Table><TableUi.TableCaption>Recent projects</TableUi.TableCaption><TableUi.TableHeader><TableUi.TableRow><TableUi.TableHead>Project</TableUi.TableHead><TableUi.TableHead>Status</TableUi.TableHead><TableUi.TableHead className="text-right">Members</TableUi.TableHead></TableUi.TableRow></TableUi.TableHeader><TableUi.TableBody>{[['Website', 'Active', '6'], ['Mobile app', 'Draft', '3'], ['Research', 'Paused', '2']].map((row) => <TableUi.TableRow key={row[0]}><TableUi.TableCell className="font-medium">{row[0]}</TableUi.TableCell><TableUi.TableCell><BadgeUi.Badge variant="outline">{row[1]}</BadgeUi.Badge></TableUi.TableCell><TableUi.TableCell className="text-right">{row[2]}</TableUi.TableCell></TableUi.TableRow>)}</TableUi.TableBody></TableUi.Table></DemoSurface>
+  return <DemoSurface><TableUi.Table><TableUi.TableCaption>Recent projects</TableUi.TableCaption><TableUi.TableHeader><TableUi.TableRow><TableUi.TableHead>Project</TableUi.TableHead><TableUi.TableHead>Status</TableUi.TableHead><TableUi.TableHead align="right">Members</TableUi.TableHead></TableUi.TableRow></TableUi.TableHeader><TableUi.TableBody>{[['Website', 'Active', '6'], ['Mobile app', 'Draft', '3'], ['Research', 'Paused', '2']].map((row) => <TableUi.TableRow key={row[0]}><TableUi.TableCell variant="emphasis">{row[0]}</TableUi.TableCell><TableUi.TableCell><BadgeUi.Badge variant="outline">{row[1]}</BadgeUi.Badge></TableUi.TableCell><TableUi.TableCell align="right">{row[2]}</TableUi.TableCell></TableUi.TableRow>)}</TableUi.TableBody></TableUi.Table></DemoSurface>
 }
 
 function TabsDemo() {
-  return <DemoSurface><TabsUi.Tabs defaultValue="overview"><TabsUi.TabsList><TabsUi.TabsTrigger value="overview">Overview</TabsUi.TabsTrigger><TabsUi.TabsTrigger value="activity">Activity</TabsUi.TabsTrigger><TabsUi.TabsTrigger value="settings" disabled>Settings</TabsUi.TabsTrigger></TabsUi.TabsList><TabsUi.TabsContent className="rounded-lg border p-4" value="overview">Overview content</TabsUi.TabsContent><TabsUi.TabsContent className="rounded-lg border p-4" value="activity">Activity content</TabsUi.TabsContent></TabsUi.Tabs></DemoSurface>
+  return <DemoSurface><TabsUi.Tabs defaultValue="overview"><TabsUi.TabsList><TabsUi.TabsTrigger value="overview">Overview</TabsUi.TabsTrigger><TabsUi.TabsTrigger value="activity">Activity</TabsUi.TabsTrigger><TabsUi.TabsTrigger value="settings" disabled>Settings</TabsUi.TabsTrigger></TabsUi.TabsList><TabsUi.TabsContent variant="panel" value="overview">Overview content</TabsUi.TabsContent><TabsUi.TabsContent variant="panel" value="activity">Activity content</TabsUi.TabsContent></TabsUi.Tabs></DemoSurface>
 }
 
 function TextareaDemo() {
@@ -583,7 +591,7 @@ function ToggleDemo() {
 }
 
 function ToggleGroupDemo() {
-  return <DemoSurface><ToggleGroupUi.ToggleGroup type="multiple" variant="outline" spacing={0} defaultValue={['left']}><ToggleGroupUi.ToggleGroupItem value="left">Left</ToggleGroupUi.ToggleGroupItem><ToggleGroupUi.ToggleGroupItem value="center">Center</ToggleGroupUi.ToggleGroupItem><ToggleGroupUi.ToggleGroupItem value="right">Right</ToggleGroupUi.ToggleGroupItem></ToggleGroupUi.ToggleGroup></DemoSurface>
+  return <DemoSurface><ToggleGroupUi.ToggleGroup type="multiple" variant="outline" density="joined" defaultValue={['left']}><ToggleGroupUi.ToggleGroupItem value="left">Left</ToggleGroupUi.ToggleGroupItem><ToggleGroupUi.ToggleGroupItem value="center">Center</ToggleGroupUi.ToggleGroupItem><ToggleGroupUi.ToggleGroupItem value="right">Right</ToggleGroupUi.ToggleGroupItem></ToggleGroupUi.ToggleGroup></DemoSurface>
 }
 
 function TooltipDemo({ defaultOpen = false }: { defaultOpen?: boolean }) {

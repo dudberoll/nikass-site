@@ -3,7 +3,7 @@ import { ThemeProvider } from 'next-themes'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
-import { TooltipProvider } from '@/components/ui/tooltip'
+import { TooltipProvider } from '@/components/tooltip'
 import { AuthProvider } from '@/features/auth'
 import App from './App'
 import './production.css'

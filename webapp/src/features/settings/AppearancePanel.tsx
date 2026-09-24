@@ -7,20 +7,21 @@ import {
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/card'
 import {
   Field,
   FieldDescription,
   FieldLabel,
-} from '@/components/ui/field'
+} from '@/components/field'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/select'
 import { Typography } from '@/components/typography'
+import { Wrapper } from '@/components/Wrapper'
 
 const themes = ['system', 'light', 'dark'] as const
 type Theme = typeof themes[number]
@@ -54,14 +55,16 @@ export function AppearancePanel() {
             }}
             value={selectedTheme}
           >
-            <SelectTrigger className="w-full sm:w-52" id="appearance-theme">
-              <SelectValue />
-            </SelectTrigger>
+            <Wrapper width="field">
+              <SelectTrigger id="appearance-theme">
+                <SelectValue />
+              </SelectTrigger>
+            </Wrapper>
             <SelectContent>
               {themes.map((item) => (
-                <SelectItem className="capitalize" key={item} value={item}>
+                <SelectItem key={item} value={item}>
                   <HugeiconsIcon aria-hidden icon={themeIcons[item]} strokeWidth={2} />
-                  {item}
+                  {item[0].toUpperCase() + item.slice(1)}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -72,7 +72,7 @@ describe('dependency direction', () => {
     expect(check([file('webapp/src/main.tsx', "import { AuthProvider } from '@/features/auth'")])).toEqual([])
     const violations = check([
       file('webapp/src/platform/api/http-client.ts', "import { AuthApi } from '@/features/auth'"),
-      file('webapp/src/components/ui/button.tsx', "import { useAuth } from '@/features/auth'"),
+      file('webapp/src/components/button.tsx', "import { useAuth } from '@/features/auth'"),
     ])
     expect(violations.every((item) => item.rule === 'client-dependency-direction')).toBe(true)
   })
@@ -127,7 +127,7 @@ describe('module root placement', () => {
 describe('website client boundary', () => {
   test('holds the website to the same feature and layer direction as the webapp', () => {
     const violations = check([
-      file('website/src/components/ui/button.tsx', "import { useAuth } from '@/features/auth'"),
+      file('website/src/components/button.tsx', "import { useAuth } from '@/features/auth'"),
       file('website/src/pages/landing.tsx', "import { model } from '@/features/pricing/model'"),
     ])
 

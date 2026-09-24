@@ -4,10 +4,10 @@ import { passwordResetRequestSchema } from '@web-app-demo/contracts'
 import { useId, useState } from 'react'
 
 import { Typography } from '@/components/typography'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import { Alert, AlertDescription, AlertTitle } from '@/components/alert'
+import { Button } from '@/components/button'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/field'
+import { Input } from '@/components/input'
 import { ApiRequestError } from '@/platform/api'
 import { useAuth } from '../use-auth'
 import { FormAlert } from './form-errors'
@@ -57,10 +57,10 @@ export function ForgotPasswordForm() {
     >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <Typography as="h1" variant="h3" balance>
+          <Typography as="h1" variant="h3">
             Reset your password
           </Typography>
-          <Typography variant="bodySm" tone="muted" balance>
+          <Typography variant="bodySm" tone="muted">
             Enter your email and we&apos;ll send reset instructions if the account exists
           </Typography>
         </div>
@@ -72,10 +72,10 @@ export function ForgotPasswordForm() {
               aria-describedby={errorId(fieldErrors.email, emailErrorId)}
               aria-invalid={hasErrors(fieldErrors.email)}
               autoComplete="email"
-              className="bg-background"
               id={emailId}
               inputMode="email"
               name={field.name}
+              variant="surface"
               onBlur={field.handleBlur}
               onChange={(event) => {
                 field.handleChange(event.target.value)
@@ -109,11 +109,11 @@ export function ForgotPasswordForm() {
           )} />
         </Field>
 
-        <Typography align="center" variant="bodySm">
-          <Link className="underline underline-offset-4" search={{ returnTo: undefined }} to="/login">
-            Back to login
+        <div className="text-center">
+          <Link search={{ returnTo: undefined }} to="/login">
+            <Typography as="span" variant="linkSm">Back to login</Typography>
           </Link>
-        </Typography>
+        </div>
       </FieldGroup>
     </form>
   )

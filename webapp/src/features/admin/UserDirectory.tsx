@@ -14,28 +14,28 @@ import {
   AlertAction,
   AlertDescription,
   AlertTitle,
-} from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
+} from '@/components/alert'
+import { Button } from '@/components/button'
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
-} from '@/components/ui/empty'
+} from '@/components/empty'
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from '@/components/ui/input-group'
-import { Item } from '@/components/ui/item'
+} from '@/components/input-group'
+import { Item } from '@/components/item'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
+} from '@/components/select'
+import { Skeleton } from '@/components/skeleton'
 import {
   Table,
   TableBody,
@@ -43,8 +43,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from '@/components/table'
 import { Typography } from '@/components/typography'
+import { Wrapper } from '@/components/Wrapper'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { formatDate } from '@/platform/intl'
 import {
@@ -245,7 +246,7 @@ function UserTable({
               />
             </TableCell>
             <TableCell>
-              <Typography as="span" className="tabular-nums" variant="bodySm">
+              <Typography as="span" numeric variant="bodySm">
                 {formatDate(user.createdAt)}
               </Typography>
             </TableCell>
@@ -283,9 +284,11 @@ function UserList({
                   <Typography variant="bodySmMedium">
                     {user.displayName ?? user.email}
                   </Typography>
-                  <Typography variant="caption" tone="muted" wrap="break">
-                    {user.email}
-                  </Typography>
+                  <span className="break-all">
+                    <Typography variant="caption" tone="muted">
+                      {user.email}
+                    </Typography>
+                  </span>
                 </dd>
               </div>
               <div>
@@ -339,9 +342,11 @@ function RoleSelect({
       }}
       value={user.role}
     >
-      <SelectTrigger aria-label={`Role for ${user.email}`} className="w-28 capitalize">
-        <SelectValue />
-      </SelectTrigger>
+      <Wrapper width="compact">
+        <SelectTrigger aria-label={`Role for ${user.email}`}>
+          <SelectValue />
+        </SelectTrigger>
+      </Wrapper>
       <SelectContent>
         <SelectItem
           disabled={user.id === currentUser.id && user.role === 'admin'}
@@ -358,9 +363,9 @@ function RoleSelect({
 function DirectoryLoading() {
   return (
     <div aria-label="Loading users" className="grid gap-3 py-2" role="status">
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
+      <Skeleton variant="row" />
+      <Skeleton variant="row" />
+      <Skeleton variant="row" />
     </div>
   )
 }

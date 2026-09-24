@@ -1,7 +1,7 @@
 import type { Decorator, Preview } from '@storybook/react-vite'
 import { ThemeProvider } from 'next-themes'
 
-import { TooltipProvider } from '@/components/ui/tooltip'
+import { TooltipProvider } from '@/components/tooltip'
 import './storybook.css'
 
 const withAppProviders: Decorator = (Story, context) => {

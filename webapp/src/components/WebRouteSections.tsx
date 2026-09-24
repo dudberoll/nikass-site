@@ -8,15 +8,15 @@ import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/button'
+import { Card, CardContent } from '@/components/card'
 import {
   Empty,
   EmptyContent,
   EmptyHeader,
   EmptyMedia,
-} from '@/components/ui/empty'
-import { Spinner } from '@/components/ui/spinner'
+} from '@/components/empty'
+import { Spinner } from '@/components/spinner'
 import { Typography } from '@/components/typography'
 
 type HomeDestination = '/login' | '/app' | '/admin'
@@ -100,7 +100,8 @@ function RouteStateCard({
 }) {
   return (
     <main className="flex min-h-svh items-center justify-center bg-muted/30 p-5">
-      <Card className="w-full max-w-lg shadow-sm">
+      <div className="w-full max-w-lg">
+        <Card variant="raised">
         <CardContent>
           <Empty
             aria-live={alert ? 'assertive' : undefined}
@@ -111,17 +112,18 @@ function RouteStateCard({
               <EmptyMedia variant="icon">
                 <HugeiconsIcon aria-hidden icon={icon} strokeWidth={2} />
               </EmptyMedia>
-              <Typography as="h1" variant="h4" balance>
+              <Typography as="h1" variant="h4">
                 {title}
               </Typography>
-              <Typography variant="bodySm" tone="muted" align="center" pretty>
+              <Typography variant="bodySm" tone="muted">
                 {description}
               </Typography>
             </EmptyHeader>
             <EmptyContent>{children}</EmptyContent>
           </Empty>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </main>
   )
 }

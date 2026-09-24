@@ -11,6 +11,20 @@ const sourceRoots = [
   'mobile/src',
 ]
 const sourceExtension = /\.(?:[cm]?[jt]sx?)$/
+const sharedUiComponentFiles = new Set([
+  'PasswordInput.tsx', 'Wrapper.tsx', 'typography.tsx',
+  'accordion.tsx', 'alert-dialog.tsx', 'alert.tsx', 'aspect-ratio.tsx', 'avatar.tsx',
+  'badge.tsx', 'breadcrumb.tsx', 'button-group.tsx', 'button.tsx', 'calendar.tsx',
+  'card.tsx', 'carousel.tsx', 'chart.tsx', 'checkbox.tsx', 'collapsible.tsx',
+  'combobox.tsx', 'command.tsx', 'context-menu.tsx', 'dialog.tsx', 'direction.tsx',
+  'drawer.tsx', 'dropdown-menu.tsx', 'empty.tsx', 'field.tsx', 'hover-card.tsx',
+  'input-group.tsx', 'input-otp.tsx', 'input.tsx', 'item.tsx', 'kbd.tsx', 'label.tsx',
+  'menubar.tsx', 'native-select.tsx', 'navigation-menu.tsx', 'pagination.tsx',
+  'popover.tsx', 'progress.tsx', 'radio-group.tsx', 'resizable.tsx', 'scroll-area.tsx',
+  'select.tsx', 'separator.tsx', 'sheet.tsx', 'sidebar.tsx', 'skeleton.tsx', 'slider.tsx',
+  'sonner.tsx', 'spinner.tsx', 'switch.tsx', 'table.tsx', 'tabs.tsx', 'textarea.tsx',
+  'toggle-group.tsx', 'toggle.tsx', 'tooltip.tsx',
+])
 const importPattern = /(?:^|\n)\s*(?:import|export)\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/g
 const runtimeModulePattern = /\b(?:import|require)\s*\(\s*['"]([^'"]+)['"]\s*\)/g
 /**
@@ -184,13 +198,14 @@ function checkClientBoundary(filePath, specifier, report) {
     }
   }
 
-  const isLowerLayer =
-    filePath.startsWith(`${client}/src/platform/`) ||
-    filePath.startsWith(`${client}/src/components/ui/`)
+  const isSharedUiComponent =
+    filePath.startsWith(`${client}/src/components/`) &&
+    sharedUiComponentFiles.has(path.basename(filePath))
+  const isLowerLayer = filePath.startsWith(`${client}/src/platform/`) || isSharedUiComponent
   if (isLowerLayer && targetFeature) {
     report(
       'client-dependency-direction',
-      `platform and UI primitives must not import product features (${specifier}).`,
+      `platform and shared UI components must not import product features (${specifier}).`,
     )
   }
 }

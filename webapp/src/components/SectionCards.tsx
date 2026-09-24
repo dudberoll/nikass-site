@@ -1,0 +1,59 @@
+import type { IconSvgElement } from '@hugeicons/react'
+import { HugeiconsIcon } from '@hugeicons/react'
+
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+} from '@/components/card'
+import { Typography } from '@/components/typography'
+
+export type SectionMetric = {
+  description?: string
+  icon?: IconSvgElement
+  label: string
+  value: number | string
+}
+
+export function SectionCards({
+  items,
+}: {
+  items: ReadonlyArray<SectionMetric>
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {items.map((item) => (
+        <Card key={item.label} variant="metric">
+          <CardHeader>
+            <CardDescription>{item.label}</CardDescription>
+            {item.icon && (
+              <CardAction>
+                <span
+                  aria-hidden="true"
+                  className="flex size-8 items-center justify-center rounded-lg border bg-background/70 text-muted-foreground"
+                >
+                  <HugeiconsIcon icon={item.icon} strokeWidth={2} />
+                </span>
+              </CardAction>
+            )}
+          </CardHeader>
+          <CardContent>
+            <Typography as="div" numeric variant="h3">
+              {item.value}
+            </Typography>
+          </CardContent>
+          {item.description && (
+            <CardFooter>
+              <Typography variant="bodySm" tone="muted">
+                {item.description}
+              </Typography>
+            </CardFooter>
+          )}
+        </Card>
+      ))}
+    </div>
+  )
+}

@@ -1,11 +1,11 @@
 import type { UserDto } from '@web-app-demo/contracts'
 import { useRef, useState, type ChangeEvent } from 'react'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
-import { FieldDescription } from '@/components/ui/field'
+import { Alert, AlertDescription, AlertTitle } from '@/components/alert'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/avatar'
+import { Button } from '@/components/button'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/card'
+import { FieldDescription } from '@/components/field'
 import { Typography } from '@/components/typography'
 import { ApiRequestError } from '@/platform/api'
 import {
@@ -53,7 +53,8 @@ export function AvatarPanel({ user }: { user: UserDto }) {
           Shown next to your name across the workspace. Only you can see the original file.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-5">
+      <CardContent>
+        <div className="grid gap-5">
         <div className="flex flex-wrap items-center gap-5">
           <Avatar data-testid="avatar-preview" size="xl">
             {imageUrl && <AvatarImage alt="" src={imageUrl} />}
@@ -120,6 +121,7 @@ export function AvatarPanel({ user }: { user: UserDto }) {
             <AlertTitle>{notice}</AlertTitle>
           </Alert>
         )}
+        </div>
       </CardContent>
     </Card>
   )

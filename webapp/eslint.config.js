@@ -545,9 +545,8 @@ export default defineConfig([
     },
   },
   {
-    // Official shadcn registry output is regenerated as a unit. Product-specific
-    // composition and typography policy stay outside this directory.
-    files: ['src/components/ui/**/*.{ts,tsx}'],
+    // Flat component files include both registry primitives and product composition.
+    files: ['src/components/{accordion,alert-dialog,alert,aspect-ratio,avatar,badge,breadcrumb,button-group,button,calendar,card,carousel,chart,checkbox,collapsible,combobox,command,context-menu,dialog,direction,drawer,dropdown-menu,empty,field,hover-card,input-group,input-otp,input,item,kbd,label,menubar,native-select,navigation-menu,pagination,popover,progress,radio-group,resizable,scroll-area,select,separator,sheet,sidebar,skeleton,slider,sonner,spinner,switch,table,tabs,textarea,toggle-group,toggle,tooltip}.{ts,tsx}'],
     rules: {
       'react-refresh/only-export-components': 'off',
       'typographyPolicy/use-typography-component': 'off',
@@ -563,7 +562,13 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/components/ui/carousel.tsx', 'src/hooks/use-mobile.ts'],
+    files: ['src/lib/button-variants.ts', 'src/lib/toggle-variants.ts'],
+    rules: {
+      'typographyPolicy/use-typography-component': 'off',
+    },
+  },
+  {
+    files: ['src/components/carousel.tsx', 'src/hooks/use-mobile.ts'],
     rules: {
       'react-hooks/set-state-in-effect': 'off',
     },

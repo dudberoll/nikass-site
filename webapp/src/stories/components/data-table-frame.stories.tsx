@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { DataTableFrame } from '@/components/dashboard'
-import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Input } from '@/components/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 
 const rows = [
   ['Website refresh', 'Active', 'Alex'],
@@ -22,7 +22,7 @@ const meta = {
     previousDisabled: true,
     summary: 'Showing 1–3 of 18 projects',
     title: 'Projects',
-    toolbar: <Input className="max-w-xs" placeholder="Filter projects" />,
+    toolbar: <div className="max-w-xs"><Input placeholder="Filter projects" /></div>,
   },
   render: (args) => (
     <DataTableFrame {...args}>

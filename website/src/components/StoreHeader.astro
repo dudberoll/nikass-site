@@ -182,7 +182,7 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
     if (event.key === "Tab" && !menuBackdrop.hidden) trapFocus(event, menuPanel);
     if (event.key === "Escape") { closeMenu(); closeSearch(); closeCatalogDropdown(); }
   });
-  const updateHeader = () => header.classList.toggle("is-scrolled", scrollY > 24);
+  const updateHeader = () => header.classList.toggle("is-scrolled", scrollY > 0);
   addEventListener("scroll", updateHeader, { passive: true });
   updateHeader();
 </script>

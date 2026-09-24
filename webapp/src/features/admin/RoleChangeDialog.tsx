@@ -1,6 +1,6 @@
 import type { AdminUserSummary, UserRole } from '@web-app-demo/contracts'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Alert, AlertDescription, AlertTitle } from '@/components/alert'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -9,8 +9,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
+} from '@/components/alert-dialog'
+import { Button } from '@/components/button'
 
 export function RoleChangeDialog({
   failureReason,

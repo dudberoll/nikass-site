@@ -5,22 +5,22 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useState } from 'react'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/alert'
+import { Badge } from '@/components/badge'
+import { Button } from '@/components/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-} from '@/components/ui/card'
+} from '@/components/card'
 import {
   Item,
   ItemActions,
   ItemContent,
   ItemMedia,
   ItemTitle,
-} from '@/components/ui/item'
+} from '@/components/item'
 import { Typography } from '@/components/typography'
 
 export function SessionPanel({ onLogout }: { onLogout: () => Promise<void> }) {
@@ -49,7 +49,8 @@ export function SessionPanel({ onLogout }: { onLogout: () => Promise<void> }) {
           Review this browser session or sign out when you are finished.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent>
+        <div className="grid gap-4">
         <Item variant="outline">
           <ItemMedia variant="icon">
             <HugeiconsIcon aria-hidden icon={ComputerIcon} strokeWidth={2} />
@@ -84,6 +85,7 @@ export function SessionPanel({ onLogout }: { onLogout: () => Promise<void> }) {
             />
             {isLoggingOut ? 'Logging out…' : 'Logout'}
           </Button>
+        </div>
         </div>
       </CardContent>
     </Card>
