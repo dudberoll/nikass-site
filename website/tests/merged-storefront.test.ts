@@ -97,23 +97,23 @@ test('homepage bestsellers use the first four Drive model series', () => {
 test('homepage hero exposes the supplied categories in the requested order', () => {
   assert.equal(HERO_CATEGORIES.length, 8)
   assert.deepEqual(HERO_CATEGORIES.map(({ title }) => title), [
-    'АВТОМОБИЛЬНЫЕ ИНВЕРТОРЫ',
     'ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ',
-    'СОЛНЕЧНЫЕ ПАНЕЛИ',
     'AGM АККУМУЛЯТОРЫ',
     'LiFePO4 АККУМУЛЯТОРЫ',
+    'ИНВЕРТОРА НАПРЯЖЕНИЯ',
     'ГИБРИДНЫЕ ИНВЕРТОРЫ',
     'СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS',
+    'СОЛНЕЧНЫЕ ПАНЕЛИ',
     'POWERBANK',
   ])
   assert.deepEqual(HERO_CATEGORIES.map(({ label }) => label), [
-    'Автомобильные инверторы',
     'Портативные зарядные станции',
-    'Солнечные панели',
     'AGM аккумуляторы',
-    'LiFePO4 аккумуляторы',
+    'LiFePO₄ аккумуляторы',
+    'Инвертора напряжения',
     'Гибридные инверторы',
     'Системы хранения энергии ESS',
+    'Солнечные панели',
     'POWERBANK',
   ])
   assert.match(homepage, /const heroCategories = HERO_CATEGORIES/)

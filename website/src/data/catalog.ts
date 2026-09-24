@@ -21,6 +21,8 @@ export type Availability = "in-stock" | "preorder" | "unavailable";
 export const ALL_PRODUCTS_LABEL = "Все товары";
 
 const PORTABLE_STATION_CATEGORY = "Портативные зарядные станции";
+const VOLTAGE_INVERTER_CATEGORY = "Инвертора напряжения";
+const LIFEPO4_CATEGORY = "LiFePO₄ аккумуляторы";
 
 export function normalizeStationText(value: string) {
   return value.replace(/\bSL(?=\s*[-]?\d)/gi, "NS");
@@ -40,13 +42,13 @@ export type ProductVariant = {
 };
 
 export const HERO_CATEGORIES = [
-  { title: "АВТОМОБИЛЬНЫЕ ИНВЕРТОРЫ", label: "Автомобильные инверторы", category: "Автомобильные инверторы", image: "/assets/images/category-automotive-inverters.webp", icon: "/assets/images/category-icons/automotive-inverter.png" },
   { title: "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ", label: "Портативные зарядные станции", category: "Портативные зарядные станции", image: "/assets/images/category-portable-charging-stations.webp", icon: "/assets/images/category-icons/portable-charging-station.png" },
-  { title: "СОЛНЕЧНЫЕ ПАНЕЛИ", label: "Солнечные панели", category: "Солнечные панели", image: "/assets/images/category-solar-panels.webp", icon: "/assets/images/category-icons/solar-panel.png" },
   { title: "AGM АККУМУЛЯТОРЫ", label: "AGM аккумуляторы", category: "AGM аккумуляторы", image: "/assets/images/category-agm-batteries.webp", icon: "/assets/images/category-icons/agm-battery.png" },
-  { title: "LiFePO4 АККУМУЛЯТОРЫ", label: "LiFePO4 аккумуляторы", category: "LiFePO4 аккумуляторы", image: "/assets/images/category-lifepo4-batteries.webp", icon: "/assets/images/category-icons/lifepo4-battery.png" },
+  { title: "LiFePO4 АККУМУЛЯТОРЫ", label: LIFEPO4_CATEGORY, category: LIFEPO4_CATEGORY, image: "/assets/images/category-lifepo4-batteries.webp", icon: "/assets/images/category-icons/lifepo4-battery.png" },
+  { title: "ИНВЕРТОРА НАПРЯЖЕНИЯ", label: VOLTAGE_INVERTER_CATEGORY, category: VOLTAGE_INVERTER_CATEGORY, image: "/assets/images/category-automotive-inverters.webp", icon: "/assets/images/category-icons/automotive-inverter.png" },
   { title: "ГИБРИДНЫЕ ИНВЕРТОРЫ", label: "Гибридные инверторы", category: "Гибридные инверторы", image: "/assets/images/category-hybrid-inverters.webp", icon: "/assets/images/category-icons/hybrid-inverter.png" },
   { title: "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS", label: "Системы хранения энергии ESS", category: "Системы хранения энергии ESS", image: "/assets/images/category-energy-storage-ess.webp", icon: "/assets/images/category-icons/energy-storage-ess.png" },
+  { title: "СОЛНЕЧНЫЕ ПАНЕЛИ", label: "Солнечные панели", category: "Солнечные панели", image: "/assets/images/category-solar-panels.webp", icon: "/assets/images/category-icons/solar-panel.png" },
   { title: "POWERBANK", label: "POWERBANK", category: "POWERBANK", image: "/assets/images/category-powerbanks.webp", icon: "/assets/images/category-icons/powerbank.png" },
 ] as const;
 
@@ -423,8 +425,8 @@ export function mapCatalogProduct(product: CatalogApiProduct, articles: readonly
 }
 
 function categoryLabel(value: string, name = "") {
-  if (value === "invertory") return /гибридн|автономный/i.test(name) ? "Гибридные инверторы" : "Автомобильные инверторы";
-  if (value === "akkumulyatory") return /LiFePO4|литий-железо-фосфатный|NSW|NSR|NSLFP/i.test(name) ? "LiFePO4 аккумуляторы" : "AGM аккумуляторы";
+  if (value === "invertory") return /гибридн|автономный/i.test(name) ? "Гибридные инверторы" : VOLTAGE_INVERTER_CATEGORY;
+  if (value === "akkumulyatory") return /LiFePO4|литий-железо-фосфатный|NSW|NSR|NSLFP/i.test(name) ? LIFEPO4_CATEGORY : "AGM аккумуляторы";
 
   const labels: Record<string, string> = {
     "charging-stations": "Портативные зарядные станции",
@@ -538,15 +540,15 @@ function modelVariantLabel(product: Product, variant: ProductVariant) {
   const text = `${product.name} ${product.characteristics}`;
   const specText = text.replace(/\b(?:SL|NS)-?\d+(?:-L\d+)?\b/gi, "");
   const power = readSpec(specText, /(\d[\d\s.,]*)\s*(?:W|Вт)(?!\w)/i)
-    || (product.category === "Автомобильные инверторы" ? readSpec(product.name, /(\d[\d\s.,]*)$/) : "");
+    || (product.category === VOLTAGE_INVERTER_CATEGORY ? readSpec(product.name, /(\d[\d\s.,]*)$/) : "");
   const hybridPower = readSpec(specText, /(\d[\d\s.,]*)\s*(?:kW|кВт)(?!\w)/i);
   const capacity = readSpec(specText, /(\d[\d\s.,]*)\s*(?:mAh|мА(?:·)?ч|Ah|А(?:·)?ч)(?!\w)/i);
   const energy = readSpec(specText, /(\d[\d\s.,]*)\s*(?:Wh|Втч|Вт[·.]?ч)(?!\w)/i);
   const weight = readSpec(specText, /(\d[\d\s.,]*)\s*(?:kg|кг|g|г)(?!\w)/i);
 
-  if (product.category === "Автомобильные инверторы" && power) return `${power} Вт`;
+  if (product.category === VOLTAGE_INVERTER_CATEGORY && power) return `${power} Вт`;
   if (product.category === "Гибридные инверторы" && hybridPower) return `${hybridPower} кВт`;
-  if ((product.category === "AGM аккумуляторы" || product.category === "LiFePO4 аккумуляторы") && capacity) return `${capacity} А·ч`;
+  if ((product.category === "AGM аккумуляторы" || product.category === LIFEPO4_CATEGORY) && capacity) return `${capacity} А·ч`;
   if (product.category === "Солнечные панели" && power) return `${power} Вт${weight ? ` · ${weight}` : ""}`;
   if (product.category === "POWERBANK" && capacity) return `${capacity} мАч`;
   if (product.category === "Портативные зарядные станции" && power) {
@@ -562,8 +564,8 @@ function modelVariantLabel(product: Product, variant: ProductVariant) {
 function modelVariantIdentity(product: Product, variant: ProductVariant) {
   const label = modelVariantLabel(product, variant);
   const parts = label.split(" · ");
-  if (product.category === "Автомобильные инверторы" || product.category === "Гибридные инверторы") return parts[0] ?? label;
-  if (product.category === "AGM аккумуляторы" || product.category === "LiFePO4 аккумуляторы" || product.category === "POWERBANK") return parts[0] ?? label;
+  if (product.category === VOLTAGE_INVERTER_CATEGORY || product.category === "Гибридные инверторы") return parts[0] ?? label;
+  if (product.category === "AGM аккумуляторы" || product.category === LIFEPO4_CATEGORY || product.category === "POWERBANK") return parts[0] ?? label;
   if (product.category === "Портативные зарядные станции") return `${parts[0] ?? ""}|${parts[1] ?? ""}`;
   if (product.category === "Солнечные панели") return label;
   return label;

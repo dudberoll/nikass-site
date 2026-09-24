@@ -37,7 +37,7 @@ const articleLink = articleHref && `${articleHref}?from=${encodeURIComponent(`/c
   <body class="store-page">
     <StoreHeader />
     <main class="store-main product-page" id="main-content" data-product-slug={product.slug}>
-      <p class="store-breadcrumb"><a href="/catalog">← Вернуться назад</a></p>
+      <p class="store-breadcrumb"><a href="/catalog" data-catalog-back>← Вернуться в каталог</a></p>
       <section class="product-layout">
         <div class="product-gallery"><img src={product.image} alt={product.name} /></div>
         <div class="product-info">
@@ -63,6 +63,15 @@ const articleLink = articleHref && `${articleHref}?from=${encodeURIComponent(`/c
     <StoreFooter />
 
     <script is:inline>
+      const catalogBackLink = document.querySelector("[data-catalog-back]");
+      catalogBackLink?.addEventListener("click", (event) => {
+        const previousPage = document.referrer ? new URL(document.referrer) : undefined;
+        if (previousPage?.origin === location.origin && previousPage.pathname.replace(/\/$/, "") === "/catalog" && history.length > 1) {
+          event.preventDefault();
+          history.back();
+        }
+      });
+
       const specificationTables = [...document.querySelectorAll("[data-product-specs-sku]")];
       const selectModelSpecifications = (sku) => {
         const selected = specificationTables.find((table) => table.dataset.productSpecsSku === sku) ?? specificationTables[0];

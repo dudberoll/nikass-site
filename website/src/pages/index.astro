@@ -12,7 +12,7 @@ const products = await loadCatalogProducts();
 
 const bikes = [
   { id: "stations", category: "Портативные зарядные станции", title: "Зарядные станции", body: "Энергия в пути", cta: "Смотреть решения", image: "energy-stations.webp" },
-  { id: "inverters", category: "Автомобильные инверторы", title: "Инверторы", body: "Стабильное питание", cta: "Выбрать инвертор", image: "energy-inverters.webp" },
+  { id: "inverters", category: "Инвертора напряжения", title: "Инвертора напряжения", body: "Стабильное питание", cta: "Выбрать инвертор", image: "energy-inverters.webp" },
   { id: "panels", category: "Солнечные панели", title: "Солнечные панели", body: "Зарядка от солнца", cta: "Выбрать панель", image: "energy-panels.webp" },
   { id: "batteries", category: "AGM аккумуляторы", title: "Аккумуляторы", body: "Запас автономности", cta: "Выбрать аккумулятор", image: "energy-batteries.webp" },
 ];
@@ -40,17 +40,7 @@ const chatProducts = products.map(({ slug, name, category, image, price, oldPric
   priceLabel: formatPrice(price),
   ...(oldPrice !== undefined ? { oldPriceLabel: formatPrice(oldPrice) } : {}),
 }));
-const heroCategoryOrder = [
-  "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ",
-  "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS",
-  "AGM АККУМУЛЯТОРЫ",
-  "LiFePO4 АККУМУЛЯТОРЫ",
-  "АВТОМОБИЛЬНЫЕ ИНВЕРТОРЫ",
-  "ГИБРИДНЫЕ ИНВЕРТОРЫ",
-  "СОЛНЕЧНЫЕ ПАНЕЛИ",
-  "POWERBANK",
-];
-const heroCategories = [...HERO_CATEGORIES].sort((left, right) => heroCategoryOrder.indexOf(left.title) - heroCategoryOrder.indexOf(right.title));
+const heroCategories = HERO_CATEGORIES;
 const formatHeroTitle = (title: string) => title.replace("LiFePO4", "LiFePO₄");
 const heroInitialIndex = 0;
 const heroPosition = (index: number) => {
