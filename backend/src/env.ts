@@ -663,8 +663,14 @@ function validatePrivateStorageEnv(env: z.infer<typeof envSchema>, ctx: z.Refine
 
 function validateOrdersEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx) {
   if (!env.ORDERS_ENABLED) return
-  for (const key of ['WOOCOMMERCE_PRODUCTS_ENDPOINT', 'WOOCOMMERCE_STORE_ENDPOINT', 'WOOCOMMERCE_CONSUMER_KEY', 'WOOCOMMERCE_CONSUMER_SECRET', 'ORDER_TELEGRAM_BOT_TOKEN', 'ORDER_TELEGRAM_CHAT_ID'] as const) {
+  const keys = ['WOOCOMMERCE_PRODUCTS_ENDPOINT', 'WOOCOMMERCE_STORE_ENDPOINT', 'WOOCOMMERCE_CONSUMER_KEY', 'WOOCOMMERCE_CONSUMER_SECRET'] as const
+  for (const key of keys) {
     if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: `${key} is required when ORDERS_ENABLED=true` })
+  }
+  if (!(env.YOO_KASSA_ENABLED && env.YOO_KASSA_TEST_MODE && env.YOO_KASSA_FULFILLMENT_MODE === 'disabled')) {
+    for (const key of ['ORDER_TELEGRAM_BOT_TOKEN', 'ORDER_TELEGRAM_CHAT_ID'] as const) {
+      if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: `${key} is required when ORDERS_ENABLED=true` })
+    }
   }
   if (env.WOOCOMMERCE_STORE_ENDPOINT) {
     const url = new URL(env.WOOCOMMERCE_STORE_ENDPOINT)
@@ -709,5 +715,8 @@ function validateYooKassaEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCt
   }
   if (env.YOO_KASSA_FULFILLMENT_MODE === 'woocommerce' && !env.ORDERS_ENABLED) {
     ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_FULFILLMENT_MODE'], message: 'YOO_KASSA_FULFILLMENT_MODE=woocommerce requires ORDERS_ENABLED=true' })
+  }
+  if (env.YOO_KASSA_TEST_MODE && env.YOO_KASSA_FULFILLMENT_MODE !== 'disabled') {
+    ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_FULFILLMENT_MODE'], message: 'Test payments must not create real WooCommerce orders' })
   }
 }

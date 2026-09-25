@@ -118,11 +118,11 @@ recording it as `removed`. Payments are never half-present and are never reintro
 
 | Question                                                                                     | Answer       |
 | -------------------------------------------------------------------------------------------- | ------------ |
-| Is deployment needed now, or local-only for the moment?                                      | Только локальный запуск; публикация не запрошена. |
+| Is deployment needed now, or local-only for the moment?                                      | Нужны скрипты для публикации тестового сайта; фактическая публикация после настройки VPS, домена и секретов. |
 | Where are your users, and must the data stay in Russia?                                      | _unanswered_ |
-| Hosting, picked by the agent from the answer above: DigitalOcean / Yandex Cloud / own server | _unanswered_ |
+| Hosting, picked by the agent from the answer above: DigitalOcean / Yandex Cloud / own server | Собственный Beget VPS для текущей тестовой версии. |
 | Production domains / URLs for API, webapp, and website; is Yandex CDN needed now?            | _unanswered_ |
-| Which surfaces are released first                                                            | _unanswered_ |
+| Which surfaces are released first                                                            | `website`, backend API, scheduler, PostgreSQL 18; `webapp` и mobile отложены. |
 
 **Ask the audience question, not the provider question.** A product owner knows where their users
 are and whether data must stay in Russia; they should not be asked to compare clouds. The agent

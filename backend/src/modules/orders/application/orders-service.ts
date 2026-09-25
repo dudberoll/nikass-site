@@ -6,7 +6,7 @@ const hash = (token: string) => createHash('sha256').update(token).digest('hex')
 const result = (row: CheckoutAttempt) => ({ state: row.state, orderNumber: row.orderNumber })
 
 export class OrdersService {
-  constructor(private readonly store: OrderStore, private readonly provider: OrderProvider) {}
+  constructor(private readonly store: OrderStore, private readonly provider: OrderProvider, private readonly allowSubmission = true) {}
 
   async quote(value: OrderQuoteRequest) {
     const input = orderQuoteRequestSchema.parse(value)
@@ -21,6 +21,7 @@ export class OrdersService {
   async status(token: string) { return result(await this.find(token)) }
 
   async submit(token: string) {
+    if (!this.allowSubmission) throw new OrderFailure('unavailable', 'В тестовом режиме реальные заказы не создаются.')
     const row = await this.find(token)
     if (row.state !== 'quoted') return result(row)
     if (row.expiresAt.getTime() <= Date.now()) throw new OrderFailure('conflict', 'Расчёт устарел. Проверьте заказ заново.')

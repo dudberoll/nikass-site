@@ -72,9 +72,9 @@ notification. No notification or actual order was sent during implementation.
    global usage limits, and real delivery addresses. No live WooCommerce was
    available for these checks; mocked adapter tests do not prove store behavior.
 
-8. For the local YooKassa test store, set `YOO_KASSA_ENABLED=true`, `YOO_KASSA_TEST_MODE=true`,
-   the test Shop ID/key and `YOO_KASSA_RETURN_URL` to the exact local `/checkout` origin used by the
-   browser (the repository default is `http://127.0.0.1:4322/checkout`). Keep
+8. For the YooKassa test store, locally or on the password-protected Beget test VPS, set `YOO_KASSA_ENABLED=true`, `YOO_KASSA_TEST_MODE=true`,
+   the test Shop ID/key and `YOO_KASSA_RETURN_URL` to the exact `/checkout` URL used by the
+   browser (`http://127.0.0.1:4322/checkout` locally, `https://YOUR_DOMAIN/checkout` on the VPS). Keep
    `YOO_KASSA_FULFILLMENT_MODE=disabled`: payment status is reconciled and shown in the storefront,
    but no order is created in the real WooCommerce store. A real webhook needs a public HTTPS API
    URL configured in YooKassa; localhost cannot receive it.

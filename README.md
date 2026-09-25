@@ -6,6 +6,8 @@
 > Товарные маршруты: `/`, `/catalog`, `/catalog/[slug]`, `/cart`, `/checkout`.
 > Каталог backend уже читает WooCommerce REST API; production-заказы, доступы и публикация ещё не настроены.
 
+Скрипты для тестовой публикации на Beget VPS: [deploy/README.md](deploy/README.md).
+
 <p align="center">
   <img src="docs/assets/vibe_tmpl_schema.png" alt="Vibe Coding Template architecture schema" width="100%">
 </p>

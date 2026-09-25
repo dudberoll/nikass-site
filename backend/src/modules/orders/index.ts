@@ -18,7 +18,7 @@ export function createOrdersModule({ env, db, provider }: { env: AppEnv; db: DbC
   const paymentProvider: PaymentProvider = env.YOO_KASSA_ENABLED && env.YOO_KASSA_SHOP_ID && env.YOO_KASSA_SECRET_KEY
     ? createYooKassaPayments({ apiUrl: env.YOO_KASSA_API_URL, shopId: env.YOO_KASSA_SHOP_ID, secretKey: env.YOO_KASSA_SECRET_KEY, timeoutMs: env.CATALOG_REQUEST_TIMEOUT_MS })
     : { create: async (): Promise<never> => { throw new PaymentFailure('unavailable', 'Онлайн-оплата пока не подключена.') }, get: async (): Promise<never> => { throw new PaymentFailure('unavailable', 'Онлайн-оплата пока не подключена.') } }
-  return { routes: createOrderRoutes(new OrdersService(store, source), new PaymentsService(store, paymentProvider, env.YOO_KASSA_RETURN_URL ?? '', env.YOO_KASSA_TEST_MODE)) }
+  return { routes: createOrderRoutes(new OrdersService(store, source, !env.YOO_KASSA_TEST_MODE), new PaymentsService(store, paymentProvider, env.YOO_KASSA_RETURN_URL ?? '', env.YOO_KASSA_TEST_MODE)) }
 }
 export type { OrderProvider } from './application/ports'
 export { deliverOrderNotification } from './infrastructure/notifications'

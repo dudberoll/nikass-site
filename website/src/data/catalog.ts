@@ -359,7 +359,7 @@ export const AVAILABILITY_LABELS: Record<Availability, string> = {
   unavailable: "Недоступен",
 };
 
-const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const apiBase = (import.meta.env.SSR && import.meta.env.CATALOG_BUILD_API_URL || import.meta.env.PUBLIC_API_URL || "http://localhost:3000").replace(/\/$/, "");
 let catalogPromise: Promise<Product[]> | undefined;
 
 export async function loadCatalogProducts() {

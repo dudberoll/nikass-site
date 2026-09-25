@@ -12,6 +12,7 @@ function publicUrl(value: string, { httpsOnly = false } = {}) {
 }
 
 const apiBase = publicUrl(import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const testMode = import.meta.env.PUBLIC_TEST_MODE === "true";
 const privacyUrl = publicUrl(import.meta.env.PUBLIC_PRIVACY_URL ?? "", { httpsOnly: true });
 const termsUrl = publicUrl(import.meta.env.PUBLIC_TERMS_URL ?? "", { httpsOnly: true });
 const yandexSuggestApiKey = import.meta.env.PUBLIC_YANDEX_SUGGEST_API_KEY ?? "";
@@ -30,8 +31,8 @@ const yandexSuggestApiKey = import.meta.env.PUBLIC_YANDEX_SUGGEST_API_KEY ?? "";
     <main class="store-main checkout-page" id="main-content">
       <p class="store-eyebrow">NIKASS / ОФОРМЛЕНИЕ</p>
       <h1>Ваш заказ</h1>
-      <p class="checkout-lead">После оплаты результат подтвердится на этой странице. В рабочем режиме менеджер свяжется с Вами в течение 1 часа и уточнит способ получения заказа.</p>
-      <Checkout {apiBase} {privacyUrl} {termsUrl} {yandexSuggestApiKey} client:load />
+      <p class="checkout-lead">{testMode ? "Сейчас доступна тестовая оплата: деньги не списываются, реальный заказ не создаётся. Результат проверки появится на этой странице." : "После оплаты результат подтвердится на этой странице. В рабочем режиме менеджер свяжется с Вами в течение 1 часа и уточнит способ получения заказа."}</p>
+      <Checkout {apiBase} {privacyUrl} {termsUrl} {yandexSuggestApiKey} {testMode} client:load />
     </main>
     <StoreFooter />
   </body>

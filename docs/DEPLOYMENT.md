@@ -319,13 +319,13 @@ operations state. Never force-unlock an active holder or a different root.
 
 ## Own server
 
-The own-server option remains deliberately separate from the two Terraform stacks. Build
-`backend/Dockerfile`, run PostgreSQL 18+, apply `bun run --cwd backend db:deploy` before promotion,
-serve `webapp/dist` and `website/dist` behind Caddy/nginx, run
-`bun run --cwd backend start:scheduler` as a supervised service, and provide an S3-compatible
-private media bucket. Use Ansible only when it reduces repeatable host configuration (packages,
-users, firewall, systemd, proxy); keep database data, credentials, and releases out of playbook
-templates. The operator owns TLS, backups, restore tests, patching, monitoring, and rollback.
+For the current NIKASS test stage on Beget VPS, use [deploy/README.md](../deploy/README.md).
+It runs PostgreSQL 18, the API, and the scheduler through Docker Compose, and serves only the
+active `website/dist` release through Nginx with HTTPS and a password. `NODE_ENV=staging` permits
+YooKassa's test shop and `YOO_KASSA_FULFILLMENT_MODE=disabled`, while secure cookies and a
+separate runtime database role remain enabled. Private filesystem storage is mounted on the VPS
+for this stage. A real production release requires a separate storage and payment activation
+review; do not change `NODE_ENV` or fulfillment mode merely to remove the test banner.
 
 ## Local validation
 

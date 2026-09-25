@@ -32,6 +32,8 @@ bun-debug.log*
 !backend/.env*.example
 !webapp/.env*.example
 !website/.env*.example
+!deploy/.env.example
+!deploy/runtime.env.example
 !mobile/.env*.example
 !mobile/.maestro/.env*.example
 

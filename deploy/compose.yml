@@ -1,0 +1,64 @@
+name: nikass
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nikass
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./init-app-role.sh:/docker-entrypoint-initdb.d/init-app-role.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nikass"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  api:
+    image: nikass-api:${APP_IMAGE_TAG:?Set APP_IMAGE_TAG in release.env}
+    restart: unless-stopped
+    env_file: runtime.env
+    environment:
+      NODE_ENV: staging
+      PORT: 3000
+      COOKIE_SECURE: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:3000"
+    volumes:
+      - ./storage:/app/backend/.storage
+
+  scheduler:
+    image: nikass-api:${APP_IMAGE_TAG:?Set APP_IMAGE_TAG in release.env}
+    command: ["bun", "src/scheduler.ts"]
+    restart: unless-stopped
+    env_file: runtime.env
+    environment:
+      NODE_ENV: staging
+      COOKIE_SECURE: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./storage:/app/backend/.storage
+
+  migrate:
+    image: nikass-api:${APP_IMAGE_TAG:?Set APP_IMAGE_TAG in release.env}
+    profiles: ["tools"]
+    env_file: runtime.env
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:?Set MIGRATION_DATABASE_URL in .env}
+      DATABASE_RUNTIME_USER: nikass_app
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
