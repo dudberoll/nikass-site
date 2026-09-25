@@ -9,7 +9,7 @@ TARGET="deploy@$DEPLOY_HOST"
 
 fail() { echo "Ошибка: $*" >&2; exit 1; }
 usage() {
-  echo 'DEPLOY_HOST=IP SITE_URL=https://domain PUBLIC_PRIVACY_URL=https://... PUBLIC_TERMS_URL=https://... ./deploy/deploy.sh publish'
+  echo 'DEPLOY_HOST=IP SITE_URL=https://IP PUBLIC_PRIVACY_URL=https://... PUBLIC_TERMS_URL=https://... ./deploy/deploy.sh publish'
   echo 'DEPLOY_HOST=IP ./deploy/deploy.sh list'
   echo 'DEPLOY_HOST=IP ./deploy/deploy.sh rollback RELEASE'
 }
@@ -47,7 +47,7 @@ fi
 REMOTE
 }
 publish() {
-  [[ "$SITE_URL" =~ ^https://[a-zA-Z0-9.-]+$ ]] || fail 'SITE_URL должен быть HTTPS-доменом без пути.'
+  [[ "$SITE_URL" == "https://$DEPLOY_HOST" ]] || fail 'SITE_URL должен быть HTTPS-адресом этого VPS без пути.'
   [[ "${PUBLIC_PRIVACY_URL:-}" == https://* && "${PUBLIC_TERMS_URL:-}" == https://* ]] || fail 'Для checkout нужны опубликованные HTTPS-адреса PUBLIC_PRIVACY_URL и PUBLIC_TERMS_URL.'
   for command in git bun docker curl; do command -v "$command" >/dev/null || fail "Не найдена команда $command."; done
   docker buildx version >/dev/null || fail 'Нужен Docker Buildx.'

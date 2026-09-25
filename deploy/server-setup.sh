@@ -9,7 +9,10 @@ command -v docker >/dev/null && docker compose version >/dev/null || { echo 'ÐÑ
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y nginx rsync curl ufw certbot apache2-utils
+apt-get install -y nginx rsync curl ufw snapd apache2-utils
+systemctl enable --now snapd.socket
+if ! snap list certbot >/dev/null 2>&1; then snap install --classic certbot; fi
+ln -sfn /snap/bin/certbot /usr/local/bin/certbot
 
 if ! id deploy >/dev/null 2>&1; then useradd --create-home --user-group --shell /bin/bash deploy; fi
 usermod -aG docker deploy
