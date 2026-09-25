@@ -39,7 +39,11 @@ certbot certonly --webroot -w /var/www/html --non-interactive --agree-tos \
     --deploy-hook /etc/letsencrypt/renewal-hooks/deploy/nikass-nginx.sh
 
 echo 'Задайте пароль для входа на тестовый сайт:'
-htpasswd -c /etc/nginx/nikass.htpasswd tester
+if [[ -t 0 ]]; then
+    htpasswd -cB /etc/nginx/nikass.htpasswd tester
+else
+    htpasswd -cBi /etc/nginx/nikass.htpasswd tester
+fi
 chmod 640 /etc/nginx/nikass.htpasswd
 chown root:www-data /etc/nginx/nikass.htpasswd
 sed "s/__SITE_IP__/$SITE_IP/g" /srv/nikass/nginx-site.conf.example > /etc/nginx/sites-available/nikass
