@@ -194,7 +194,8 @@ export default function PromptInput({
     textarea.style.height = "0px";
     const styles = window.getComputedStyle(textarea);
     const padding = parseFloat(styles.paddingBlockStart) + parseFloat(styles.paddingBlockEnd);
-    setMultiline(textarea.scrollHeight > padding + parseFloat(styles.lineHeight) + 1);
+    const lineHeight = parseFloat(styles.lineHeight);
+    setMultiline(textarea.scrollHeight - padding > lineHeight * 1.5);
     const nextHeight = Math.max(68, Math.min(textarea.scrollHeight, 160));
     textarea.style.height = `${nextHeight}px`;
     setContainerHeight(nextHeight + 48);
