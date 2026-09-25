@@ -43,4 +43,8 @@
 
 @media (max-width: 600px) {
   .prompt-input-root { max-width: 100%; }
+  .ai-assistant-card-prompt .prompt-input-root[data-expanded="true"]:not([data-multiline="true"]) .prompt-input-surface { height: 64px !important; overflow: hidden; }
+  .ai-assistant-card-prompt .prompt-input-root[data-expanded="true"]:not([data-multiline="true"]) .prompt-input-textarea { height: 64px !important; min-height: 0; padding: 20px 48px; }
+  .ai-assistant-card-prompt .prompt-input-root[data-expanded="true"]:not([data-multiline="true"]) .prompt-input-bottom-actions { bottom: 16px; }
+  .ai-assistant-card-prompt .prompt-input-root[data-expanded="true"]:not([data-multiline="true"]) .prompt-input-action { bottom: 16px; }
 }

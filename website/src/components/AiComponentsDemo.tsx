@@ -222,7 +222,7 @@ export function AssistantCard({ apiBase, products }: { apiBase: string; products
     </div>}
     {error && <p className="ai-chat-error" role="alert">{error}</p>}
     <div className="ai-assistant-card-composer ai-assistant-card-prompt">
-      <PromptInput variant="embedded" value={draft} onChange={setDraft} onSubmit={(value) => void sendPrompt(value)} onVoiceInput={transcribeAudio} disabled={streaming || transcribing} placeholder="Что нужно запитать?" />
+      <PromptInput variant="embedded" value={draft} onChange={setDraft} onSubmit={(value) => void sendPrompt(value)} onVoiceInput={transcribeAudio} disabled={streaming || transcribing} placeholder={messages.length === 0 ? "Что нужно запитать?" : ""} />
     </div>
   </section>;
 }

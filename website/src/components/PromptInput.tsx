@@ -65,6 +65,7 @@ export default function PromptInput({
 }: PromptInputProps) {
   const [localValue, setLocalValue] = useState(defaultValue);
   const [expanded, setExpanded] = useState(false);
+  const [multiline, setMultiline] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [activeAttachment, setActiveAttachment] = useState<{ attachment: Attachment; rect: DOMRect } | null>(null);
   const [recording, setRecording] = useState(false);
@@ -189,11 +190,15 @@ export default function PromptInput({
   useEffect(() => {
     if (currentValue.trim() !== "" || attachments.length > 0) setExpanded(true);
     if (!textareaRef.current || !expanded) return;
-    textareaRef.current.style.height = "0px";
-    const nextHeight = Math.max(68, Math.min(textareaRef.current.scrollHeight, 160));
-    textareaRef.current.style.height = `${nextHeight}px`;
+    const textarea = textareaRef.current;
+    textarea.style.height = "0px";
+    const styles = window.getComputedStyle(textarea);
+    const padding = parseFloat(styles.paddingBlockStart) + parseFloat(styles.paddingBlockEnd);
+    setMultiline(textarea.scrollHeight > padding + parseFloat(styles.lineHeight) + 1);
+    const nextHeight = Math.max(68, Math.min(textarea.scrollHeight, 160));
+    textarea.style.height = `${nextHeight}px`;
     setContainerHeight(nextHeight + 48);
-  }, [currentValue, attachments.length, expanded]);
+  }, [currentValue, attachments.length, expanded, multiline]);
 
   const submit = () => {
     if (!hasValue || recording || disabled) return;
@@ -226,7 +231,7 @@ export default function PromptInput({
     requestAnimationFrame(() => textareaRef.current?.focus());
   };
 
-  return <div className="prompt-input-root" data-variant={variant} data-expanded={expanded}>
+  return <div className="prompt-input-root" data-variant={variant} data-expanded={expanded} data-multiline={multiline}>
     <input ref={fileInputRef} className="prompt-input-hidden" type="file" accept="image/*" multiple onChange={chooseFiles} />
     <div className={`prompt-input-attachments ${attachments.length && expanded ? "is-visible" : ""}`}>
       {attachments.map((attachment, index) => <div key={attachment.id} className="prompt-input-thumb" style={{ animationDelay: `${index * 35}ms` }}>
