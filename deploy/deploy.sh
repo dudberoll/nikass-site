@@ -33,7 +33,7 @@ cd /srv/nikass
 if [[ -n "$previous" ]]; then
   printf 'APP_IMAGE_TAG=%s\n' "$previous" > release.env.tmp
   mv release.env.tmp release.env
-  APP_IMAGE_TAG="$previous" docker compose --env-file .env -f compose.yml up -d api scheduler
+  APP_IMAGE_TAG="$previous" docker compose --env-file .env -f compose.yml up -d --force-recreate api scheduler
   for attempt in {1..30}; do
     if curl --fail --silent http://127.0.0.1:8080/health/ready >/dev/null; then break; fi
     sleep 2
@@ -118,7 +118,7 @@ if [[ -z "$previous" ]]; then
 else
   dc run --rm --no-deps -e ADMIN_SEED_EMAIL= -e ADMIN_SEED_PASSWORD= migrate bun scripts/deploy-database.ts
 fi
-dc up -d api scheduler
+dc up -d --force-recreate api scheduler
 for attempt in {1..30}; do
   if curl --fail --silent http://127.0.0.1:8080/health/ready >/dev/null; then exit 0; fi
   sleep 2
