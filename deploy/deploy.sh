@@ -64,7 +64,8 @@ publish() {
   ssh "$TARGET" 'test -s /srv/nikass/.env && test -s /srv/nikass/runtime.env && test -f /srv/nikass/compose.yml && test -f /etc/nginx/nikass.htpasswd' || fail 'Сначала подготовьте VPS, env-файлы и HTTPS.'
   previous="$(ssh "$TARGET" 'test -f /srv/nikass/release.env && cut -d= -f2 /srv/nikass/release.env || true')"
   [[ -z "$previous" || "$previous" =~ ^[0-9]{14}-[0-9a-f]{12}$ ]] || fail 'На VPS некорректный release.env.'
-  ssh "$TARGET" bash -s -- "$previous" <<'REMOTE' || fail 'На VPS не заполнены обязательные переменные конфигурации.'
+  previous_arg="${previous:-none}"
+  ssh "$TARGET" bash -s -- "$previous_arg" <<'REMOTE' || fail 'На VPS не заполнены обязательные переменные конфигурации.'
 set -Eeuo pipefail
 cd /srv/nikass
 for key in POSTGRES_PASSWORD POSTGRES_APP_PASSWORD MIGRATION_DATABASE_URL; do
@@ -74,7 +75,7 @@ for key in DATABASE_URL JWT_SECRET CORS_ORIGINS WOOCOMMERCE_PRODUCTS_ENDPOINT WO
   grep -Eq "^${key}=[^[:space:]]+" runtime.env
 done
 ! grep -Eq 'YOUR_DOMAIN|YOUR_WOO_SITE|:APP_PASSWORD@|:POSTGRES_PASSWORD@' .env runtime.env
-if [[ -z "$1" ]]; then
+if [[ "$1" == none ]]; then
   grep -Eq '^ADMIN_SEED_EMAIL=[^[:space:]]+' .env
   grep -Eq '^ADMIN_SEED_PASSWORD=[^[:space:]]+' .env
 fi
