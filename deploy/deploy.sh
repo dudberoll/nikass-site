@@ -21,10 +21,14 @@ validate() {
 remote_restore() {
   local previous="$1"
   local candidate="${2:-}"
-  ssh "$TARGET" bash -s -- "$previous" "$candidate" <<'REMOTE'
+  local previous_arg="${previous:-none}"
+  local candidate_arg="${candidate:-none}"
+  ssh "$TARGET" bash -s -- "$previous_arg" "$candidate_arg" <<'REMOTE'
 set -Eeuo pipefail
 previous="$1"
 candidate="$2"
+if [[ "$previous" == none ]]; then previous=""; fi
+if [[ "$candidate" == none ]]; then candidate=""; fi
 cd /srv/nikass
 if [[ -n "$previous" ]]; then
   printf 'APP_IMAGE_TAG=%s\n' "$previous" > release.env.tmp
@@ -99,10 +103,12 @@ REMOTE
   docker save "nikass-api:$release" | ssh "$TARGET" docker load
 
   activated=1
-  ssh "$TARGET" bash -s -- "$release" "$previous" <<'REMOTE'
+  previous_arg="${previous:-none}"
+  ssh "$TARGET" bash -s -- "$release" "$previous_arg" <<'REMOTE'
 set -Eeuo pipefail
 release="$1"
 previous="$2"
+if [[ "$previous" == none ]]; then previous=""; fi
 cd /srv/nikass
 dc() { APP_IMAGE_TAG="$release" docker compose --env-file .env -f compose.yml "$@"; }
 dc config --quiet
