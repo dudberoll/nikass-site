@@ -12,11 +12,19 @@ export function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const catalogProducts = entry.slug === "energy-at-dacha" ? await loadCatalogProducts() : [];
-const recommendedProducts = [
-  catalogProducts.find((product) => product.category === "Портативные зарядные станции"),
-  catalogProducts.find((product) => product.category === "Солнечные панели"),
-].filter((product) => product !== undefined);
+const catalogProducts = entry.slug === "energy-at-dacha" || entry.recommendedProductSlugs?.length
+  ? await loadCatalogProducts()
+  : [];
+const recommendedProducts = entry.recommendedProductSlugs
+  ? entry.recommendedProductSlugs.map((slug) => {
+      const product = catalogProducts.find((candidate) => candidate.slug === slug);
+      if (!product) throw new Error(`Blog entry ${entry.slug} references unknown catalog product: ${slug}`);
+      return product;
+    })
+  : [
+      catalogProducts.find((product) => product.category === "Портативные зарядные станции"),
+      catalogProducts.find((product) => product.category === "Солнечные панели"),
+    ].filter((product) => product !== undefined);
 ---
 <!doctype html>
 <html lang="ru">
@@ -63,7 +71,7 @@ const recommendedProducts = [
             : entry.content.map((sentence) => <p>{sentence}</p>)}
         </div>
         <a class="store-primary-button" href="/blog">Все статьи</a>
-        {recommendedProducts.length === 2 && <section class="orbea-bestsellers blog-recommended-products" aria-labelledby="recommended-products-title">
+        {recommendedProducts.length > 0 && <section class="orbea-bestsellers blog-recommended-products" aria-labelledby="recommended-products-title">
           <div class="orbea-bestsellers-intro">
             <div>
               <p class="orbea-section-kicker">NIKASS / К СТАТЬЕ</p>
