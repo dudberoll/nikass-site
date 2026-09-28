@@ -2,7 +2,9 @@
 
 Единый активный storefront: главная и визуальный язык Astra объединены с проверенной логикой вариантов, наличия, предзаказа, корзины и guest checkout. Каталог при сборке берётся из `GET /api/catalog` backend, а backend получает его из WooCommerce REST API. Из ответа выбираются 47 товарных строк текущего CSV, а совпадающие модельные семейства сворачиваются в 17 публичных карточек с вариантами мощности и ёмкости. Опубликованные в WooCommerce, но не входящие в этот CSV старые и тестовые товары в витрину не попадают.
 
-Маршруты: `/`, `/catalog`, `/catalog/[slug]`, `/catalog-editor`, `/blog`, `/blog/[slug]`, `/cart`, `/checkout`, `/payment-and-delivery`, `/return-policy`, `/message-scroller`.
+Маршруты: `/`, `/catalog`, `/catalog/[slug]`, `/catalog-editor`, `/blog`, `/blog/[slug]`, `/cart`, `/checkout`, `/payment-and-delivery`, `/return-policy`, `/service-center`, `/message-scroller`.
+
+`/service-center` описывает послегарантийный ремонт NIKASS и бесплатную диагностику; контакты сервисного центра будут добавлены после уточнения.
 
 Публичный блог содержит короткие статьи NIKASS о сценариях автономной энергии; записи доступны из шапки сайта и карточек на главной.
 

@@ -1,0 +1,79 @@
+---
+import StoreFooter from "../components/StoreFooter.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import "../styles/global.css";
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Гарантийное обслуживание NIKASS: бесплатная диагностика, ремонт или отправка нового устройства. Также выполняем постгарантийный ремонт." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Сервисный центр NIKASS — гарантийное обслуживание и ремонт</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main info-page service-center-page" id="main-content">
+      <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <span>Сервисный центр</span></nav>
+
+      <section class="store-intro info-intro">
+        <p class="store-eyebrow">NIKASS / СЕРВИСНЫЙ ЦЕНТР</p>
+        <h1>Ремонт и обслуживание NIKASS</h1>
+        <p>По гарантийным обращениям проводим бесплатную диагностику и, если случай подтверждён, ремонтируем устройство или отправляем новое. Также принимаем оборудование на постгарантийный ремонт и рассматриваем случаи, которые не покрываются гарантией.</p>
+      </section>
+
+      <div class="info-sections">
+        <section class="info-section" aria-labelledby="service-advantages-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">01 / НАШИ ПРЕИМУЩЕСТВА</p>
+            <h2 id="service-advantages-title">Поддержка вашего оборудования</h2>
+          </div>
+          <div class="info-columns">
+            <article class="info-card">
+              <h3>Оригинальные комплектующие</h3>
+              <p>Для ремонта используем оригинальные запчасти NIKASS.</p>
+            </article>
+            <article class="info-card">
+              <h3>Сертифицированные специалисты</h3>
+              <p>С оборудованием NIKASS работают обученные специалисты с подтверждённой квалификацией.</p>
+            </article>
+            <article class="info-card">
+              <h3>Бесплатная диагностика</h3>
+              <p>Перед ремонтом проверяем оборудование и определяем характер неисправности.</p>
+            </article>
+            <article class="info-card">
+              <h3>Гарантия на ремонт</h3>
+              <p>Предоставляем гарантию на выполненные работы и установленные запчасти.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="info-section" aria-labelledby="service-products-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">02 / ЧТО МЫ ОБСЛУЖИВАЕМ</p>
+            <h2 id="service-products-title">Оборудование и аксессуары NIKASS</h2>
+            <p>Принимаем товары всех категорий NIKASS, включая портативные зарядные станции, аккумуляторы, солнечные панели и аксессуары. Обратиться можно и при механических или электрических повреждениях, а также после нарушения условий эксплуатации.</p>
+          </div>
+        </section>
+
+        <section class="info-section" aria-labelledby="service-delivery-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">03 / ПЕРЕДАЧА ОБОРУДОВАНИЯ</p>
+            <h2 id="service-delivery-title">Как передать товар в сервис</h2>
+            <p>Оборудование принимаем по адресу пункта самовывоза NIKASS. Передайте чистое устройство без загрязнений, которые могут помешать диагностике и ремонту.</p>
+          </div>
+        </section>
+
+        <aside class="info-callout" aria-labelledby="service-diagnosis-title">
+          <div>
+            <p class="store-eyebrow">04 / РЕЗУЛЬТАТ ДИАГНОСТИКИ</p>
+            <h2 id="service-diagnosis-title">Возможность ремонта зависит от состояния устройства</h2>
+          </div>
+          <p class="info-list-light">После диагностики сообщим, можно ли восстановить оборудование. Иногда ремонт технически невозможен или нецелесообразен из-за характера повреждений либо отсутствия необходимых комплектующих.</p>
+        </aside>
+      </div>
+    </main>
+    <StoreFooter />
+  </body>
+</html>

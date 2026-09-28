@@ -25,15 +25,28 @@ const actions: Array<{ icon: IconName; label: string; prompt: string }> = [
 
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string };
 
+function renderBoldMarkdown(text: string): ReactElement[] {
+  return text.split(/(\*\*[^*\n]+\*\*)/g).map((part, index) =>
+    part.startsWith("**") && part.endsWith("**")
+      ? <strong key={index}>{part.slice(2, -2)}</strong>
+      : <span key={index}>{part}</span>,
+  );
+}
+
 const catalogPathPattern = /(?:https?:\/\/[^)\s/]+)?\/catalog\/([a-z0-9-]+)\/?/gi;
 const catalogLinkLinePattern = /^\s*(?:[-*+•]\s*)?(?:\[[^\]\n]+\]\()?(?:https?:\/\/[^)\s/]+)?\/catalog\/[a-z0-9-]+\/?\)?\s*$/i;
+const markdownLinkPattern = /\[([^\]\n]+)\]\([^\)\n]*(?:\)|$)/g;
 
 export function extractCatalogProductSlugs(text: string) {
   return [...new Set([...text.matchAll(catalogPathPattern)].map((match) => match[1]).filter((slug): slug is string => Boolean(slug)))];
 }
 
 export function removeCatalogProductLinkLines(text: string) {
-  return text.split(/\r?\n/).filter((line) => !catalogLinkLinePattern.test(line)).join("\n").trim();
+  return text.split(/\r?\n/)
+    .filter((line) => !catalogLinkLinePattern.test(line))
+    .map((line) => line.replace(markdownLinkPattern, "$1"))
+    .join("\n")
+    .trim();
 }
 
 function ProductRecommendations({ text, products }: { text: string; products: readonly ChatProduct[] }) {
@@ -214,7 +227,7 @@ export function AssistantCard({ apiBase, products }: { apiBase: string; products
         return <article key={message.id} className={`ai-chat-message is-${message.role}`}>
           <div className="ai-chat-message-avatar" aria-hidden="true">{message.role === "assistant" ? "N" : "Вы"}</div>
           <div className="ai-chat-message-content">
-            {(visibleText || !message.text) && <div className="ai-chat-bubble">{visibleText || "Печатает…"}</div>}
+            {(visibleText || !message.text) && <div className="ai-chat-bubble">{visibleText ? renderBoldMarkdown(visibleText) : "Печатает…"}</div>}
             {message.role === "assistant" && <ProductRecommendations text={message.text} products={products} />}
           </div>
         </article>;

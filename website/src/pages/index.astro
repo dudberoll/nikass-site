@@ -22,7 +22,7 @@ const mobileStories = storyEntries.filter((story) => !["backup-power-for-work", 
 
 const footerGroups = [
   { title: "Магазин", links: [{ label: "Каталог", href: "/catalog" }, { label: "Блог", href: "/blog" }, { label: "Корзина", href: "/cart" }] },
-  { title: "Поддержка", links: [{ label: "Оплата и доставка", href: "/payment-and-delivery" }, { label: "Политика возврата", href: "/return-policy" }] },
+  { title: "Поддержка", links: [{ label: "Оплата и доставка", href: "/payment-and-delivery" }, { label: "Политика возврата", href: "/return-policy" }, { label: "Сервисный центр", href: "/service-center" }] },
 ];
 
 const bestSellerSlugs = [
@@ -92,7 +92,7 @@ const heroPosition = (index: number) => {
                 data-hero-position={heroPosition(index)}
               >
                 <span class="orbea-hero-product-media"><img src={category.image} alt={formatHeroTitle(category.title)} loading={index === heroInitialIndex ? "eager" : "lazy"} decoding="async" /></span>
-                <span class="orbea-hero-product-name">{category.title === "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS" ? <><span>СИСТЕМЫ ХРАНЕНИЯ</span><span>ЭНЕРГИИ ESS</span></> : formatHeroTitle(category.title)}</span>
+                <span class="orbea-hero-product-name">{category.title === "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ" ? <>ПОРТАТИВНЫЕ<br />ЗАРЯДНЫЕ СТАНЦИИ</> : category.title === "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS" ? <><span>СИСТЕМЫ ХРАНЕНИЯ</span><span>ЭНЕРГИИ ESS</span></> : formatHeroTitle(category.title)}</span>
               </a>
             ))}
             </div>
@@ -210,7 +210,7 @@ const heroPosition = (index: number) => {
         <div class="orbea-newsletter">
           <h3>О NIKASS</h3>
           <p>Автономная энергия для дома, дороги и работы.</p>
-          <a href="mailto:hello@nikass.ru">Связаться с нами</a>
+          <a href="/#contacts">Связаться с нами</a>
         </div>
         <div class="orbea-footer-links">
           {footerGroups.map((group) => <div><h3>{group.title}</h3><ul>{group.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul></div>)}

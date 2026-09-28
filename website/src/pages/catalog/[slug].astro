@@ -2,6 +2,7 @@
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
 import ProductVariantSelector from "../../components/ProductVariantSelector";
+import { blogEntries } from "../../data/blog";
 import { detailLines, detailRows, displayProductSku, formatPrice, loadCatalogProducts, relatedProducts, type Product } from "../../data/catalog";
 
 import "../../styles/global.css";
@@ -18,11 +19,18 @@ const characteristicSets = product.variantCharacteristics
 const packageContents = detailLines(product.packageContents);
 const initialVariantSku = product.variants[0]?.sku ?? "default";
 const related = relatedProducts(product, await loadCatalogProducts());
-const articleHrefByCategory: Record<string, string> = {
-  "Портативные зарядные станции": "/blog/energy-at-dacha",
+const articleSlugByCategory: Record<string, string> = {
+  "Портативные зарядные станции": "energy-at-dacha",
+  "Солнечные панели": "sun-in-the-system",
+  "AGM аккумуляторы": "how-to-build-an-autonomous-system",
+  "LiFePO₄ аккумуляторы": "how-to-build-an-autonomous-system",
+  "Инвертора напряжения": "how-to-build-an-autonomous-system",
+  "Гибридные инверторы": "how-to-build-an-autonomous-system",
+  "Системы хранения энергии ESS": "how-to-build-an-autonomous-system",
+  POWERBANK: "charging-on-the-road",
 };
-const articleHref = articleHrefByCategory[product.category];
-const articleLink = articleHref && `${articleHref}?from=${encodeURIComponent(`/catalog/${product.slug}`)}`;
+const article = blogEntries.find((entry) => entry.slug === articleSlugByCategory[product.category]);
+const articleLink = article && `/blog/${article.slug}?from=${encodeURIComponent(`/catalog/${product.slug}`)}`;
 ---
 
 <!doctype html>
@@ -45,7 +53,7 @@ const articleLink = articleHref && `${articleHref}?from=${encodeURIComponent(`/c
           <h1>{product.name}</h1>
           <p class="product-sku">Артикул: {displayProductSku(product)}</p>
           <ProductVariantSelector {product} client:load />
-          {product.description && <div class="product-description"><h2>Описание</h2><p>{product.description}</p>{articleLink && <a class="store-primary-button" href={articleLink}>Читать полностью</a>}</div>}
+          {(product.description || article) && <div class="product-description"><h2>Описание</h2>{product.description && <p>{product.description}</p>}{article && articleLink && <><p class="product-article-teaser">{article.summary}</p><a class="store-primary-button" href={articleLink}>Смотреть полностью</a></>}</div>}
         </div>
       </section>
 

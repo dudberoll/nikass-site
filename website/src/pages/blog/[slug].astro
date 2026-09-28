@@ -2,7 +2,7 @@
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
 import { blogEntries, type BlogEntry } from "../../data/blog";
-import { formatPrice, loadCatalogProducts } from "../../data/catalog";
+import { formatPrice, HERO_CATEGORIES, loadCatalogProducts } from "../../data/catalog";
 import "../../styles/global.css";
 
 type Props = { entry: BlogEntry };
@@ -25,6 +25,16 @@ const recommendedProducts = entry.recommendedProductSlugs
       catalogProducts.find((product) => product.category === "Портативные зарядные станции"),
       catalogProducts.find((product) => product.category === "Солнечные панели"),
     ].filter((product) => product !== undefined);
+const returnCategoryByArticle: Record<string, string> = {
+  "energy-at-dacha": "Портативные зарядные станции",
+  "sun-in-the-system": "Солнечные панели",
+  "charging-on-the-road": "POWERBANK",
+};
+const defaultReturnCategory = returnCategoryByArticle[entry.slug];
+const defaultReturnPath = defaultReturnCategory
+  ? `/catalog?category=${encodeURIComponent(defaultReturnCategory)}`
+  : "/catalog";
+const allowedCatalogCategories = HERO_CATEGORIES.flatMap(({ title, label, category }) => [title, label, category]);
 ---
 <!doctype html>
 <html lang="ru">
@@ -38,11 +48,10 @@ const recommendedProducts = entry.recommendedProductSlugs
   <body class="store-page">
     <StoreHeader />
     <main class="store-main blog-article-page" id="main-content">
-      <a class="store-primary-button blog-return-button" href="/catalog" hidden data-return-to-product>Вернуться в каталог</a>
+      <a class="store-primary-button blog-return-button" href={defaultReturnPath} data-return-to-catalog data-default-href={defaultReturnPath} data-catalog-categories={JSON.stringify(allowedCatalogCategories)}>Вернуться в каталог</a>
       <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <a href="/blog">Блог</a> / <span>{entry.title}</span></nav>
       <article class="blog-article">
         <header class="blog-article-header">
-          <p class="store-eyebrow">{entry.category} / {entry.date}</p>
           <h1>{entry.title}</h1>
           <p>{entry.summary}</p>
         </header>
@@ -95,19 +104,30 @@ const recommendedProducts = entry.recommendedProductSlugs
     </main>
     <StoreFooter />
     <script is:inline>
-      const returnToProduct = document.querySelector("[data-return-to-product]");
-      const from = new URLSearchParams(window.location.search).get("from");
-      if (returnToProduct && from) {
+      const returnToCatalog = document.querySelector("[data-return-to-catalog]");
+      const catalogCategories = new Set(JSON.parse(returnToCatalog?.dataset.catalogCategories ?? "[]"));
+      const getCatalogReturnPath = (value) => {
+        if (!value) return undefined;
         try {
-          const returnUrl = new URL(from, window.location.origin);
-          if (returnUrl.origin === window.location.origin && returnUrl.pathname.startsWith("/catalog/")) {
-            returnToProduct.href = `${returnUrl.pathname}${returnUrl.search}`;
-            returnToProduct.hidden = false;
+          const url = new URL(value, window.location.origin);
+          if (url.origin !== window.location.origin) return undefined;
+          if (url.pathname === "/catalog" || url.pathname === "/catalog/") {
+            const category = url.searchParams.get("category");
+            return category && catalogCategories.has(category) ? `/catalog?category=${encodeURIComponent(category)}` : "/catalog";
           }
+          const product = url.pathname.match(/^\/catalog\/([a-z0-9-]+)\/?$/);
+          if (!product) return undefined;
+          const variant = url.searchParams.get("variant");
+          return `/catalog/${product[1]}${variant ? `?variant=${encodeURIComponent(variant)}` : ""}`;
         } catch {
-          // Ignore malformed return URLs and keep the button hidden.
+          return undefined;
         }
-      }
+      };
+      const from = new URLSearchParams(window.location.search).get("from");
+      returnToCatalog.href = getCatalogReturnPath(from)
+        ?? getCatalogReturnPath(document.referrer)
+        ?? returnToCatalog.dataset.defaultHref
+        ?? "/catalog";
     </script>
   </body>
 </html>
