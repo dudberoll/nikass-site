@@ -114,9 +114,9 @@ dc() { APP_IMAGE_TAG="$release" docker compose --env-file .env -f compose.yml "$
 dc config --quiet
 dc up -d --wait db
 if [[ -z "$previous" ]]; then
-  dc run --rm --no-deps migrate bun scripts/deploy-database.ts
+  dc run --rm --no-deps --interactive=false migrate bun scripts/deploy-database.ts
 else
-  dc run --rm --no-deps -e ADMIN_SEED_EMAIL= -e ADMIN_SEED_PASSWORD= migrate bun scripts/deploy-database.ts
+  dc run --rm --no-deps --interactive=false -e ADMIN_SEED_EMAIL= -e ADMIN_SEED_PASSWORD= migrate bun scripts/deploy-database.ts
 fi
 dc up -d --force-recreate api scheduler
 for attempt in {1..30}; do
