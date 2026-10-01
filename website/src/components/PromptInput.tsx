@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
 import "./prompt-input.css";
 
 type PromptInputMeta = { attachments: File[] };
@@ -187,7 +187,7 @@ export default function PromptInput({
     return () => document.removeEventListener("nikass:chat-close", handleChatClose);
   }, [stopRecording]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (currentValue.trim() !== "" || attachments.length > 0) setExpanded(true);
     if (!textareaRef.current || !expanded) return;
     const textarea = textareaRef.current;

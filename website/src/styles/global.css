@@ -278,8 +278,8 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 @media (max-width: 767px) {
   .orbea-account { display: none; }
   .orbea-hero { height: auto; min-height: 0; }
-  .orbea-hero-featured { display: flex; height: auto; min-height: calc(100svh - 216px); flex-direction: column; align-items: stretch; justify-content: center; gap: 10px; padding: 60px 20px 24px; }
-  .orbea-hero-featured .orbea-hero-copy { top: 32px; order: 2; width: 100%; }
+  .orbea-hero-featured { display: flex; height: auto; min-height: calc(100svh - 216px); flex-direction: column; align-items: stretch; justify-content: center; gap: 42px; padding: 60px 20px 24px; }
+  .orbea-hero-featured .orbea-hero-copy { order: 2; width: 100%; }
   .orbea-hero-featured .orbea-hero-copy h1 { font-size: 28px; }
   .orbea-hero-featured .orbea-hero-copy p { max-width: 330px; margin-top: 10px; font-size: 15px; }
   .orbea-hero-products { order: 1; width: 100%; padding-top: 32px; }
