@@ -112,13 +112,13 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
   .orbea-hero-product-card, .orbea-hero-product-media, .orbea-hero-product-name { transition: none; }
 }
 @keyframes orbea-hero-auto-nudge {
-  0%, 100% { transform: scale(2) rotate(0deg); }
-  20% { transform: scale(2) rotate(-1.2deg); }
-  40% { transform: scale(2) rotate(1.2deg); }
-  60% { transform: scale(2) rotate(-.7deg); }
-  80% { transform: scale(2) rotate(.4deg); }
+  0%, 100% { rotate: 0deg; }
+  20% { rotate: -1.2deg; }
+  40% { rotate: 1.2deg; }
+  60% { rotate: -.7deg; }
+  80% { rotate: .4deg; }
 }
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+@media (prefers-reduced-motion: no-preference) {
   .orbea-hero-products.is-hero-auto-hint .orbea-hero-product-card[data-hero-position="0"] .orbea-hero-product-media { animation: orbea-hero-auto-nudge 1s ease-in-out both; }
 }
 .orbea-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 12px 20px; border-radius: 40px; background: #fff; color: #111; font-size: 14px; font-weight: 500; line-height: 20px; transition: background-color .15s ease, color .15s ease, transform .15s ease; }

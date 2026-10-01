@@ -130,14 +130,13 @@ test('homepage hero exposes the supplied categories in the requested order', () 
   assert.match(homepageStyles, /data-hero-position="0"[^}]+orbea-hero-product-name[^}]+opacity: 1/)
 })
 
-test('homepage hero auto-advances generically on desktop', () => {
+test('homepage hero auto-advances with reduced-motion support', () => {
   assert.match(homepage, /heroCarousel\.addEventListener\("animationend"/)
   assert.match(homepage, /heroCarousel\.classList\.add\("is-hero-auto-hint"\)/)
-  assert.match(homepage, /matchMedia\("\(min-width: 1024px\)"\)/)
   assert.match(homepage, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/)
   assert.match(homepageStyles, /@keyframes orbea-hero-auto-nudge/)
   assert.match(homepageStyles, /orbea-hero-auto-nudge 1s/)
   assert.match(homepageStyles, /transition: transform 1\.5s/)
   assert.match(homepage, /scheduleHeroAutoAdvance\(4000\)/)
-  assert.match(homepageStyles, /@media \(min-width: 1024px\) and \(prefers-reduced-motion: no-preference\)/)
+  assert.match(homepageStyles, /@media \(prefers-reduced-motion: no-preference\)/)
 })

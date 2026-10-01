@@ -417,7 +417,7 @@ const heroPosition = (index: number) => {
         });
         heroViewport.addEventListener("pointercancel", () => { heroPointerStart = undefined; });
 
-        if (heroItems.length > 1 && matchMedia("(min-width: 1024px)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        if (heroItems.length > 1 && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
           scheduleHeroAutoAdvance(2000);
           addEventListener("pagehide", cancelHeroAutoAdvance, { once: true });
         }

@@ -142,11 +142,13 @@ REMOTE
   [[ -f website/dist/index.html && -f website/dist/checkout/index.html ]] || fail 'Сборка сайта неполная.'
 
   ssh "$TARGET" "mkdir -p '/var/www/nikass/releases/$release'"
-  rsync -rlptz --delete --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r website/dist/ "$TARGET:/var/www/nikass/releases/$release/"
+  rsync -rlptz --delete website/dist/ "$TARGET:/var/www/nikass/releases/$release/"
   ssh "$TARGET" bash -s -- "$release" <<'REMOTE'
 set -Eeuo pipefail
 release="$1"
 test -f "/var/www/nikass/releases/$release/index.html"
+find "/var/www/nikass/releases/$release" -type d -exec chmod 755 {} +
+find "/var/www/nikass/releases/$release" -type f -exec chmod 644 {} +
 ln -sfn "releases/$release" /var/www/nikass/current.next
 mv -Tf /var/www/nikass/current.next /var/www/nikass/current
 printf 'APP_IMAGE_TAG=%s\n' "$release" > /srv/nikass/release.env.tmp
