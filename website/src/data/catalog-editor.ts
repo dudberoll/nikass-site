@@ -23,9 +23,19 @@ export function defaultCardDescription(product: Product) {
 export function rowsForVariant(product: Product, sku: string, edits: CatalogEdits): CharacteristicRow[] {
   const saved = edits.products[product.slug]?.characteristics?.[sku];
   if (saved) return saved;
-  return detailRows(product.variantCharacteristics?.[sku] ?? product.characteristics)
+  const rows = detailRows(product.variantCharacteristics?.[sku] ?? product.characteristics)
     .filter(([label, value]) => label || value)
     .map(([label, value]) => ({ label, value }));
+  const contents = product.variantPackageContents?.[sku] ?? product.packageContents;
+  for (const line of contents.split(/\r?\n/).filter(Boolean)) {
+    const separator = line.indexOf(":");
+    rows.push(line.startsWith("Дополнительные опции") && separator > 0
+      ? { label: line.slice(0, separator), value: line.slice(separator + 1).trim() }
+      : { label: "Комплектация", value: line });
+  }
+  const warranty = product.variantWarranties?.[sku] ?? product.warranty;
+  if (warranty) rows.push({ label: "Гарантия", value: warranty });
+  return rows;
 }
 
 export function parseCatalogEdits(value: unknown, products?: Product[]): CatalogEdits {

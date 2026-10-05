@@ -1,0 +1,59 @@
+---
+import StoreFooter from "../components/StoreFooter.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import "../styles/global.css";
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Проект добровольного согласия на рекламную рассылку NIKASS." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Согласие на рекламную рассылку — NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main info-page" id="main-content">
+      <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <span>Согласие на рекламную рассылку</span></nav>
+      <section class="store-intro info-intro">
+        <p class="store-eyebrow">NIKASS / ДОКУМЕНТЫ</p>
+        <h1>Согласие на рекламную рассылку</h1>
+        <p>Отдельное добровольное разрешение получать новости и предложения NIKASS.</p>
+      </section>
+
+      <aside class="info-card-grid info-card-grid-delivery" aria-label="Статус документа">
+        <article class="info-card">
+          <h3>Черновик — укажите каналы рассылки</h3>
+          <p>Перед использованием назовите фактические способы отправки рекламы и контакт для отказа от неё. Рекламная подписка должна быть отдельным выбором и не отмечаться заранее.</p>
+        </article>
+      </aside>
+
+      <div class="info-sections">
+        <section class="info-section" aria-labelledby="advertising-text-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">01 / СОГЛАСИЕ</p>
+            <h2 id="advertising-text-title">Текст разрешения</h2>
+          </div>
+          <div class="info-card-grid info-card-grid-delivery"><article class="info-card">
+            <p>Я даю [ИП/ООО/самозанятый: полное имя или наименование, ИНН] разрешение отправлять мне рекламные и информационные сообщения о товарах, услугах, скидках и новостях NIKASS.</p>
+            <p>Сообщения могут приходить через: [укажите используемые каналы — электронную почту, SMS, телефон, мессенджер или другие каналы]. Для рассылки используются: [перечислите нужные контактные данные и сведения о заказах/предпочтениях, если они действительно применяются].</p>
+            <p>Сообщения об исполнении заказа и другие необходимые сервисные уведомления не относятся к рекламной подписке.</p>
+          </article></div>
+        </section>
+
+        <section class="info-section" aria-labelledby="advertising-withdraw-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">02 / ОТКАЗ ОТ РАССЫЛКИ</p>
+            <h2 id="advertising-withdraw-title">Как отменить подписку</h2>
+          </div>
+          <div class="info-card-grid info-card-grid-delivery"><article class="info-card">
+            <p>Согласие действует, пока вы его не отзовёте. Для отказа используйте [ссылку отписки в письме / ответное SMS / электронную почту оператора / иной реально работающий способ].</p>
+            <p>После отзыва рекламные сообщения прекращаются. Это не отменяет обработку данных, необходимую для уже оформленного заказа или обязательную по закону. Условия обработки данных описаны в <a href="/privacy-policy">Политике конфиденциальности</a>.</p>
+          </article></div>
+        </section>
+      </div>
+    </main>
+    <StoreFooter />
+  </body>
+</html>

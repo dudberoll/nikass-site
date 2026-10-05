@@ -74,7 +74,7 @@ const envSchema = z.object({
   AI_MODEL: stringWithDefault('gpt-4o-mini'),
   AI_SYSTEM_PROMPT: stringWithDefault('Ты консультант магазина NIKASS. Отвечай по-русски, кратко и по делу. Не выдумывай цены, наличие и характеристики товаров; если данных недостаточно, честно скажи об этом и предложи открыть каталог или связаться с менеджером.'),
   AI_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().max(60_000).default(30_000),
-  CHAT_BODY_LIMIT_BYTES: z.coerce.number().int().positive().max(512 * 1024).default(128 * 1024),
+  CHAT_BODY_LIMIT_BYTES: z.coerce.number().int().positive().max(512 * 1024).default(512 * 1024),
   CHAT_AUDIO_BODY_LIMIT_BYTES: z.coerce.number().int().positive().max(27 * 1024 * 1024).default(26 * 1024 * 1024),
   CHAT_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(20),
   CHAT_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),

@@ -131,6 +131,18 @@ enum TaskOutboxStatus {
   @@map("task_outbox_status")
 }
 
+/// Keeps an undelivered contact recoverable even after the outbox exhausts its retries.
+/// Details are erased once Telegram confirms delivery; the audit/idempotency record remains.
+model RestockRequest {
+  id         String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  dedupeKey  String    @unique @map("dedupe_key")
+  details    Json
+  notifiedAt DateTime? @map("notified_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("restock_requests")
+}
+
 model AuthSession {
   id                       String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
   userId                   String    @map("user_id") @db.Uuid

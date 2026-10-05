@@ -1,0 +1,33 @@
+---
+import CatalogExplorer from "../components/CatalogExplorer";
+import StoreFooter from "../components/StoreFooter.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import { DISCOUNTED_PRODUCTS_LABEL, HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
+import "../styles/global.css";
+
+const products = await loadCatalogProducts("discounted");
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Уценённые товары NIKASS с незначительными дефектами по сниженной цене." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>{DISCOUNTED_PRODUCTS_LABEL} — NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main" id="main-content">
+      <nav class="catalog-return" aria-label="Возврат в каталог">
+        <a class="store-primary-button" href="/catalog">← Вернуться в каталог</a>
+      </nav>
+      <section class="store-intro catalog-intro">
+        <h1>{DISCOUNTED_PRODUCTS_LABEL}</h1>
+        <p>Товары с незначительными дефектами по сниженной цене.</p>
+      </section>
+      <CatalogExplorer products={products} categories={HERO_CATEGORIES} discounted client:load />
+    </main>
+    <StoreFooter />
+  </body>
+</html>

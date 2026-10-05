@@ -12,5 +12,5 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } } },
     { name: "mobile", use: { ...devices["Pixel 5"], viewport: { width: 390, height: 844 } } },
   ],
-  webServer: { command: `bun run dev -- --host 127.0.0.1 --port ${port} --ignore-lock`, url: `${baseURL}/catalog`, reuseExistingServer: false, timeout: 120_000 },
+  webServer: { command: `bun run dev -- --host 127.0.0.1 --port ${port} --ignore-lock`, url: `${baseURL}/checkout`, reuseExistingServer: false, timeout: 120_000 },
 });

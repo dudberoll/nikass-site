@@ -5,7 +5,7 @@ import StoreHeader from "../components/StoreHeader.astro";
 import { loadCatalogProducts } from "../data/catalog";
 import "../styles/global.css";
 
-const products = await loadCatalogProducts();
+const products = await loadCatalogProducts("all");
 ---
 <!doctype html>
 <html lang="ru">

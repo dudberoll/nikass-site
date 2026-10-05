@@ -15,7 +15,7 @@ const customerSnapshotSchema = contactSchema.strip();
 type Quote = ReturnType<typeof orderQuoteResponseSchema.parse>;
 type Payment = ReturnType<typeof paymentStatusResponseSchema.parse>;
 type CustomerSnapshot = ReturnType<typeof customerSnapshotSchema.parse>;
-type Initial = { cart: CartReviewRequest | null; quote: Quote | null; customer: CustomerSnapshot | null; error: string };
+type Initial = { cart: CartReviewRequest | null; quote: Quote | null; paymentId: string | null; error: string };
 type CheckoutProps = { apiBase: string; privacyUrl: string; termsUrl: string; yandexSuggestApiKey: string; testMode?: boolean };
 const money = (minor: number) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB" }).format(minor / 100);
 
@@ -38,27 +38,22 @@ function readCheckout(): Initial {
   try {
     const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? "null");
     const quote = orderQuoteResponseSchema.safeParse(saved?.quote);
-    const customer = customerSnapshotSchema.safeParse(saved?.customer);
-    if (quote.success) return { cart: cartReviewRequestSchema.parse(saved.cart), quote: quote.data, customer: customer.success ? customer.data : null, error: "" };
+    const payment = paymentStatusRequestSchema.safeParse({ paymentId: saved?.paymentId });
+    if (quote.success) return { cart: cartReviewRequestSchema.parse(saved.cart), quote: quote.data, paymentId: payment.success ? payment.data.paymentId : null, error: "" };
     const hash = new URLSearchParams(location.hash.slice(1)).get("cart");
     const local = readCart();
     if (local.error) throw new Error();
     const cart = hash ? JSON.parse(hash) : saved?.cart ?? { version: 1, items: local.items.map((item) => ({ slug: item.productSlug, sku: item.variantSku, quantity: item.quantity })) };
-    return { cart: cartReviewRequestSchema.parse(cart), quote: null, customer: null, error: "" };
-  } catch { return { cart: null, quote: null, customer: null, error: "Корзина недоступна или пуста. Вернитесь в каталог." }; }
+    return { cart: cartReviewRequestSchema.parse(cart), quote: null, paymentId: null, error: "" };
+  } catch { return { cart: null, quote: null, paymentId: null, error: "Корзина недоступна или пуста. Вернитесь в каталог." }; }
 }
 
 function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, testMode }: CheckoutProps) {
   const [initial] = useState(readCheckout);
   const [cart] = useState(initial.cart);
   const [quote, setQuote] = useState(initial.quote);
-  const [customer, setCustomer] = useState<CustomerSnapshot | null>(initial.customer);
-  const [paymentId, setPaymentId] = useState<string | null>(() => {
-    try {
-      const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? "null");
-      return initial.quote && paymentStatusRequestSchema.safeParse({ paymentId: saved?.paymentId }).success ? saved.paymentId : null;
-    } catch { return null; }
-  });
+  const [customer, setCustomer] = useState<CustomerSnapshot | null>(null);
+  const [paymentId, setPaymentId] = useState(initial.paymentId);
   const [payment, setPayment] = useState<Payment | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -116,10 +111,15 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, te
 
   useEffect(() => {
     try {
-      if (paymentId) void refreshPayment(paymentId);
-      else if (initial.cart) { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ cart: initial.cart })); history.replaceState(null, "", location.pathname + location.search); }
+      // Rewrite legacy snapshots too: contacts and addresses belong only in form memory and the backend.
+      if (initial.cart) {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ cart: initial.cart,
+          ...(initial.quote ? { quote: initial.quote } : {}), ...(initial.paymentId ? { paymentId: initial.paymentId } : {}) }));
+        history.replaceState(null, "", location.pathname + location.search);
+      } else sessionStorage.removeItem(STORAGE_KEY);
+      if (initial.paymentId) void refreshPayment(initial.paymentId);
     } catch { setError("Не удалось сохранить оформление в браузере."); }
-  }, [initial, paymentId]);
+  }, [initial]);
 
   function showIssues(issues: Array<{ path: PropertyKey[]; message: string }>, values: Record<string, unknown>) {
     const nextErrors = Object.fromEntries(issues.map((issue) => {
@@ -164,7 +164,7 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, te
     if (!parsed.success) return showIssues(parsed.error.issues, customer);
     if (!privacyUrl || !termsUrl) return setError("Документы магазина ещё не опубликованы. Отправка заказа пока недоступна.");
     setBusy(true);
-    try { const next = await request("/api/orders/quote", parsed.data, orderQuoteResponseSchema) as Quote; const snapshot = customerSnapshotSchema.parse(parsed.data.customer); sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ cart, quote: next, customer: snapshot })); setQuote(next); setCustomer(snapshot); setPaymentId(null); setPayment(null); }
+    try { const next = await request("/api/orders/quote", parsed.data, orderQuoteResponseSchema) as Quote; const snapshot = customerSnapshotSchema.parse(parsed.data.customer); sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ cart, quote: next })); setQuote(next); setCustomer(snapshot); setPaymentId(null); setPayment(null); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось проверить заказ."); }
     finally { setBusy(false); }
   }
@@ -174,7 +174,7 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, te
     setBusy(true); setError("");
     try {
       const next = await request("/api/orders/payment", { checkoutToken: quote.checkoutToken }, paymentStartResponseSchema) as ReturnType<typeof paymentStartResponseSchema.parse>;
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ cart, quote, customer, paymentId: next.paymentId }));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ cart, quote, paymentId: next.paymentId }));
       setPaymentId(next.paymentId);
       location.assign(next.confirmationUrl);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось открыть оплату."); setBusy(false); }

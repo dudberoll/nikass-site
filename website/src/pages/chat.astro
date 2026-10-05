@@ -1,16 +1,16 @@
 ---
 import AiComponentsDemo from "../components/AiComponentsDemo";
-import { formatPrice, loadCatalogProducts } from "../data/catalog";
+import { getProductPrice, loadCatalogProducts } from "../data/catalog";
 import "../styles/global.css";
 
 const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
-const chatProducts = (await loadCatalogProducts()).map(({ slug, name, category, image, price, oldPrice }) => ({
-  slug,
-  name,
-  category,
-  image,
-  priceLabel: formatPrice(price),
-  ...(oldPrice !== undefined ? { oldPriceLabel: formatPrice(oldPrice) } : {}),
+const chatProducts = (await loadCatalogProducts()).map((product) => ({
+  slug: product.slug,
+  name: product.name,
+  category: product.category,
+  image: product.image,
+  priceLabel: getProductPrice(product).label,
+  oldPriceLabel: getProductPrice(product).oldPriceLabel,
 }));
 ---
 <!doctype html>

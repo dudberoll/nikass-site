@@ -69,7 +69,7 @@ export function createApp({
     requireAuth: auth.requireAuth,
     storage: storage.storage,
   })
-  const catalog = createCatalogModule({ env, source: catalogSource })
+  const catalog = createCatalogModule({ env, db: prisma, source: catalogSource })
   const chat = createChatModule({ env, provider: chatProvider })
   const app = new OpenAPIHono<AuthHttpEnv>({
     defaultHook: validationErrorHook,
@@ -123,6 +123,13 @@ export function createApp({
     app.use('/api/orders', middleware)
     app.use('/api/orders/*', middleware)
   }
+  for (const middleware of createChatSecurity({
+    bodyLimitBytes: 8_192, rateLimitMax: 5, rateLimitWindowSeconds: 60,
+    trustProxy: env.TRUST_PROXY,
+    trustedProxyClientIpHeader: env.TRUSTED_PROXY_CLIENT_IP_HEADER,
+    trustedProxyClientIpPosition: env.TRUSTED_PROXY_CLIENT_IP_POSITION,
+  })) app.use('/api/catalog/restock', middleware)
+
   const chatRateLimit = createFixedWindowRateLimit({
     errorMessage: 'Too many chat requests',
     key: (c) => clientAddress(c, {

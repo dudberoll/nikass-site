@@ -16,6 +16,13 @@ export type TaskHandlerRegistry = Record<string, TaskHandlerEntry>
  * `await import()` inside `run`, which also keeps a module out of the runs that do not use it.
  */
 export const taskHandlers = {
+  'catalog:restock-notify': {
+    maxAttempts: 5,
+    run: async ({ payload, signal }, runtime) => {
+      const { deliverRestockNotification } = await import('../modules/catalog')
+      await deliverRestockNotification(payload, runtime, signal)
+    },
+  },
   'payment:fulfill': {
     maxAttempts: 1,
     run: async ({ payload, signal }, runtime) => {
@@ -27,7 +34,7 @@ export const taskHandlers = {
     maxAttempts: 5,
     run: async ({ payload, signal }, runtime) => {
       const { deliverOrderNotification } = await import('../modules/orders')
-      await deliverOrderNotification(payload, runtime, signal)
+      return deliverOrderNotification(payload, runtime, signal)
     },
   },
   /**

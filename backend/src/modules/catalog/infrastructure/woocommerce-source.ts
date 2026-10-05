@@ -214,22 +214,29 @@ function withListParams(endpoint: string) {
 }
 
 function mapProduct(product: WooProduct, variations: WooVariation[]): CatalogProduct {
+  const isDiscountCategory = (category: NonNullable<WooProduct['categories']>[number]) =>
+    category.slug === 'ucenennye-tovary' || category.name?.trim().toLocaleLowerCase('ru-RU').replace(/ё/g, 'е') === 'уцененные товары'
   const variants = variations.length > 0
     ? variations.map((variation) => mapVariant(variation, 'Вариант'))
     : [mapVariant({ ...product, attributes: undefined }, 'Основной вариант')]
+  const attributes = attributesToRecord(product.attributes)
+  const packageEntries = Object.entries(attributes).filter(([name]) =>
+    name === 'Комплектация' || name.startsWith('Дополнительные опции'))
 
   return {
     slug: product.slug,
     name: product.name,
-    category: product.categories?.find((category) => category.slug)?.slug ?? 'uncategorized',
+    category: product.categories?.find((category) => category.slug && !isDiscountCategory(category))?.slug ?? 'uncategorized',
+    ...(product.categories?.some(isDiscountCategory) ? { discounted: true } : {}),
     images: (product.images ?? [])
       .map((image) => httpUrl(image.src))
       .filter((value): value is string => value !== undefined),
     shortDescription: product.short_description?.trim() ?? '',
     description: product.description?.trim() ?? '',
-    characteristics: attributesToRecord(product.attributes),
-    packageContents: [],
-    warrantyMonths: 12,
+    characteristics: Object.fromEntries(Object.entries(attributes).filter(([name]) =>
+      name !== 'Гарантия' && !packageEntries.some(([packageName]) => packageName === name))),
+    packageContents: packageEntries.map(([name, value]) => name === 'Комплектация' ? value : `${name}: ${value}`),
+    warranty: attributes['Гарантия'] ?? '',
     reviews: [],
     relatedProductSlugs: [],
     promotionPeriod: promotionPeriod(product),

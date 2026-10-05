@@ -1,0 +1,71 @@
+---
+import StoreFooter from "../components/StoreFooter.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import "../styles/global.css";
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Проект согласия на обработку персональных данных для заказов и обращений NIKASS." />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Согласие на обработку персональных данных — NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main info-page" id="main-content">
+      <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <span>Согласие на обработку персональных данных</span></nav>
+      <section class="store-intro info-intro">
+        <p class="store-eyebrow">NIKASS / ДОКУМЕНТЫ</p>
+        <h1>Согласие на обработку персональных данных</h1>
+        <p>Текст согласия для человека, который отправляет заказ или обращение через сайт NIKASS.</p>
+      </section>
+
+      <aside class="info-card-grid info-card-grid-delivery" aria-label="Статус документа">
+        <article class="info-card">
+          <h3>Черновик — требуется привязать к форме</h3>
+          <p>Укажите оператора, реальные поля каждой формы и используемые сервисы. Согласие должно соответствовать тому действию, рядом с которым посетитель его принимает.</p>
+        </article>
+      </aside>
+
+      <div class="info-sections">
+        <section class="info-section" aria-labelledby="consent-operator-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">01 / КОМУ И НА ЧТО</p>
+            <h2 id="consent-operator-title">Текст согласия</h2>
+          </div>
+          <div class="info-card-grid info-card-grid-delivery"><article class="info-card">
+            <p>Я, отправляя форму на сайте [адрес сайта NIKASS], даю [ИП/ООО/самозанятый: полное имя или наименование, ИНН и регистрационные данные] согласие на обработку моих персональных данных.</p>
+            <p>В зависимости от отправляемой формы это могут быть: имя и фамилия, телефон, электронная почта, адрес доставки, сведения о заказе и оплате, комментарий к заказу либо выбранный контакт для уведомления о поступлении товара (телефон, имя пользователя или ссылка на профиль).</p>
+            <p>Данные используются только для [уточните цель конкретной формы: принять и выполнить заказ, связаться по обращению или сообщить о поступлении выбранного товара].</p>
+          </article></div>
+        </section>
+
+        <section class="info-section" aria-labelledby="consent-actions-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">02 / ПОРЯДОК ОБРАБОТКИ</p>
+            <h2 id="consent-actions-title">Как используются сведения</h2>
+          </div>
+          <div class="info-card-grid info-card-grid-delivery"><article class="info-card">
+            <p>Согласие охватывает получение, запись, хранение, уточнение, использование, передачу привлечённым сервисам в необходимом объёме, блокирование и удаление данных; обработка может выполняться автоматизированно и вручную.</p>
+            <p>Для выполнения выбранной цели сведения могут быть переданы [перечислите реальные платформу заказов, службу доставки, платёжный сервис и другие сервисы, которые получают эти данные]. Подробные сведения об обработке размещены в <a href="/privacy-policy">Политике конфиденциальности</a>.</p>
+            <p>Согласие действует до достижения цели обработки или его отзыва, с учётом сроков хранения, которые оператор обязан соблюдать по закону.</p>
+          </article></div>
+        </section>
+
+        <section class="info-section" aria-labelledby="consent-withdraw-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">03 / ОТЗЫВ</p>
+            <h2 id="consent-withdraw-title">Как отозвать согласие</h2>
+          </div>
+          <div class="info-card-grid info-card-grid-delivery"><article class="info-card">
+            <p>Отозвать согласие можно, направив запрос оператору на [электронная почта] или по адресу [почтовый адрес]. Укажите, какие данные и форму обращения вы имеете в виду.</p>
+            <p>Это согласие не является согласием на рекламную рассылку. Разрешение получать рекламные сообщения оформляется отдельно и по желанию посетителя.</p>
+          </article></div>
+        </section>
+      </div>
+    </main>
+    <StoreFooter />
+  </body>
+</html>

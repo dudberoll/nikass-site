@@ -14,8 +14,8 @@ export function createOrderStore(db: DbClient, emailEnabled: boolean): OrderStor
     finish: async (id, orderNumber) => {
       await db.$transaction(async (tx) => {
         await tx.checkoutAttempt.update({ where: { id }, data: { state: 'confirmed', orderNumber, cartToken: null } })
-        for (const channel of emailEnabled ? ['email', 'telegram'] : ['telegram']) {
-          await enqueueTask(tx, { type: 'orders:notify', dedupeKey: `${id}:${channel}`, payload: { id, channel } })
+        if (emailEnabled) {
+          await enqueueTask(tx, { type: 'orders:notify', dedupeKey: `${id}:email`, payload: { id, channel: 'email' } })
         }
       })
     },
@@ -49,7 +49,7 @@ export function createOrderStore(db: DbClient, emailEnabled: boolean): OrderStor
     finishFulfillment: async (id, orderNumber, skipped) => {
       await db.$transaction(async (tx) => {
         const updated = await tx.checkoutAttempt.updateMany({
-          where: { id, fulfillmentState: 'processing' },
+          where: { id, fulfillmentState: 'processing', paymentState: 'succeeded' },
           data: skipped
             ? { fulfillmentState: 'skipped' }
             : { fulfillmentState: 'confirmed', state: 'confirmed', orderNumber, cartToken: null },

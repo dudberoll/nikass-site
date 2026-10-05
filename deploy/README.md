@@ -39,6 +39,13 @@ WooCommerce Store API должен быть доступен извне, име�
 
 AI-чат включается в `runtime.env` только при наличии ключа провайдера (`AI_PROVIDER=chat-completions`, `AI_API_URL`, `AI_API_KEY`, `AI_MODEL`). Подсказки адресов включаются публичным `PUBLIC_YANDEX_SUGGEST_API_KEY` при запуске сборки; без него адрес можно ввести вручную. Отправка email в этом тестовом профиле отключена.
 
+Telegram-уведомления о заказах и заявках на поступление отправляются только в чат
+из `ORDER_TELEGRAM_CHAT_ID`. Для общей группы добавьте туда `@nikass_orders_bot`,
+затем задайте ID группы в локальном `backend/.env` и серверном `/srv/nikass/runtime.env`.
+На VPS примените изменение к API и scheduler через Docker Compose с текущим
+`APP_IMAGE_TAG` из `release.env`; обычный `restart` не перечитывает `env_file`.
+Все участники выбранной группы видят уведомления, включая контакты из заявок на поступление.
+
 ## 2. HTTPS и пароль
 
 После подготовки VPS запустите от root:

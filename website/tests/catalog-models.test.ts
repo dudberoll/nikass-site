@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { displayProductSku, groupCatalogProducts, mapCatalogProduct, type CatalogApiProduct } from "../src/data/catalog";
+import { detailRows, displayProductSku, groupCatalogProducts, mapCatalogProduct, type CatalogApiProduct } from "../src/data/catalog";
+import { emptyCatalogEdits, rowsForVariant } from "../src/data/catalog-editor";
 
 function source(slug: string, name: string, category: string, characteristics: Record<string, string>, sku: string, price: number) {
   const product: CatalogApiProduct = {
@@ -17,6 +18,34 @@ function source(slug: string, name: string, category: string, characteristics: R
   };
   return mapCatalogProduct(product);
 }
+
+test("uses WooCommerce specifications without a local SKU override or splitting semicolons", () => {
+  const product = source("inverter", "Инвертор", "invertory", {
+    Мощность: "777 Вт", "Выходы": "5 В / 2 А; 9 В / 2 А",
+  }, "WJF-800GST", 1234);
+  assert.deepEqual(detailRows(product.characteristics), [
+    ["Артикул", "WJF-800GST"], ["Мощность", "777 Вт"], ["Выходы", "5 В / 2 А; 9 В / 2 А"],
+  ]);
+});
+
+test("keeps WooCommerce image, kit and warranty for each model in a grouped card", () => {
+  const products = [150, 300].map((power) => mapCatalogProduct({
+    slug: power === 150 ? "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2" : "portativnaya-zaryadnaya-stantsiya-300-vt-96000-mah",
+    name: `Станция ${power} Вт`, category: "portativnye-stantsii", images: [`https://cdn.example.com/ns31-${power}.png`],
+    shortDescription: "", description: `Описание ${power}`, characteristics: { Мощность: `${power} Вт` },
+    packageContents: [`Комплект ${power}`], warranty: `${power} дней`,
+    variants: [{ sku: `NS-31-${power}`, label: "Основной вариант", price: power, availability: "in-stock" }],
+  }));
+  const grouped = groupCatalogProducts(products)[0];
+  assert.deepEqual(grouped.variants.map((variant) => variant.image), [
+    "https://cdn.example.com/ns31-150.png", "https://cdn.example.com/ns31-300.png",
+  ]);
+  assert.deepEqual(grouped.variantPackageContents, { "NS-31-150": "Комплект 150", "NS-31-300": "Комплект 300" });
+  assert.deepEqual(grouped.variantWarranties, { "NS-31-150": "150 дней", "NS-31-300": "300 дней" });
+  const exportRows = rowsForVariant(grouped, "NS-31-300", emptyCatalogEdits);
+  assert.ok(exportRows.some((row) => row.label === "Комплектация" && row.value === "Комплект 300"));
+  assert.ok(exportRows.some((row) => row.label === "Гарантия" && row.value === "300 дней"));
+});
 
 test("groups model families, keeps compact stations separate, and deduplicates equal options", () => {
   const products = [
@@ -35,13 +64,11 @@ test("groups model families, keeps compact stations separate, and deduplicates e
   assert.deepEqual(inverter?.variants.map((variant) => variant.label.replace(/\s/g, "")), ["800Вт", "1300Вт"]);
   assert.equal(station?.category, "Портативные зарядные станции");
   assert.deepEqual(station?.variants.map((variant) => variant.label), ["L1 — 150 Вт", "L2 — 300 Вт", "L4 — 500 Вт"]);
-  assert.equal(station?.image, "/assets/images/sl69-station.png");
-  assert.match(station?.description ?? "", /LiFePO4/);
-  assert.match(station?.characteristics ?? "", /NS-69-500:[\s\S]*Аккумулятор: 12,8 В \/ 42 000 мАч/);
-  assert.match(station?.characteristics ?? "", /NS-69-150:[\s\S]*Ёмкость: 153,6 Вт·ч/);
-  assert.match(station?.characteristics ?? "", /NS-69-500:[\s\S]*Минимальное время зарядки от солнечного входа 200 Вт: ≈2 ч 41 мин/);
-  assert.match(station?.characteristics ?? "", /NS-69-500:[\s\S]*Вес: 4,5 кг/);
-  assert.match(station?.characteristics ?? "", /Общее количество выходов: 10/);
+  assert.equal(station?.image, "/assets/images/gear-menu.webp");
+  assert.equal(station?.description, "");
+  assert.match(station?.characteristics ?? "", /NS-69-150:[\s\S]*Мощность: 150/);
+  assert.match(station?.variantCharacteristics?.["NS-69-500"] ?? "", /Емкость: 168000/);
+  assert.doesNotMatch(station?.characteristics ?? "", /Минимальное время зарядки|Общее количество выходов/);
 });
 
 test("labels powerbank categories and model cards in English", () => {
@@ -58,15 +85,15 @@ test("labels powerbank categories and model cards in English", () => {
 
 test("keeps NS-31 characteristics per selected variant", () => {
   const station = groupCatalogProducts([
-    source("portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2", "Портативная зарядная станция SL-31 150 Вт", "portativnye-stantsii", {}, "NS-31-150", 10_000),
-    source("portativnaya-zaryadnaya-stantsiya-300-vt-96000-mah", "Портативная зарядная станция SL-31 300 Вт", "portativnye-stantsii", {}, "NS-31-300", 15_000),
+    source("portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2", "Портативная зарядная станция SL-31 150 Вт", "portativnye-stantsii", { Ёмкость: "153,6 Вт·ч", "Эквивалентная ёмкость": "48 000 мАч", Размеры: "230 × 130 × 220 мм" }, "NS-31-150", 10_000),
+    source("portativnaya-zaryadnaya-stantsiya-300-vt-96000-mah", "Портативная зарядная станция SL-31 300 Вт", "portativnye-stantsii", { Ёмкость: "307,2 Вт·ч", "Эквивалентная ёмкость": "96 000 мАч", Размеры: "230 × 135 × 220 мм", Защита: "IP21" }, "NS-31-300", 15_000),
   ])[0];
 
   assert.deepEqual(station?.variants.map((variant) => variant.label.replace(/\u00a0/g, " ")), [
     "150 Вт · 48 000 мАч · 153,6 Вт·ч",
     "300 Вт · 96 000 мАч · 307,2 Вт·ч",
   ]);
-  assert.equal(station?.image, "/assets/images/sl31-station.png");
+  assert.equal(station?.image, "/assets/images/gear-menu.webp");
   assert.match(station?.variantCharacteristics?.["NS-31-150"] ?? "", /Размеры: 230 × 130 × 220 мм/);
   assert.match(station?.variantCharacteristics?.["NS-31-300"] ?? "", /Защита: IP21/);
   assert.doesNotMatch(station?.variantCharacteristics?.["NS-31-150"] ?? "", /IP21/);

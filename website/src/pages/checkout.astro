@@ -7,7 +7,8 @@ import "../styles/global.css";
 function publicUrl(value: string, { httpsOnly = false } = {}) {
   if (!value) return "";
   const url = new URL(value);
-  if ((httpsOnly && url.protocol !== "https:") || (!httpsOnly && !["http:", "https:"].includes(url.protocol))) throw new Error(`Недопустимый публичный URL: ${value}`);
+  const local = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+  if (url.username || url.password || (url.protocol !== "https:" && (httpsOnly || url.protocol !== "http:" || !local))) throw new Error("Для оформления нужен HTTPS; HTTP разрешён только на локальном компьютере.");
   return url.href;
 }
 

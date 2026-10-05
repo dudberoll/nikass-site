@@ -8,7 +8,7 @@ const product: Product = {
   slug: "nikass-invertor-1200",
   sku: "3204442838",
   name: "NIKASS Инвертор 1200 Вт",
-  category: "Инвертора напряжения",
+  category: "Инверторы напряжения",
   rawCategory: "invertory",
   price: 4333,
   oldPrice: 90000,
@@ -28,12 +28,12 @@ test("merges duplicate lines, caps quantity and strips stale stored fields", () 
   assert.deepEqual(parseCart(JSON.stringify({ version: 0, items: cart })), []);
 });
 
-test("allows preorder, blocks unavailable and removes a line at zero", () => {
+test("blocks preorder and unavailable additions and removes a line at zero", () => {
   const base = product;
   const preorder: Product = { ...base, variants: [{ ...base.variants[0], sku: "pre", availability: "preorder" }] };
   const unavailable: Product = { ...base, variants: [{ ...base.variants[0], sku: "off", availability: "unavailable" }] };
 
-  assert.equal(addCartItem([], preorder, "pre").length, 1);
+  assert.deepEqual(addCartItem([], preorder, "pre"), []);
   assert.deepEqual(addCartItem([], unavailable, "off"), []);
   assert.deepEqual(setCartItemQuantity([{ productSlug: base.slug, variantSku: base.sku, quantity: 1 }], base.slug, base.sku, 0), []);
   assert.deepEqual(removeCartItem([{ productSlug: base.slug, variantSku: base.sku, quantity: 1 }], base.slug, base.sku), []);

@@ -89,6 +89,24 @@ rebuilding on every small change is not a substitute for choosing the right rend
 
 ## NIKASS guest checkout exception
 
+NIKASS catalog content is owned by the existing WooCommerce products and native product
+attributes. The catalog adapter maps `Комплектация` and `Дополнительные опции…` attributes to
+`packageContents`, and `Гарантия` to the optional `warranty` text field. It does not invent a
+warranty duration; the legacy `warrantyMonths` field is optional for compatibility. The website
+keeps these sections and specifications per SKU when grouping products, and renders only the
+WooCommerce snapshot on public routes. Browser catalog-editor saves are draft previews only.
+Public images also come from WooCommerce; each grouped variant keeps its source product's
+primary image, which follows selection in the catalog, product page, and cart. Product-specific
+local photo/specification overrides are not applied. The existing manual SSG rebuild remains
+the publication mechanism.
+
+На 2026-10-05 владелец заменил покупку выбранного варианта с `onbackorder` заявкой
+«Сообщить о поступлении». `website` собирает контакт с согласием, backend проверяет свежий
+SKU/статус и сохраняет заявку вместе с outbox-задачей. Менеджер получает её в Telegram
+и сам связывается с покупателем. Автоматические уведомления покупателей не активны.
+Существующие корзины и серверная поддержка WooCommerce backorders сохраняют совместимость;
+новые предзаказы через кнопку витрины не добавляются. См. [../website/README.md](../website/README.md).
+
 The product owner explicitly chose guest ordering without registration on
 2026-09-08, matching PRD.md, and consolidated on 2026-09-11. The one active guest form is
 `website /checkout`; it reads the same-origin versioned cart. The earlier storefront was removed after

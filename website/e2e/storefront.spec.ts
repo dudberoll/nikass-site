@@ -107,22 +107,25 @@ test("product details are collapsed and only one disclosure opens at a time", as
   const disclosures = page.locator("details.product-detail-disclosure");
   const characteristics = disclosures.nth(0);
   const packageContents = disclosures.nth(1);
-  const delivery = disclosures.nth(2);
+  const warranty = disclosures.nth(2);
+  const delivery = disclosures.nth(3);
   await expect(characteristics).not.toHaveAttribute("open", "");
   await expect(packageContents).not.toHaveAttribute("open", "");
   await expect(delivery).not.toHaveAttribute("open", "");
   await expect(characteristics.locator(".product-specs:visible")).toHaveCount(0);
-  await expect(packageContents.locator("ul")).toBeHidden();
+  await expect(packageContents.locator("ul:visible")).toHaveCount(0);
   await expect(delivery.locator("p")).toBeHidden();
 
   await characteristics.locator("summary").click();
   await expect(characteristics).toHaveAttribute("open", "");
   await expect(characteristics.locator(".product-specs:visible")).toBeVisible();
-  expect(await characteristics.locator(".product-specs:visible tbody").evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(3);
   await packageContents.locator("summary").click();
   await expect(characteristics).not.toHaveAttribute("open", "");
   await expect(packageContents).toHaveAttribute("open", "");
-  await expect(packageContents.locator("ul")).toBeVisible();
+  await expect(packageContents.locator("ul:visible")).toBeVisible();
+  await warranty.locator("summary").click();
+  await expect(packageContents).not.toHaveAttribute("open", "");
+  await expect(warranty.locator("p:visible")).toHaveText("1 год со дня продажи");
   await delivery.locator("summary").click();
   await expect(packageContents).not.toHaveAttribute("open", "");
   await expect(delivery).toHaveAttribute("open", "");
@@ -130,8 +133,13 @@ test("product details are collapsed and only one disclosure opens at a time", as
 });
 
 test("NS-31 characteristics follow the selected variant", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("nikass.catalog-edits.v1", JSON.stringify({
+    version: 1, products: { "portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2": {
+      characteristics: { "NS-31-150": [{ label: "Локальная подмена", value: "Старые данные" }] },
+    } },
+  })));
   await page.goto("/catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2");
-  await expect(page.locator(".product-gallery img")).toHaveAttribute("src", "/assets/images/sl31-station.png");
+  await expect(page.locator("astro-island").filter({ has: page.locator(".product-variant-selector") })).not.toHaveAttribute("ssr", "");
   await expect(page.getByRole("heading", { name: "Портативная зарядная станция NS-31" })).toBeVisible();
   await expect(page.locator(".product-sku")).toContainText("NS-31-150");
   await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-31-150");
@@ -140,14 +148,59 @@ test("NS-31 characteristics follow the selected variant", async ({ page }) => {
   await characteristics.locator("summary").click();
   const visibleSpecs = characteristics.locator(".product-specs:visible");
   await expect(visibleSpecs).toContainText("150 Вт");
-  await expect(visibleSpecs).toContainText("230 × 130 × 220 мм");
-  await expect(visibleSpecs).not.toContainText("IP21");
+  await expect(visibleSpecs).toContainText("23 × 13 × 22 см");
+  await expect(visibleSpecs).toContainText("153,6 Вт·ч");
+  await expect(visibleSpecs).not.toContainText("Локальная подмена");
+  await expect(visibleSpecs).not.toContainText("Гарантия");
+  await expect(visibleSpecs).not.toContainText("Комплектация");
 
   await page.getByRole("button", { name: /300 Вт/ }).click();
   await expect(visibleSpecs).toContainText("300 Вт");
-  await expect(visibleSpecs).toContainText("230 × 135 × 220 мм");
-  await expect(visibleSpecs).toContainText("IP21");
-  await expect(visibleSpecs).not.toContainText("230 × 130 × 220 мм");
+  await expect(visibleSpecs).toContainText("23 × 13 × 22 см");
+  await expect(visibleSpecs).toContainText("307,2 Вт·ч");
+  await expect(visibleSpecs).not.toContainText("153,6 Вт·ч");
+  const kit = page.locator("details").filter({ has: page.locator("summary", { hasText: /^Комплектация$/ }) });
+  await kit.locator("summary").click();
+  await expect(kit.locator('[data-product-detail-sku="NS-31-300"]')).toBeVisible();
+  await expect(kit).toContainText("AC-адаптер");
+  await expect(kit).toContainText("подарок от продавца");
+  const warranty = page.locator("details").filter({ has: page.locator("summary", { hasText: /^Гарантия$/ }) });
+  await warranty.locator("summary").click();
+  await expect(warranty.locator('[data-product-detail-sku="NS-31-300"]')).toHaveText("1 год со дня продажи");
+});
+
+test("WooCommerce photos follow the selected variant in catalog, product page and cart", async ({ page }) => {
+  const api = process.env.CATALOG_BUILD_API_URL ?? "http://127.0.0.1:3000";
+  const response = await page.request.get(`${api}/api/catalog?perPage=100`);
+  expect(response.ok()).toBe(true);
+  const { items } = await response.json();
+  const images = ["PB-20", "PB-50", "PB-60"].map((sku) => items.find((item: { variants: Array<{ sku: string }> }) => item.variants.some((variant) => variant.sku === sku)).images[0]);
+  expect(new Set(images).size).toBe(3);
+
+  await page.goto("/catalog");
+  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
+  await page.getByLabel("Поиск по каталогу").fill("POWERBANK");
+  const card = page.locator("[data-product-card]");
+  await expect(card).toHaveCount(1);
+  await expect(card.locator(".store-product-image img")).toHaveAttribute("src", images[0]);
+  const choice50 = card.getByRole("button", { name: /50\s*000 мАч/ });
+  await expect(choice50.locator("img")).toHaveAttribute("src", images[1]);
+  await choice50.click();
+  await expect(card.locator(".store-product-image img")).toHaveAttribute("src", images[1]);
+  await card.getByRole("link", { name: "Выбрать вариант" }).click();
+  await expect(page).toHaveURL(/variant=PB-50/);
+  await expect(page.locator(".product-gallery img")).toHaveAttribute("src", images[1]);
+  await page.reload();
+  await expect(page.locator(".product-gallery img")).toHaveAttribute("src", images[1]);
+  await page.getByRole("button", { name: /60\s*000 мАч/ }).click();
+  await expect(page.locator(".product-gallery img")).toHaveAttribute("src", images[2]);
+  await expect.poll(() => page.locator(".product-gallery img").evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Добавить в корзину" }).click();
+  await page.getByLabel("Корзина").click();
+  await expect(page.locator(".cart-line-image img")).toHaveAttribute("src", images[2]);
+  await page.locator(".cart-line-image").click();
+  await expect(page).toHaveURL(/variant=PB-60/);
+  await expect(page.locator(".product-gallery img")).toHaveAttribute("src", images[2]);
 });
 
 test("moves from personal details to the Yandex-assisted delivery address", async ({ page }) => {
@@ -279,4 +332,49 @@ test("empty mobile chat keeps the composer above the shortened viewport", async 
     const panelBox = composer.closest(".ai-assistant-card")?.getBoundingClientRect();
     return panelBox ? composerBox.bottom <= panelBox.bottom + 1 : false;
   })).toBe(true);
+});
+
+
+test("homepage variants persist into the product page and preorder displays pending price", async ({ page, request }) => {
+  const response = await request.get(`${process.env.CATALOG_BUILD_API_URL ?? "http://127.0.0.1:3000"}/api/catalog?perPage=100`);
+  expect(response.ok()).toBeTruthy();
+  const { items } = await response.json();
+  const model = items.find((item: { variants: Array<{ sku: string }> }) => item.variants.some((variant) => variant.sku === "NS-69-500"));
+  const variant = model.variants.find((item: { sku: string }) => item.sku === "NS-69-500");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/#bestsellers");
+  const card = page.locator("#bestsellers [data-product-card]").first();
+  await expect(card.locator("xpath=..")).not.toHaveAttribute("ssr", "");
+  const choice = card.getByRole("button", { name: /500 Вт,/ });
+  if (!(await choice.isVisible())) await card.getByRole("button", { name: /Ещё/ }).click();
+  await choice.click();
+  await expect(choice).toHaveAttribute("aria-pressed", "true");
+  await expect(card.locator(".orbea-bestseller-price strong")).toHaveText(`${new Intl.NumberFormat("ru-RU").format(variant.price)} ₽`);
+  await expect(card.locator(".orbea-bestseller-image img")).toHaveAttribute("src", model.images[0]);
+  await card.getByRole("link", { name: "Выбрать вариант", exact: true }).click();
+  await expect(page).toHaveURL(/variant=NS-69-500/);
+  await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-69-500");
+
+  await page.goto("/catalog");
+  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
+  const solar = page.locator("[data-product-card]").filter({ has: page.getByRole("heading", { name: "Портативная солнечная панель", exact: true }) });
+  const panel = items.find((item: { variants: Array<{ sku: string }> }) => item.variants.some((variant) => variant.sku === "SP-30"));
+  await expect(solar.locator(".store-product-bottom strong")).toHaveText(`от ${new Intl.NumberFormat("ru-RU").format(panel.variants[0].price)} ₽`);
+  const preorderPanel = solar.getByRole("button", { name: /450 Вт.*Цена уточняется/ });
+  if (!(await preorderPanel.isVisible())) await solar.getByRole("button", { name: /Ещё/ }).click();
+  await preorderPanel.click();
+  await expect(preorderPanel).toHaveAttribute("aria-pressed", "true");
+  await expect(solar.locator(".store-product-bottom strong")).toHaveText("Цена уточняется");
+  await expect(solar.getByRole("button", { name: "Сообщить о поступлении", exact: true })).toBeVisible();
+  await solar.getByRole("button", { name: /^30 Вт.*₽/ }).click();
+  await expect(solar.locator(".store-product-bottom strong")).toHaveText(`${new Intl.NumberFormat("ru-RU").format(panel.variants[0].price)} ₽`);
+  const waiting = page.locator("[data-product-card]").filter({ has: page.locator(".product-availability.is-preorder") });
+  expect(await waiting.count()).toBeGreaterThan(0);
+  for (const pending of await waiting.all()) {
+    await expect(pending.locator(".store-product-bottom strong")).toHaveText("Цена уточняется");
+    await expect(pending.locator(".store-product-bottom del")).toHaveCount(0);
+  }
+  await waiting.first().getByRole("link").first().click();
+  await expect(page.locator(".product-variant-summary > strong")).toHaveText("Цена уточняется");
+  await expect(page.locator(".product-variant-options strong")).not.toContainText(["100 ₽"]);
 });

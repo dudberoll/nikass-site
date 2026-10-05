@@ -10,7 +10,7 @@ import {
   type CatalogEdits,
   type CharacteristicRow,
 } from "../data/catalog-editor";
-import { formatPrice, type Product } from "../data/catalog";
+import { formatVariantPrice, type Product } from "../data/catalog";
 
 const CHANGE_EVENT = "nikass:catalog-edits-change";
 
@@ -206,7 +206,7 @@ export default function CatalogEditor({ products }: { products: Product[] }) {
               <p className="store-product-category">{product.category}</p>
               <h3>{product.name}</h3>
               <p className="store-product-card-description">{cardDescription}</p>
-              <div className="store-product-bottom"><strong>{formatPrice(variant.price)}</strong></div>
+              <div className="store-product-bottom"><strong>{formatVariantPrice(variant)}</strong></div>
             </div>
           </article>
           <h3 className="catalog-editor-preview-specs-title">Характеристики · {variant.label || variant.sku}</h3>

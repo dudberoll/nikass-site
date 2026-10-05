@@ -1,4 +1,4 @@
-import type { Product } from "../data/catalog";
+import { isVariantAddable, type Product } from "../data/catalog";
 
 export const CART_STORAGE_KEY = "nikass-cart";
 export const CART_CHANGED_EVENT = "nikass:cart-changed";
@@ -40,7 +40,7 @@ export function parseCart(raw: string | null): CartLine[] {
 export function addCartItem(cart: CartLine[], product: Pick<Product, "slug" | "variants">, variantSku: string, quantity = 1) {
   const next = normalizeCart(cart);
   const variant = product.variants.find((item) => item.sku === variantSku);
-  if (!variant || variant.availability === "unavailable" || !Number.isSafeInteger(quantity) || quantity <= 0) return next;
+  if (!variant || !isVariantAddable(variant) || !Number.isSafeInteger(quantity) || quantity <= 0) return next;
   const productSlug = variant.sourceSlug ?? product.slug;
   const existing = next.find((item) => item.productSlug === productSlug && item.variantSku === variantSku);
   return existing

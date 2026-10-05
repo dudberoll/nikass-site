@@ -1,4 +1,7 @@
 import type { AppEnv } from '../../env'
+import type { DbClient } from '../../db'
+import { RestockService } from './application/restock-service'
+import { createRestockQueue } from './infrastructure/restock-notifications'
 import { CatalogService } from './application/catalog-service'
 import type { CatalogClock, CatalogSource } from './application/ports'
 import { CatalogFailure } from './domain/catalog'
@@ -7,6 +10,7 @@ import { createCatalogRoutes } from './transport/routes'
 
 type CreateCatalogModuleOptions = {
   env: AppEnv
+  db: DbClient
   source?: CatalogSource
   clock?: CatalogClock
 }
@@ -15,7 +19,7 @@ const systemClock: CatalogClock = {
   now: () => new Date(),
 }
 
-export function createCatalogModule({ env, source, clock = systemClock }: CreateCatalogModuleOptions) {
+export function createCatalogModule({ env, db, source, clock = systemClock }: CreateCatalogModuleOptions) {
   const service = new CatalogService({
     cacheTtlMs: env.CATALOG_CACHE_TTL_SECONDS * 1000,
     clock,
@@ -23,7 +27,7 @@ export function createCatalogModule({ env, source, clock = systemClock }: Create
   })
 
   return {
-    routes: createCatalogRoutes(service),
+    routes: createCatalogRoutes(service, new RestockService(service, Boolean(env.ORDER_TELEGRAM_BOT_TOKEN && env.ORDER_TELEGRAM_CHAT_ID), createRestockQueue(db))),
     service,
   }
 }
@@ -58,6 +62,7 @@ function sourceFromEnv(env: AppEnv): CatalogSource {
 }
 
 export { CatalogService } from './application/catalog-service'
+export { deliverRestockNotification } from './infrastructure/restock-notifications'
 export { CatalogFailure } from './domain/catalog'
 export type {
   CatalogAvailability,

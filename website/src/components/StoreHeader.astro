@@ -1,5 +1,7 @@
 ---
-import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
+import { ALL_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, HERO_CATEGORIES } from "../data/catalog";
+
+const isHomePage = Astro.url.pathname === "/";
 ---
 
 <header class="orbea-header orbea-header-light" data-header>
@@ -15,8 +17,9 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
         </button>
         <div class="orbea-catalog-dropdown" id="orbea-catalog-dropdown" hidden data-catalog-dropdown>
           <div class="orbea-catalog-dropdown-list">
-            <a class="orbea-catalog-dropdown-link orbea-catalog-dropdown-all" href="/catalog" data-catalog-dropdown-link><span>{ALL_PRODUCTS_LABEL}</span><span aria-hidden="true">↗</span></a>
+            <a class="orbea-catalog-dropdown-link orbea-catalog-dropdown-all" href="/catalog" data-catalog-dropdown-link><span>{ALL_PRODUCTS_LABEL}</span>{!isHomePage && <span aria-hidden="true">↗</span>}</a>
             {HERO_CATEGORIES.map((category) => <a class="orbea-catalog-dropdown-link" href={`/catalog?category=${encodeURIComponent(category.label)}`} data-catalog-dropdown-link><span class="orbea-catalog-dropdown-label"><img src={category.icon} alt="" aria-hidden="true" /><span>{category.label}</span></span><span aria-hidden="true">›</span></a>)}
+            <a class="orbea-catalog-dropdown-link" href={DISCOUNTED_PRODUCTS_PATH} data-catalog-dropdown-link><span>{DISCOUNTED_PRODUCTS_LABEL}</span><span aria-hidden="true">›</span></a>
           </div>
         </div>
       </div>
@@ -51,7 +54,7 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
       <strong class="orbea-menu-title">NIKASS</strong>
       <button class="orbea-icon-button" type="button" aria-label="Закрыть" data-menu-close>×</button>
     </div>
-    <div class="orbea-menu-root" data-menu-root data-all-products-label={ALL_PRODUCTS_LABEL} data-category-items={JSON.stringify([ALL_PRODUCTS_LABEL, ...HERO_CATEGORIES.map(({ label }) => label)])} data-category-icons={JSON.stringify(Object.fromEntries(HERO_CATEGORIES.map(({ label, icon }) => [label, icon])))}>
+    <div class="orbea-menu-root" data-menu-root data-all-products-label={ALL_PRODUCTS_LABEL} data-discounted-label={DISCOUNTED_PRODUCTS_LABEL} data-discounted-path={DISCOUNTED_PRODUCTS_PATH} data-category-items={JSON.stringify([ALL_PRODUCTS_LABEL, ...HERO_CATEGORIES.map(({ label }) => label), DISCOUNTED_PRODUCTS_LABEL])} data-category-icons={JSON.stringify(Object.fromEntries(HERO_CATEGORIES.map(({ label, icon }) => [label, icon])))}>
       <button class="orbea-menu-root-link" type="button" data-menu-section="Gear">Каталог <span>›</span></button>
       <a class="orbea-menu-root-link" href="/blog" data-menu-anchor>Блог</a>
       <a class="orbea-menu-root-link" href="/#custom" data-menu-anchor>Как выбрать</a>
@@ -120,7 +123,7 @@ import { ALL_PRODUCTS_LABEL, HERO_CATEGORIES } from "../data/catalog";
     menuDetail.hidden = false;
     menuPromo.hidden = section !== "Gear";
     const items = section === "Gear" ? JSON.parse(menuRoot.dataset.categoryItems || "[]") : ["О компании", "Поддержка"];
-    menuList.innerHTML = items.map((item) => `<a class="orbea-menu-detail-link" href="${section === "Commitment" ? (item === "О компании" ? "/about" : "/#footer") : item === allProductsLabel ? "/catalog" : `/catalog?category=${encodeURIComponent(item)}`}" data-menu-anchor><span class="orbea-menu-detail-label">${categoryIcons[item] ? `<img src="${categoryIcons[item]}" alt="" aria-hidden="true">` : ""}<span>${item}</span></span><span>›</span></a>`).join("");
+    menuList.innerHTML = items.map((item) => `<a class="orbea-menu-detail-link" href="${section === "Commitment" ? (item === "О компании" ? "/about" : "/#footer") : item === allProductsLabel ? "/catalog" : item === menuRoot.dataset.discountedLabel ? menuRoot.dataset.discountedPath : `/catalog?category=${encodeURIComponent(item)}`}" data-menu-anchor><span class="orbea-menu-detail-label">${categoryIcons[item] ? `<img src="${categoryIcons[item]}" alt="" aria-hidden="true">` : ""}<span>${item}</span></span><span>›</span></a>`).join("");
     menuList.querySelectorAll("[data-menu-anchor]").forEach((link) => link.addEventListener("click", closeMenu));
   };
   const openMenu = (section) => {

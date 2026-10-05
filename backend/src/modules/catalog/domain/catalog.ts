@@ -12,12 +12,14 @@ export type CatalogProduct = {
   slug: string
   name: string
   category: string
+  discounted?: boolean
   images: string[]
   shortDescription: string
   description: string
   characteristics: Record<string, string>
   packageContents: string[]
-  warrantyMonths: number
+  warranty?: string
+  warrantyMonths?: number
   reviews: Array<{
     author: string
     rating: number

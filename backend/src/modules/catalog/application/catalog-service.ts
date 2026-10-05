@@ -51,8 +51,8 @@ export class CatalogService {
     }
   }
 
-  async getBySlug(slug: string): Promise<CatalogProductResult> {
-    const snapshot = await this.snapshot()
+  async getBySlug(slug: string, fresh = false): Promise<CatalogProductResult> {
+    const snapshot = fresh ? { ...(await this.refresh()), stale: false } : await this.snapshot()
     const product = snapshot.products.find((item) => item.slug === slug)
     if (!product) throw new CatalogFailure('not_found', 'Product not found')
 

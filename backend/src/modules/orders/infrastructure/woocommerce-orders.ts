@@ -85,7 +85,7 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
       ...(selectedRates.length ? { shipping_lines: selectedRates } : {}),
     }, undefined, true)
     const order = orderSchema.safeParse(response.data)
-    if (!order.success) throw new OrderFailure('unavailable', 'Результат оформления требует проверки менеджером.')
+    if (!order.success || (paid && !['processing', 'completed'].includes(order.data.status))) throw new OrderFailure('unavailable', 'Результат оформления требует проверки менеджером.')
     return order.data.number ?? String(order.data.id)
   }
   return {

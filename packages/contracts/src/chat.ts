@@ -1,21 +1,27 @@
 import { z } from 'zod'
 
-export const chatMessageSchema = z
-  .object({
-    role: z.enum(['user', 'assistant']),
+const chatReplySchema = z.string().trim().min(1).max(12_000)
+
+export const chatMessageSchema = z.discriminatedUnion('role', [
+  z.object({
+    role: z.literal('user'),
     content: z.string().trim().min(1).max(4_000),
-  })
-  .strict()
+  }).strict(),
+  z.object({
+    role: z.literal('assistant'),
+    content: chatReplySchema,
+  }).strict(),
+])
 
 export const chatRequestSchema = z
   .object({
-    messages: z.array(chatMessageSchema).min(1).max(20),
+    messages: z.array(chatMessageSchema).min(1).max(200),
   })
   .strict()
 
 export const chatResponseSchema = z
   .object({
-    reply: z.string().trim().min(1).max(12_000),
+    reply: chatReplySchema,
   })
   .strict()
 

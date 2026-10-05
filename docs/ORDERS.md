@@ -34,11 +34,37 @@ the current tab; PostgreSQL stores its hash. Never log request bodies or tokens.
 WooCommerce remains the sole order authority. PostgreSQL `checkout_attempts`
 is a private submission log, not a second editable order catalog. A conditional
 state transition allows only one remote submission per quote, including across
-API processes. Success and two separate `orders:notify` tasks commit together.
-Email contains the order/contact/address; Telegram contains only the order
-number and summary. Their failures retry independently via `outbox:drain`.
+API processes. Verified payment and successful WooCommerce fulfillment commit
+with a Telegram `orders:notify` task and, when configured, a separate email task.
+Telegram includes product names/SKUs, quantities, line totals, total and discount,
+customer name, phone, email, delivery method, address and comment. The recipient is
+only the server-configured `ORDER_TELEGRAM_CHAT_ID`; the task payload contains
+only the checkout attempt ID and channel. The delivery handler checks payment,
+fulfillment and order number again before reading/sending customer details.
+Legacy unpaid submissions queue email only, never Telegram. Failures retry
+independently via `outbox:drain`.
 Delivery is at-least-once: an ambiguous provider acknowledgment can duplicate a
-notification. No notification or actual order was sent during implementation.
+notification, including previously accepted parts of a long order. Full order
+text is split into Unicode-safe messages below Telegram's 4096-character limit.
+Messages use plain text, disable link previews and enable `protect_content`.
+This restricts forwarding/saving; members of the recipient group can still read
+or manually copy the data. Restrict group membership accordingly.
+No real notification or actual order was sent during implementation.
+
+Customer contacts and address remain in form memory and server-side storage,
+never checkout `localStorage` or `sessionStorage`. Opening checkout rewrites
+legacy saved snapshots without customer data, including after payment returns.
+Browser recovery keeps only cart identifiers, quote totals, the opaque checkout
+capability and payment ID; public status responses never include contacts.
+After a redirect, contact details are intentionally omitted from the receipt UI.
+Checkout API URLs require HTTPS except for local loopback development. Telegram,
+WooCommerce and payment credentials remain backend-only. Raw card details are
+entered only on the hosted payment page.
+
+`YOO_KASSA_FULFILLMENT_MODE=disabled` continues to skip WooCommerce creation and
+paid-order notifications, including successful test payments. Activation requires
+an explicit environment change to `woocommerce`; this feature does not change
+the safe test environment automatically.
 
 ## Activation
 
@@ -100,6 +126,8 @@ reconciliation. WooCommerce retains the authoritative order under its own policy
 
 ## Local checks
 
+- `bun test backend/src/modules/orders/infrastructure/notifications.test.ts backend/src/modules/orders/infrastructure/orders-store.test.ts` — full paid-order details, fixed recipient, unpaid/unfinished delivery rejection, long messages and safe errors.
+- `WEBSITE_E2E_PORT=4346 PUBLIC_API_URL=http://127.0.0.1:4346 PUBLIC_PRIVACY_URL=https://example.test/privacy PUBLIC_TERMS_URL=https://example.test/terms PUBLIC_YANDEX_SUGGEST_API_KEY= bun run --cwd website e2e -- checkout-privacy.spec.ts --project=desktop` — legacy contact cleanup and no contact persistence through quote/payment redirects, with mocked API/payment responses.
 - `bun test packages/contracts/src/orders.test.ts backend/src/modules/orders/application backend/src/modules/orders/infrastructure/woocommerce-orders.test.ts backend/src/modules/orders/transport`
 - `bun test backend/src/modules/orders/application/payments-service.test.ts backend/src/env.test.ts` — payment amount/mode binding and YooKassa environment guard.
 - `bun run --cwd backend test:integration src/modules/orders/orders.integration.test.ts` — requires Docker.

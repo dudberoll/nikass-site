@@ -1,8 +1,9 @@
-import { apiErrorSchema, cartReviewRequestSchema, cartReviewResponseSchema } from '@web-app-demo/contracts'
+import { apiErrorSchema, cartReviewRequestSchema, cartReviewResponseSchema, restockRequestSchema, restockResponseSchema } from '@web-app-demo/contracts'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 
 import { validationErrorHook } from '../../../http/errors'
 import type { CatalogService } from '../application/catalog-service'
+import type { RestockService } from '../application/restock-service'
 import {
   catalogListQuerySchema,
   catalogListResponseSchema,
@@ -50,8 +51,23 @@ const getCatalogProductRoute = createRoute({
   },
 })
 
-export function createCatalogRoutes(service: CatalogService) {
+export function createCatalogRoutes(service: CatalogService, restock: RestockService) {
   const routes = new OpenAPIHono({ defaultHook: validationErrorHook })
+
+  routes.openapi(createRoute({
+    method: 'post', path: '/restock',
+    request: { body: { required: true, content: { 'application/json': { schema: restockRequestSchema } } } },
+    responses: {
+      202: { content: { 'application/json': { schema: restockResponseSchema } }, description: 'Request saved for manager notification' },
+      400: { content: errorContent, description: 'Invalid contact or missing consent' },
+      404: { content: errorContent, description: 'Product or variant not found' },
+      409: { content: errorContent, description: 'Variant no longer on preorder' },
+      503: { content: errorContent, description: 'Request unavailable' },
+    },
+  }), async (c) => {
+    c.header('Cache-Control', 'no-store')
+    return c.json(await executeCatalog(() => restock.request(c.req.valid('json'))), 202)
+  })
 
   routes.openapi(createRoute({
     method: 'post',

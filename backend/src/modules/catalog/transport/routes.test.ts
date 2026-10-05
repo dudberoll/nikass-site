@@ -4,6 +4,7 @@ import type { DbClient } from '../../../db'
 import { createApp } from '../../../app'
 import { loadEnv } from '../../../env'
 import type { CatalogProduct } from '../domain/catalog'
+import { catalogListResponseSchema } from './contracts'
 
 const env = loadEnv({
   DATABASE_URL: 'postgresql://superuser:superpassword@localhost:54329/web_app_demo',
@@ -21,6 +22,7 @@ const catalogProduct: CatalogProduct = {
   characteristics: { Мощность: '300 Вт' },
   packageContents: ['Станция'],
   warrantyMonths: 12,
+  warranty: '1 год со дня продажи',
   reviews: [],
   relatedProductSlugs: [],
   popularity: 98,
@@ -57,7 +59,9 @@ test('exposes the public catalog list and product routes', async () => {
 
   const detail = await api.request('/api/catalog/nikass-ns-31')
   expect(detail.status).toBe(200)
-  expect(await detail.json()).toMatchObject({ product: { slug: 'nikass-ns-31' } })
+  expect(await detail.json()).toMatchObject({ product: {
+    slug: 'nikass-ns-31', packageContents: ['Станция'], warranty: '1 год со дня продажи',
+  } })
 })
 
 test('rejects invalid catalog queries and reports missing products', async () => {
@@ -69,6 +73,24 @@ test('rejects invalid catalog queries and reports missing products', async () =>
   const missing = await api.request('/api/catalog/does-not-exist')
   expect(missing.status).toBe(404)
   expect((await missing.json()).error.code).toBe('NOT_FOUND')
+})
+
+test('publishes discounted stock and reviews it together with regular stock at its own price', async () => {
+  const discounted = { ...catalogProduct, slug: 'ns-31-outlet', discounted: true,
+    variants: [{ ...catalogProduct.variants[0]!, sku: 'NS31-OUTLET-1', price: 8000, oldPrice: 10000 }] }
+  const api = createApp({ env, prisma: {} as DbClient,
+    catalogSource: { listProducts: async () => [catalogProduct, discounted] } })
+  const catalog = catalogListResponseSchema.parse(await (await api.request('/api/catalog')).json())
+  expect(catalog.items.find(({ slug }) => slug === discounted.slug)?.discounted).toBe(true)
+  const response = await api.request('/api/catalog/cart/review', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: 1, items: [catalogProduct, discounted].map((product) => ({
+      slug: product.slug, sku: product.variants[0]!.sku, quantity: 1,
+    })) }),
+  })
+  expect(response.status).toBe(200)
+  expect(await response.json()).toMatchObject({ subtotalMinor: 3299000,
+    items: [{ unitPriceMinor: 2499000 }, { unitPriceMinor: 800000 }] })
 })
 
 test('returns a clear unavailable response while the catalog provider is disabled', async () => {

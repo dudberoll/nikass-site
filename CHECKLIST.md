@@ -85,7 +85,7 @@ follow the implementation contract in `docs/WEB_SURFACES.md`.
 
 | Question                                                                                    | Answer       |
 | ------------------------------------------------------------------------------------------- | ------------ |
-| Which public product or content data comes from the backend/database at website build time? | Каталог NIKASS загружается из WooCommerce API при статической сборке website и ограничивается 47 товарными строками текущего CSV; старые и тестовые товары WooCommerce исключаются. |
+| Which public product or content data comes from the backend/database at website build time? | Каталог NIKASS загружается из WooCommerce API при статической сборке website: обычные товары ограничены выбранными строками CSV, уценённые экземпляры с отдельными SKU берутся из категории «Уценённые товары» и показываются только в `/discounted`; старые и тестовые товары исключаются. |
 | How soon after that data changes must the public website show the change?                   | После следующей ручной статической сборки; автоматическая синхронизация пока не включена. |
 | Which changes require an automatic rebuild/redeploy rather than a manual release?           | Никакие в текущем локальном этапе; публикация и автоматический rebuild не запрошены. |
 
@@ -181,10 +181,13 @@ A capability with no row is `absent` by default. Add the row instead of assuming
 | Storybook component catalogs    | included | Separate local React/Vite catalogs cover every flat shared `webapp/src/components` module and every website-owned React component in `website/src/components`, with official docs/a11y addons and story-only composition examples. They are not deployed; Astro-rendered sections remain outside React Storybook, and the website stays static SSG.                                                                                                                                       |
 | Apple storefront prototype | removed | Старые Apple Store/Shop Mac маршруты удалены из активной website-поверхности; NIKASS использует собственные публичные маршруты. |
 | NIKASS storefront catalog | included | `/`, `/catalog`, `/catalog/[slug]`, `/cart` и `/checkout` образуют путь на данных WooCommerce API, ограниченных выбранными артикулами CSV. Корзина хранит только slug/SKU/quantity в версионированном `sessionStorage`; checkout передаёт оплату на hosted YooKassa. |
+| NIKASS restock requests | available | Для выбранного варианта `onbackorder` покупка заменяется кнопкой «Сообщить о поступлении». Телефон, Telegram, MAX или WhatsApp собираются с согласием; заявки атомарно сохраняются в PostgreSQL и передаются менеджеру через Telegram/outbox. Менеджер пишет покупателям сам. Нужны миграции, работающий scheduler, `ORDER_TELEGRAM_BOT_TOKEN` / `ORDER_TELEGRAM_CHAT_ID` и `PUBLIC_PRIVACY_URL`. Контакт удаляется из базы после доставки; неотправленные заявки остаются для восстановления. |
+| NIKASS paid-order Telegram notifications | available | После серверной проверки YooKassa и подтверждённого создания заказа в WooCommerce группа менеджеров получает названия/SKU, количество, суммы, имя, телефон, email, способ получения, адрес и комментарий. Получатель и ключ бота заданы только на backend; контакты checkout не сохраняются в браузере. Доставка через outbox, без предпросмотра ссылок и с защитой пересылки. Текущий тестовый `YOO_KASSA_FULFILLMENT_MODE=disabled` не создаёт реальные заказы и не отправляет такие уведомления; для рабочего режима нужен отдельный запуск `woocommerce`. |
+| NIKASS discounted catalog | included | `/discounted` сразу показывает все уценённые товары без выбора категории; поиск и сортировка сохраняются, параметр `category` игнорируется. Ссылка последняя в категориях обычного каталога. Отдельные экземпляры WooCommerce с категорией «Уценённые товары» исключаются из обычной витрины и используют общую корзину/checkout. Обычная цена зачёркнута, причина уценки и фотографии берутся из товара; реальные экземпляры добавляет владелец позже. Локальный `CATALOG_DEMO_DISCOUNTED=true` добавляет по одному тестовому варианту каждой обычной карточки со скидкой 20%; образцы имеют отдельные SKU, поддерживают корзину и не допускаются к оформлению. |
 | NIKASS service center page | included | Публичная `/service-center` описывает послегарантийный ремонт товаров NIKASS всех категорий, бесплатную диагностику, оригинальные комплектующие, сертифицированных специалистов, гарантию на работы и детали; контакты центра ожидают уточнения. |
-| Локальный редактор каталога | included | `/catalog-editor` сохраняет описания карточек и характеристики в браузере локальной копии; архив статического сайта запускается без backend/WooCommerce, правки можно экспортировать и импортировать JSON-файлом. Цены, наличие и WooCommerce не меняются. |
+| Локальный редактор каталога | included | `/catalog-editor` сохраняет описания карточек и характеристики в браузере только для подготовки и предпросмотра; архив статического сайта запускается без backend/WooCommerce, правки можно экспортировать и импортировать JSON-файлом. Публичный каталог не применяет браузерные правки: характеристики, комплектация и гарантия хранятся в атрибутах существующих товаров WooCommerce и попадают на сайт после ручной пересборки. Цены, наличие и WooCommerce редактор не меняет. |
 | NIKASS backend catalog and cart review | included | WooCommerce catalog API and fresh cart review; provider credentials pending. Orders are a separately configured module. |
-| AI-консультант | available | `/message-scroller` вызывает `POST /api/chat`; провайдер chat-completions подключается через серверные `AI_*`. По умолчанию отключён, история не хранится. |
+| AI-консультант | available | Чат на главной и `/message-scroller` вызывают `POST /api/chat`; провайдер chat-completions подключается через серверные `AI_*`. До 200 сообщений в истории, запрос до 512 КиБ по умолчанию; история не сохраняется. По умолчанию AI отключён. |
 | Website build-time backend data | included | Astro загружает каталог из WooCommerce API во время сборки; при ошибке сборка останавливается, а dev-запрос может повториться после запуска API. |
 | Automatic SSG rebuild           | absent   | Durable desired/published revision state, single-flight deployment reconciliation, immutable atomic/blue-green release promotion, public-marker verification, and a provider adapter are not implemented. Yandex additionally needs a separate builder/upload component. See `docs/WEB_SURFACES.md`.                                                                                                                 |
 | Website cart handoff | included | Корзина `website` хранит только slug/SKU/quantity в версионном sessionStorage и открывает единый same-origin `/checkout`; цену и остаток повторно проверяет backend. |
@@ -245,6 +248,14 @@ Verified by the agent during setup, not asked.
 ### NIKASS backend stage — 2026-09-08
 
 Пользователь активировал backend-этап до предоставления доступа к API. Реальные интеграции проверяются локальными тестовыми ответами; production не подставляет mock-товары. Реализованы каталог и проверка корзины по свежим данным WooCommerce. Создание заказа, checkout и внешние уведомления остаются следующим срезом.
+
+### NIKASS Telegram notifications — 2026-10-05
+
+Пользователь выбрал группу «Zhenya & Лиза, nikass» с ботом `@nikass_orders_bot`
+для уведомлений о заказах и заявках на поступление. Получатель задаётся только
+серверным `ORDER_TELEGRAM_CHAT_ID`; запуск бота другими пользователями не подписывает
+их на уведомления. Локальный `backend/.env` переключён на группу; применение на Beget
+пока не подтверждено из-за недоступного SSH.
 
 ### NIKASS orders stage — 2026-09-08
 

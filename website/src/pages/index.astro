@@ -1,10 +1,11 @@
 ---
 import "../styles/global.css";
+import ProductCard from "../components/ProductCard";
 import AboutSection from "../components/AboutSection.astro";
 import ReviewsSection from "../components/ReviewsSection.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import { AssistantCard } from "../components/AiComponentsDemo";
-import { HERO_CATEGORIES, formatPrice, loadCatalogProducts } from "../data/catalog";
+import { HERO_CATEGORIES, getProductPrice, loadCatalogProducts } from "../data/catalog";
 import { storyEntries } from "../data/blog";
 
 const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -12,7 +13,7 @@ const products = await loadCatalogProducts();
 
 const bikes = [
   { id: "stations", category: "Портативные зарядные станции", title: "Зарядные станции", body: "Энергия в пути", cta: "Смотреть решения", image: "energy-stations.webp" },
-  { id: "inverters", category: "Инвертора напряжения", title: "Инвертора напряжения", body: "Стабильное питание", cta: "Выбрать инвертор", image: "energy-inverters.webp" },
+  { id: "inverters", category: "Инверторы напряжения", title: "Инверторы напряжения", body: "Стабильное питание", cta: "Выбрать инвертор", image: "energy-inverters.webp" },
   { id: "panels", category: "Солнечные панели", title: "Солнечные панели", body: "Зарядка от солнца", cta: "Выбрать панель", image: "energy-panels.webp" },
   { id: "batteries", category: "AGM аккумуляторы", title: "Аккумуляторы", body: "Запас автономности", cta: "Выбрать аккумулятор", image: "energy-batteries.webp" },
 ];
@@ -32,13 +33,13 @@ const bestSellerSlugs = [
   "portativnaya-elektrostantsiya-168000-mah-600w",
 ];
 const bestSellers = bestSellerSlugs.flatMap((slug) => products.filter((product) => product.slug === slug));
-const chatProducts = products.map(({ slug, name, category, image, price, oldPrice }) => ({
-  slug,
-  name,
-  category,
-  image,
-  priceLabel: formatPrice(price),
-  ...(oldPrice !== undefined ? { oldPriceLabel: formatPrice(oldPrice) } : {}),
+const chatProducts = products.map((product) => ({
+  slug: product.slug,
+  name: product.name,
+  category: product.category,
+  image: product.image,
+  priceLabel: getProductPrice(product).label,
+  oldPriceLabel: getProductPrice(product).oldPriceLabel,
 }));
 const heroCategories = HERO_CATEGORIES;
 const formatHeroTitle = (title: string) => title.replace("LiFePO4", "LiFePO₄");
@@ -69,7 +70,7 @@ const heroPosition = (index: number) => {
             <h1>Энергия без привязки</h1>
             <p>Надёжные решения для дома, дороги и работы — там, где нужна свобода от розетки.</p>
             <div class="orbea-hero-actions">
-              <a class="orbea-button" href="/catalog"><span>↗</span> Смотреть каталог</a>
+              <a class="orbea-button orbea-button-no-arrow" href="/catalog">Смотреть каталог</a>
               <a class="orbea-button orbea-button-dark" href="#custom">Подобрать решение</a>
             </div>
           </div>
@@ -92,7 +93,7 @@ const heroPosition = (index: number) => {
                 data-hero-position={heroPosition(index)}
               >
                 <span class="orbea-hero-product-media"><img src={category.image} alt={formatHeroTitle(category.title)} loading={index === heroInitialIndex ? "eager" : "lazy"} decoding="async" /></span>
-                <span class="orbea-hero-product-name">{category.title === "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ" ? <>ПОРТАТИВНЫЕ<br />ЗАРЯДНЫЕ СТАНЦИИ</> : category.title === "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS" ? <><span>СИСТЕМЫ ХРАНЕНИЯ</span><span>ЭНЕРГИИ ESS</span></> : formatHeroTitle(category.title)}</span>
+                <span class="orbea-hero-product-name">{category.title === "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ" ? <>ПОРТАТИВНЫЕ<br />ЗАРЯДНЫЕ СТАНЦИИ</> : category.title === "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ" ? <><span>СИСТЕМЫ ХРАНЕНИЯ</span><span>ЭНЕРГИИ</span></> : formatHeroTitle(category.title)}</span>
               </a>
             ))}
             </div>
@@ -116,16 +117,7 @@ const heroPosition = (index: number) => {
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
             </button>
             <div class="orbea-bestsellers-grid" data-bestsellers-viewport>
-            {bestSellers.map((product) => (
-              <a class="orbea-bestseller-card" href={`/catalog/${product.slug}`}>
-                <div class="orbea-bestseller-image"><img src={product.image} alt={product.name} loading="lazy" /></div>
-                <div class="orbea-bestseller-copy">
-                  <p>{product.category}</p>
-                  <h3>{product.name}</h3>
-                  <div><strong>{formatPrice(product.price)}</strong>{product.oldPrice && <del>{formatPrice(product.oldPrice)}</del>}</div>
-                </div>
-              </a>
-            ))}
+            {bestSellers.map((product) => <ProductCard product={product} appearance="bestseller" client:load />)}
             </div>
             <button class="orbea-hero-arrow orbea-bestsellers-arrow orbea-bestsellers-arrow-next" type="button" aria-label="Следующие хиты продаж" data-bestsellers-next>
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
@@ -161,7 +153,7 @@ const heroPosition = (index: number) => {
           <div class="orbea-stories-intro">
             <h2>Что нужно именно вам?</h2>
             <p>Разбираем реальные сценарии: как пережить отключение, зарядить технику в дороге и собрать систему под свои задачи.</p>
-            <a class="orbea-button orbea-button-dark" href="/blog"><span>↗</span> Все статьи</a>
+            <a class="orbea-button orbea-button-dark orbea-button-no-arrow" href="/blog">Все статьи</a>
           </div>
           <div class="orbea-story-row orbea-story-row-desktop" role="region" aria-label="Статьи блога" tabindex="0">
             {stories.map((story, index) => {
@@ -197,9 +189,12 @@ const heroPosition = (index: number) => {
             <p>Позвоните нам или напишите в мессенджере — ответим на вопросы и поможем подобрать оборудование под Вашу задачу.</p>
           </div>
           <div class="orbea-contact-actions" role="group" aria-label="Связаться с NIKASS">
-            <a class="orbea-contact-pill" href="mailto:hello@nikass.ru">hello@nikass.ru</a>
-            <a class="orbea-contact-pill" href="tel:+789032191882">8 903 219-18-82</a>
-            <button class="orbea-contact-icon" type="button" data-chat-open aria-controls="nikass-chat-widget" aria-expanded="false" aria-label="Открыть консультанта NIKASS">
+            <a class="orbea-contact-pill" href="mailto:shop@nikass.ru">shop@nikass.ru</a>
+            <a class="orbea-contact-pill" href="tel:+79256425315">+7 (925) 642-53-15</a>
+            <a class="orbea-contact-icon orbea-contact-telegram" href="https://t.me/Nikass_energy" target="_blank" rel="noopener noreferrer" aria-label="Написать в Telegram">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21.9 2.2c.3-.1.6.2.6.5l-3.2 17.1c-.1.6-.8.9-1.3.5l-5.1-3.8-2.8 2.7c-.4.4-1.1.2-1.1-.4l.2-4.7L18 6.5c.3-.3 0-.7-.4-.5L6.4 13.1l-4.6-1.4c-.6-.2-.6-1 .1-1.2l20-8.3Z" /></svg>
+            </a>
+            <button class="orbea-contact-icon orbea-contact-chat" type="button" data-chat-open aria-controls="nikass-chat-widget" aria-expanded="false" aria-label="Открыть консультанта NIKASS">
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H12l-4 3v-3.1a2.5 2.5 0 0 1-3-2.4v-6Z" /><path d="M8 9h8M8 12h5" /></svg>
             </button>
           </div>
@@ -211,6 +206,14 @@ const heroPosition = (index: number) => {
           <h3>О NIKASS</h3>
           <p>Автономная энергия для дома, дороги и работы.</p>
           <a href="/#contacts">Связаться с нами</a>
+          <nav class="orbea-footer-legal-group" aria-label="Правовая информация">
+            <h3>Правовая информация</h3>
+            <ul>
+              <li><a href="/privacy-policy">Политика конфиденциальности</a></li>
+              <li><a href="/personal-data-consent">Согласие на обработку персональных данных</a></li>
+              <li><a href="/advertising-consent">Согласие на рекламную рассылку</a></li>
+            </ul>
+          </nav>
         </div>
         <div class="orbea-footer-links">
           {footerGroups.map((group) => <div><h3>{group.title}</h3><ul>{group.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul></div>)}

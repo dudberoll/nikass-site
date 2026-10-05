@@ -32,6 +32,25 @@ test('uses native WooCommerce coupon/stock validation, zero-priced shipping and 
   expect(calls.at(-1)?.headers.get('Cart-Token')).toBeNull()
 })
 
+test('paid fulfillment writes payment, items and full contacts to WooCommerce and requires a paid order status', async () => {
+  let status = 'processing'
+  let body: Record<string, unknown> = {}
+  const provider = createWooCommerceOrders(config, async (url, init) => {
+    if (url.pathname.endsWith('/cart')) return Response.json(cart)
+    body = JSON.parse(String(init?.body))
+    return Response.json({ id: 12, number: 'N-12', status })
+  })
+  const totals = { currency: 'RUB' as const, items: [{ sku: 'S1', name: 'Station', quantity: 2, totalMinor: 1800 }], totalMinor: 1800, discountMinor: 200, shippingMinor: 0 as const }
+  const paymentId = '223e4567-e89b-12d3-a456-426614174000'
+  expect(await provider.submitPaid('private-cart', input, totals, paymentId)).toBe('N-12')
+  expect(body).toMatchObject({ set_paid: true, status: 'processing', transaction_id: paymentId,
+    billing: { first_name: 'Анна', last_name: 'Иванова', email: input.customer.email, phone: input.customer.phone, address_1: 'Лесная, д. 3', address_2: 'кв. 5' },
+    line_items: [{ name: 'Station', quantity: 2, total: '18.00' }], customer_note: input.customer.comment })
+  for (status of ['pending', 'on-hold']) {
+    await expect(provider.submitPaid('private-cart', input, totals, paymentId)).rejects.toThrow('Результат оформления требует проверки менеджером')
+  }
+})
+
 test('propagates Store API nonce and refreshed cart token during quote and revalidation', async () => {
   let cartReads = 0
   let storeResponses = 0

@@ -5,9 +5,9 @@ import { fileURLToPath } from "node:url";
 
 const checkout = readFileSync(fileURLToPath(new URL("../src/components/Checkout.tsx", import.meta.url)), "utf8");
 
-test("checkout preserves the display snapshot across the payment redirect", () => {
+test("checkout displays contacts from memory while preserving payment and order summaries", () => {
   assert.match(checkout, /customerSnapshotSchema/);
-  assert.match(checkout, /customer: snapshot/);
+  assert.match(checkout, /setCustomer\(snapshot\)/);
   assert.match(checkout, /h2>Ожидает оплаты<\/h2>/);
   assert.match(checkout, /h2>Успешная оплата<\/h2>/);
   assert.match(checkout, /Менеджер свяжется с вами в течение часа, чтобы подтвердить все данные и заказ/);

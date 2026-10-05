@@ -202,6 +202,39 @@ test('chat route validates the conversation and returns the provider reply', asy
   expect(await response.json()).toEqual({ reply: 'Ответ на: Какая станция подойдёт для дома?' })
 })
 
+test('chat accepts a long Russian conversation and rejects count and byte overflows before the provider', async () => {
+  let calls = 0
+  const app = createApp({
+    env,
+    prisma: {} as DbClient,
+    chatProvider: {
+      respond: async (messages) => {
+        calls += 1
+        expect(messages).toHaveLength(199)
+        expect(messages[1]?.content).toHaveLength(12_000)
+        return 'Продолжим обсуждение.'
+      },
+    },
+  })
+  const messages = Array.from({ length: 199 }, (_, index) => ({
+    role: index % 2 === 0 ? 'user' : 'assistant',
+    content: 'Я'.repeat(index === 1 ? 12_000 : 1_000),
+  }))
+  const request = (history: typeof messages) => app.request('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: history }),
+  })
+  expect(new TextEncoder().encode(JSON.stringify({ messages })).byteLength).toBeGreaterThan(128 * 1024)
+  const response = await request(messages)
+  expect(response.status).toBe(200)
+  expect(await response.json()).toEqual({ reply: 'Продолжим обсуждение.' })
+  expect((await request([...messages, messages[0]!, messages[0]!])).status).toBe(400)
+  const oversized = messages.map((message) => ({ ...message, content: 'Я'.repeat(4_000) }))
+  expect((await request(oversized)).status).toBe(413)
+  expect(calls).toBe(1)
+})
+
 test('chat transcription route accepts an audio file and returns recognized text', async () => {
   let receivedAudio: File | undefined
   const app = createApp({
