@@ -64,12 +64,13 @@ test('keeps only the CSV-selected WooCommerce products', () => {
   assert.equal(selected[0]?.variants[0]?.sku, 'WOO-KEEP')
 })
 
-test('related products stay in category and never include the current product', () => {
-  const product = products[0]
-  const related = relatedProducts(product, products)
+test('related products use complementary categories and never include the current product', () => {
+  const inverter = products[0]
+  const battery = { ...inverter, slug: 'agm-battery', category: 'AGM аккумуляторы' }
+  const catalog = [...products, battery]
 
-  assert.ok(related.length > 0)
-  assert.ok(related.every((item) => item.category === product.category && item.slug !== product.slug))
+  assert.deepEqual(relatedProducts(inverter, catalog).map(({ slug, category }) => [slug, category]), [['agm-battery', 'AGM аккумуляторы']])
+  assert.deepEqual(relatedProducts(battery, catalog).map(({ slug, category }) => [slug, category]), [[inverter.slug, inverter.category]])
 })
 
 test('characteristics become name-value rows', () => {

@@ -31,6 +31,16 @@ export const DISCOUNTED_PRODUCTS_PATH = "/discounted";
 const PORTABLE_STATION_CATEGORY = "Портативные зарядные станции";
 const VOLTAGE_INVERTER_CATEGORY = "Инверторы напряжения";
 const LIFEPO4_CATEGORY = "LiFePO₄ аккумуляторы";
+const RELATED_PRODUCT_CATEGORIES: Record<string, readonly string[]> = {
+  [PORTABLE_STATION_CATEGORY]: ["Солнечные панели", "POWERBANK"],
+  ["Солнечные панели"]: [PORTABLE_STATION_CATEGORY, "Гибридные инверторы", "Системы хранения энергии"],
+  [VOLTAGE_INVERTER_CATEGORY]: ["AGM аккумуляторы"],
+  ["AGM аккумуляторы"]: [VOLTAGE_INVERTER_CATEGORY, "Гибридные инверторы"],
+  ["Гибридные инверторы"]: [LIFEPO4_CATEGORY, "AGM аккумуляторы", "Солнечные панели"],
+  ["Системы хранения энергии"]: ["Солнечные панели"],
+  [LIFEPO4_CATEGORY]: ["Гибридные инверторы"],
+  ["POWERBANK"]: [PORTABLE_STATION_CATEGORY],
+};
 
 export function normalizeStationText(value: string) {
   return value.replace(/\bSL(?=\s*[-]?\d)/gi, "NS");
@@ -636,5 +646,9 @@ export function productAvailability(product: Product): Availability {
 }
 
 export function relatedProducts(product: Product, products: readonly Product[], limit = 4) {
-  return products.filter((item) => Boolean(item.discounted) === Boolean(product.discounted) && item.category === product.category && item.slug !== product.slug).slice(0, limit);
+  // ponytail: category-level pairings; add SKU matching if model-specific compatibility becomes a requirement.
+  return (RELATED_PRODUCT_CATEGORIES[product.category] ?? [])
+    .map((category) => products.find((item) => Boolean(item.discounted) === Boolean(product.discounted) && item.category === category && item.slug !== product.slug))
+    .filter((item): item is Product => Boolean(item))
+    .slice(0, limit);
 }

@@ -74,7 +74,7 @@ const articleLink = article && `/blog/${article.slug}?from=${encodeURIComponent(
       </section>
 
       {related.length > 0 && <section class="product-related" aria-labelledby="related-title">
-        <p class="store-eyebrow">NIKASS / СВЯЗАННЫЕ ТОВАРЫ</p><h2 id="related-title">С этим товаром покупают</h2>
+        <p class="store-eyebrow">NIKASS / СВЯЗАННЫЕ ТОВАРЫ</p><h2 id="related-title">Рекомендуем в комплект</h2>
         <div class="orbea-bestsellers-grid">{related.map((item) => <a class="orbea-bestseller-card" href={`/catalog/${item.slug}`}><div class="orbea-bestseller-image"><img src={item.image} alt={item.name} loading="lazy" /></div><div class="orbea-bestseller-copy"><p>{item.category}</p><h3>{item.name}</h3><div class="orbea-bestseller-price"><strong>{getProductPrice(item).label}</strong>{getProductPrice(item).oldPriceLabel && <del>{getProductPrice(item).oldPriceLabel}</del>}</div></div></a>)}</div>
       </section>}
     </main>

@@ -41,7 +41,7 @@ test("product page shows availability and related products", async ({ page }) =>
   await expect(page.locator("[data-product-card]")).toHaveCount(1);
   await page.locator("[data-product-card] a[href^='/catalog/']").first().click();
   await expect(page.getByText("В наличии", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "С этим товаром покупают" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Рекомендуем в комплект" })).toBeVisible();
   const related = await page.locator(".product-related .orbea-bestseller-card").count();
   expect(related).toBeGreaterThan(0);
   expect(related).toBeLessThanOrEqual(4);
