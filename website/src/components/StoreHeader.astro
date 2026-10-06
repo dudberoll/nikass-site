@@ -2,6 +2,11 @@
 import { ALL_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, HERO_CATEGORIES } from "../data/catalog";
 
 const isHomePage = Astro.url.pathname === "/";
+const DISCOUNTED_PRODUCTS_ICON = "/assets/images/category-icons/discounted-products.png";
+const menuCategoryIcons = Object.fromEntries([
+  ...HERO_CATEGORIES.map(({ label, icon }) => [label, icon] as const),
+  [DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_ICON] as const,
+]);
 ---
 
 <header class="orbea-header orbea-header-light" data-header>
@@ -19,7 +24,7 @@ const isHomePage = Astro.url.pathname === "/";
           <div class="orbea-catalog-dropdown-list">
             <a class="orbea-catalog-dropdown-link orbea-catalog-dropdown-all" href="/catalog" data-catalog-dropdown-link><span>{ALL_PRODUCTS_LABEL}</span>{!isHomePage && <span aria-hidden="true">↗</span>}</a>
             {HERO_CATEGORIES.map((category) => <a class="orbea-catalog-dropdown-link" href={`/catalog?category=${encodeURIComponent(category.label)}`} data-catalog-dropdown-link><span class="orbea-catalog-dropdown-label"><img src={category.icon} alt="" aria-hidden="true" /><span>{category.label}</span></span><span aria-hidden="true">›</span></a>)}
-            <a class="orbea-catalog-dropdown-link" href={DISCOUNTED_PRODUCTS_PATH} data-catalog-dropdown-link><span>{DISCOUNTED_PRODUCTS_LABEL}</span><span aria-hidden="true">›</span></a>
+            <a class="orbea-catalog-dropdown-link" href={DISCOUNTED_PRODUCTS_PATH} data-catalog-dropdown-link><span class="orbea-catalog-dropdown-label"><img src={DISCOUNTED_PRODUCTS_ICON} alt="" aria-hidden="true" /><span>{DISCOUNTED_PRODUCTS_LABEL}</span></span><span aria-hidden="true">›</span></a>
           </div>
         </div>
       </div>
@@ -54,7 +59,7 @@ const isHomePage = Astro.url.pathname === "/";
       <strong class="orbea-menu-title">NIKASS</strong>
       <button class="orbea-icon-button" type="button" aria-label="Закрыть" data-menu-close>×</button>
     </div>
-    <div class="orbea-menu-root" data-menu-root data-all-products-label={ALL_PRODUCTS_LABEL} data-discounted-label={DISCOUNTED_PRODUCTS_LABEL} data-discounted-path={DISCOUNTED_PRODUCTS_PATH} data-category-items={JSON.stringify([ALL_PRODUCTS_LABEL, ...HERO_CATEGORIES.map(({ label }) => label), DISCOUNTED_PRODUCTS_LABEL])} data-category-icons={JSON.stringify(Object.fromEntries(HERO_CATEGORIES.map(({ label, icon }) => [label, icon])))}>
+    <div class="orbea-menu-root" data-menu-root data-all-products-label={ALL_PRODUCTS_LABEL} data-discounted-label={DISCOUNTED_PRODUCTS_LABEL} data-discounted-path={DISCOUNTED_PRODUCTS_PATH} data-category-items={JSON.stringify([ALL_PRODUCTS_LABEL, ...HERO_CATEGORIES.map(({ label }) => label), DISCOUNTED_PRODUCTS_LABEL])} data-category-icons={JSON.stringify(menuCategoryIcons)}>
       <button class="orbea-menu-root-link" type="button" data-menu-section="Gear">Каталог <span>›</span></button>
       <a class="orbea-menu-root-link" href="/blog" data-menu-anchor>Блог</a>
       <a class="orbea-menu-root-link" href="/#custom" data-menu-anchor>Как выбрать</a>
@@ -63,8 +68,8 @@ const isHomePage = Astro.url.pathname === "/";
     <div class="orbea-menu-detail" hidden data-menu-detail>
       <div class="orbea-menu-list" data-menu-list></div>
       <div class="orbea-menu-promo" hidden data-menu-promo>
-        <img src="/assets/images/gear-menu.webp" alt="Оборудование NIKASS" />
-        <div><span>Система, а не отдельные детали.</span><strong>Соберите своё решение</strong><a href="/catalog" data-menu-anchor>Открыть каталог</a></div>
+        <img src="/assets/images/story-autonomous-system.webp" alt="" aria-hidden="true" />
+        <div><span>NIKASS / ПРАКТИКА</span><strong>Как собрать автономную систему</strong><a href="/blog/how-to-build-an-autonomous-system" data-menu-anchor>Читать статью</a></div>
       </div>
     </div>
   </aside>

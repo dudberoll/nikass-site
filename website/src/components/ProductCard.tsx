@@ -28,7 +28,7 @@ export default function ProductCard({ product, appearance = "catalog" }: { produ
             <img src={item.image ?? product.image} alt="" loading="lazy" />
             <span>{item.label}</span>
           </button>)}
-          {moreVariantsOnPhone && <button type="button" className={`store-product-variant-more${moreVariantsOnDesktop ? " is-visible-desktop" : ""} is-visible-phone`} aria-controls={`product-variants-${product.slug}`} aria-expanded={variantsExpanded} onClick={() => setExpanded(!variantsExpanded)}>
+          {moreVariantsOnPhone && <button type="button" className={`store-product-variant-more${moreVariantsOnDesktop ? " is-visible-desktop" : ""} is-visible-phone`} aria-label={variantsExpanded ? "Свернуть варианты" : "Показать ещё варианты"} aria-controls={`product-variants-${product.slug}`} aria-expanded={variantsExpanded} onClick={() => setExpanded(!variantsExpanded)}>
             <span className="store-product-variant-more-count">
               {variantsExpanded ? "−" : <><span className="store-product-variant-more-count-desktop">+{product.variants.length - 4}</span><span className="store-product-variant-more-count-phone">+{product.variants.length - 2}</span></>}
             </span>
