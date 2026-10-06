@@ -75,7 +75,7 @@ export default function RestockRequest({ product, variant, large = false }: { pr
             </label>
             <div className="restock-trap" aria-hidden="true"><label>Ваш сайт<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
             {privacyUrl && <label className="restock-consent"><input type="checkbox" name="consent" required />
-              <span>Согласен на обработку контакта для уведомления о поступлении. <a href={privacyUrl} target="_blank" rel="noreferrer">Политика конфиденциальности</a></span></label>}
+              <span>Даю отдельное согласие на обработку контакта для заявки о поступлении. <a href="/personal-data-consent" target="_blank" rel="noreferrer">Текст согласия</a> · <a href={privacyUrl} target="_blank" rel="noreferrer">Политика конфиденциальности</a></span></label>}
             <p className="restock-error" id={`${id}-error`} role="alert">{error}</p>
             {!privacyUrl && <p className="restock-hint">Приём заявок пока недоступен. Попробуйте позже.</p>}
             <button className="store-add-button" type="submit" disabled={!privacyUrl}>{busy ? "Отправляем…" : "Оставить заявку"}</button>
