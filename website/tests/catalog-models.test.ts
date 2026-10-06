@@ -99,6 +99,32 @@ test("keeps NS-31 characteristics per selected variant", () => {
   assert.doesNotMatch(station?.variantCharacteristics?.["NS-31-150"] ?? "", /IP21/);
 });
 
+test("keeps ESS and UPS as separate WooCommerce model cards", () => {
+  const products = [
+    source("sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt", "Система хранения энергии ESS 10.240 Вт·ч 6.2 кВт", "sistema-hraneniya-energii-ess", {}, "YG10-6.2", 100_000),
+    source("sistema-hraneniya-energii-ess-5-120-vt-ch-6-2-kvt", "Система хранения энергии ESS 5.120 Вт·ч 6.2 кВт", "sistema-hraneniya-energii-ess", {}, "YG5-6.2", 80_000),
+    source("sistema-hraneniya-energii-ess-2-560-vt-ch-3-5-kvt", "Система хранения энергии ESS 2.560 Вт·ч 3.5 кВт", "sistema-hraneniya-energii-ess", {}, "YG2.5-3.5", 60_000),
+    source("sistema-hraneniya-energii-ess-2-560-vt-ch-1-200-vt", "Источник бесперебойного питания UPS 2.560 Вт·ч 1.200 Вт", "sistema-hraneniya-energii-ess", {}, "YG2.5-1200", 40_000),
+    source("sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt", "Источник бесперебойного питания UPS 1.280 Вт·ч 600 Вт", "sistema-hraneniya-energii-ess", {}, "YG1.2-600", 20_000),
+  ];
+
+  const grouped = groupCatalogProducts(products);
+  assert.deepEqual(grouped.map((product) => [product.name, product.variants.length]), [
+    ["Система хранения энергии ESS", 3],
+    ["Источники бесперебойного питания UPS", 2],
+  ]);
+  assert.deepEqual(grouped.map((product) => product.variants.map(({ sku }) => sku)), [
+    ["YG2.5-3.5", "YG5-6.2", "YG10-6.2"],
+    ["YG1.2-600", "YG2.5-1200"],
+  ]);
+  assert.deepEqual(grouped[0]?.variants.map(({ label }) => label), [
+    "2.560 Вт·ч · 3.5 кВт", "5.120 Вт·ч · 6.2 кВт", "10.240 Вт·ч · 6.2 кВт",
+  ]);
+  assert.deepEqual(grouped[1]?.variants.map(({ label }) => label), [
+    "1.280 Вт·ч · 600 Вт", "2.560 Вт·ч · 1.200 Вт",
+  ]);
+});
+
 test("shows NS station labels while preserving the provider SKU", () => {
   const product = source(
     "portativnaya-zaryadnaya-stantsiya-sl-54-s-radio-i-bluetooth-150-vt-153-6-vt-ch",

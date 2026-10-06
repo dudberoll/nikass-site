@@ -114,11 +114,11 @@ const catalogArticlesBySlug: CatalogSelection = Object.fromEntries([
   "gibkaya-solnechnaya-panel-210w-33-9v",
   "portativnaya-solnechnaya-panel-100w-20v",
   "solnechnaya-panel-450-vt-41-v",
-  "sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt",
-  "sistema-hraneniya-energii-ess-2-560-vt-ch-1-200-vt",
   "sistema-hraneniya-energii-ess-2-560-vt-ch-3-5-kvt",
   "sistema-hraneniya-energii-ess-5-120-vt-ch-6-2-kvt",
   "sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt",
+  "sistema-hraneniya-energii-ess-2-560-vt-ch-1-200-vt",
+  "sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt",
   "gibkaya-solnechnaya-panel-30w-18v",
   "gibkaya-solnechnaya-panel-100w-17v",
   "gibkaya-solnechnaya-panel-50w-18v",
@@ -248,14 +248,20 @@ const catalogModelGroups = [
     ],
   },
   {
-    name: "Система хранения энергии",
+    name: "Система хранения энергии ESS",
+    canonicalSlug: "sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt",
+    memberSlugs: [
+      "sistema-hraneniya-energii-ess-2-560-vt-ch-3-5-kvt",
+      "sistema-hraneniya-energii-ess-5-120-vt-ch-6-2-kvt",
+      "sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt",
+    ],
+  },
+  {
+    name: "Источники бесперебойного питания UPS",
     canonicalSlug: "sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt",
     memberSlugs: [
       "sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt",
       "sistema-hraneniya-energii-ess-2-560-vt-ch-1-200-vt",
-      "sistema-hraneniya-energii-ess-2-560-vt-ch-3-5-kvt",
-      "sistema-hraneniya-energii-ess-5-120-vt-ch-6-2-kvt",
-      "sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt",
     ],
   },
   {
@@ -507,6 +513,9 @@ function mergeModelGroup(group: CatalogModelGroup, products: Product[]): Product
 function modelVariantLabel(product: Product, variant: ProductVariant) {
   const text = `${product.name} ${product.characteristics}`;
   const specText = text.replace(/\b(?:SL|NS)-?\d+(?:-L\d+)?\b/gi, "");
+  if (product.category === "Системы хранения энергии") {
+    return product.name.replace(/^.*?\b(?:ESS|UPS)\s+/i, "").replace(/(Вт[·.]ч)\s+(?=\d)/i, "$1 · ");
+  }
   const power = readSpec(specText, /(\d[\d\s.,]*)\s*(?:W|Вт)(?!\w)/i)
     || (product.category === VOLTAGE_INVERTER_CATEGORY ? readSpec(product.name, /(\d[\d\s.,]*)$/) : "");
   const hybridPower = readSpec(specText, /(\d[\d\s.,]*)\s*(?:kW|кВт)(?!\w)/i);
