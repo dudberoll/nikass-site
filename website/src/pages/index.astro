@@ -4,6 +4,7 @@ import ProductCard from "../components/ProductCard";
 import AboutSection from "../components/AboutSection.astro";
 import ReviewsSection from "../components/ReviewsSection.astro";
 import StoreHeader from "../components/StoreHeader.astro";
+import CookieNotice from "../components/CookieNotice.astro";
 import { AssistantCard } from "../components/AiComponentsDemo";
 import { HERO_CATEGORIES, getProductPrice, loadCatalogProducts } from "../data/catalog";
 import { storyEntries } from "../data/blog";
@@ -222,6 +223,8 @@ const heroPosition = (index: number) => {
       </footer>
 
     </div>
+
+    <CookieNotice />
 
     <aside id="nikass-chat-widget" class="orbea-chat-widget is-minimized" data-chat-widget role="dialog" aria-modal="false" aria-label="Консультант NIKASS">
       <div class="orbea-chat-widget-panel">

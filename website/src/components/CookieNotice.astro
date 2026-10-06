@@ -1,0 +1,16 @@
+<aside class="cookie-notice" data-cookie-notice aria-label="Уведомление об использовании файлов cookie">
+  <p>Мы используем технические файлы cookie и аналогичные технологии для работы сайта. Нажимая «Согласен», вы даёте согласие на их использование в соответствии с <a href="/privacy-policy">Политикой конфиденциальности</a>.</p>
+  <button class="store-primary-button" type="button" data-cookie-consent>Согласен</button>
+</aside>
+
+<script is:inline>
+  const cookieNotice = document.querySelector("[data-cookie-notice]");
+  const cookieConsentName = "nikass_cookie_consent";
+  if (cookieNotice instanceof HTMLElement) {
+    cookieNotice.hidden = document.cookie.split(";").some((cookie) => cookie.trim() === `${cookieConsentName}=accepted`);
+    cookieNotice.querySelector("[data-cookie-consent]")?.addEventListener("click", () => {
+      document.cookie = `${cookieConsentName}=accepted; Max-Age=15552000; Path=/; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
+      cookieNotice.hidden = true;
+    });
+  }
+</script>

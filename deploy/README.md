@@ -63,8 +63,8 @@ Certbot выпустит короткоживущий сертификат на 
 ```bash
 DEPLOY_HOST=93.188.186.9 \
 SITE_URL=https://93.188.186.9 \
-PUBLIC_PRIVACY_URL=https://nikass.ru/privacy-policy/ \
-PUBLIC_TERMS_URL=https://nikass.ru/oplata-i-dostavka/ \
+PUBLIC_PRIVACY_URL=https://nikass.ru/privacy-policy \
+PUBLIC_TERMS_URL=https://nikass.ru/payment-and-delivery \
 ./deploy/deploy.sh publish
 ```
 
