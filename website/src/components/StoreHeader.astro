@@ -37,7 +37,7 @@ const menuCategoryIcons = Object.fromEntries([
       <button class="orbea-icon-button" type="button" aria-label="Поиск" data-search-open>
         <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
       </button>
-      <a class="orbea-icon-button" href="/cart" aria-label="Корзина">
+      <a class="orbea-icon-button" href="/cart" aria-label="Корзина" data-cart-target>
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 8h12l1 13H5L6 8Z" /><path d="M9 8V5a3 3 0 0 1 6 0v3" /></svg>
         <span class="orbea-cart-count" data-cart-count>0</span>
       </a>
@@ -200,4 +200,34 @@ const menuCategoryIcons = Object.fromEntries([
   const updateCart = () => document.querySelectorAll("[data-cart-count]").forEach((node) => { node.textContent = String(getCartCount(readCart().items)); });
   subscribeToCart(updateCart);
   updateCart();
+
+  window.addEventListener("nikass:cart-item-added", (event) => {
+    const { image, origin } = (event as CustomEvent<{ image: string; origin: HTMLElement }>).detail;
+    const target = document.querySelector<HTMLElement>("[data-cart-target]");
+    if (!image || !origin || !target || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const from = origin.getBoundingClientRect();
+    const to = target.getBoundingClientRect();
+    const item = document.createElement("img");
+    item.className = "cart-fly-image";
+    item.src = image;
+    item.alt = "";
+    item.setAttribute("aria-hidden", "true");
+    item.style.left = `${from.left + from.width / 2 - 20}px`;
+    item.style.top = `${from.top + from.height / 2 - 20}px`;
+    document.body.append(item);
+
+    const animation = item.animate([
+      { transform: "translate(0, 0) scale(1)", opacity: 1, offset: 0, easing: "cubic-bezier(.3, .7, .2, 1)" },
+      { transform: `translate(${(to.left + to.width / 2 - from.left - from.width / 2) * .78}px, ${(to.top + to.height / 2 - from.top - from.height / 2) * .78 - 30}px) scale(.72)`, opacity: .9, offset: .72, easing: "cubic-bezier(.4, 0, .8, .2)" },
+      { transform: `translate(${to.left + to.width / 2 - from.left - from.width / 2}px, ${to.top + to.height / 2 - from.top - from.height / 2}px) scale(.2)`, opacity: 0, offset: 1 },
+    ], { duration: 1400, easing: "linear" });
+    animation.onfinish = () => {
+      item.remove();
+      document.querySelector("[data-cart-count]")?.animate(
+        [{ transform: "scale(1)" }, { transform: "scale(1.4)" }, { transform: "scale(1)" }],
+        { duration: 280, easing: "ease-out" },
+      );
+    };
+  });
 </script>

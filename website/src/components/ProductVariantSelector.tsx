@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 
 import { AVAILABILITY_LABELS, displayProductSku, formatPrice, formatVariantPrice, getSelectedVariant, isVariantAddable, type Product } from "../data/catalog";
 import { addCartItem, readCart, saveCart } from "../lib/cart";
@@ -20,11 +20,12 @@ export default function ProductVariantSelector({ product }: { product: Product }
   }, [variant?.sku]);
   if (!variant) return <p>Варианты пока не добавлены.</p>;
 
-  function add() {
+  function add(event: MouseEvent<HTMLButtonElement>) {
     const stored = readCart();
     if (stored.error) return setMessage("Корзина недоступна. Разрешите хранение данных в браузере.");
     const saved = saveCart(addCartItem(stored.items, product, variant.sku, quantity));
     setMessage(saved.error ? "Не удалось сохранить корзину." : `Товар добавлен: ${quantity} шт. `);
+    if (!saved.error) window.dispatchEvent(new CustomEvent("nikass:cart-item-added", { detail: { image: variant.image ?? product.image, origin: event.currentTarget } }));
   }
 
   return <section className="product-variant-selector" aria-labelledby="variant-title">

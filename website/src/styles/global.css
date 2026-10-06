@@ -524,8 +524,9 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .restock-error:empty { display: none; }
 .restock-dialog :focus-visible { outline: 2px solid #111; outline-offset: 3px; }
 @media (max-width: 480px) { .restock-dialog { padding: 24px; } .restock-dialog h2 { font-size: 26px; } }
-.store-added-note { margin: 12px 0 0; color: #33704c; font-size: 12px; }
+.store-added-note { margin: 12px 0 0; color: #33704c; font-size: 20px; }
 .store-added-note a { text-decoration: underline; }
+@media (max-width: 600px) { .store-added-note { font-size: clamp(12px, 4vw, 16px); white-space: nowrap; } }
 .catalog-no-results { padding: 40px 0; color: #666; }
 .store-footer { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 32px; align-items: end; padding: 42px 5vw; background: #111; color: #fff; }
 .store-footer p { max-width: 250px; margin: 18px 0 0; color: #aaa; font-size: 13px; line-height: 1.35; }
@@ -926,6 +927,7 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 /* Unified storefront behavior, kept inside the Astra visual system. */
 .orbea-icon-button { position: relative; }
 .orbea-cart-count { position: absolute; top: -4px; right: -11px; display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; background: #111; color: #fff; font-size: 10px; font-style: normal; }
+.cart-fly-image { position: fixed; z-index: 1000; width: 40px; height: 40px; pointer-events: none; object-fit: contain; border-radius: 8px; background: #fff; box-shadow: 0 2px 12px rgb(0 0 0 / 16%); }
 .orbea-header:not(.is-scrolled) .orbea-cart-count { background: #fff; color: #111; }
 .orbea-page .orbea-header:not(.is-scrolled) .orbea-cart-count { background: #111; color: #fff; }
 .store-status-message { min-height: 20px; margin: -10px 0 18px; color: #33704c; font-size: 13px; }
