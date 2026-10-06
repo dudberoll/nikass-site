@@ -30,7 +30,7 @@ const products = (await loadCatalogProducts()).map((product) => {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <meta name="description" content="Локальный редактор описаний и характеристик каталога NIKASS." />
+    <meta name="description" content="Локальный редактор каталога NIKASS и черновиков товаров ESS." />
     <link rel="icon" href="/favicon.ico" />
     <title>Редактор каталога — NIKASS</title>
   </head>
@@ -40,7 +40,7 @@ const products = (await loadCatalogProducts()).map((product) => {
       <section class="store-intro catalog-editor-intro">
         <p class="store-eyebrow">NIKASS / ЛОКАЛЬНЫЙ ЧЕРНОВИК</p>
         <h1>Редактор каталога</h1>
-        <p>Меняйте короткие описания и характеристики. Правки сохраняются в этом браузере; JSON-файл можно перенести на другой компьютер.</p>
+        <p>Редактируйте товары каталога и создавайте черновики ESS с артикулами, вариантами и характеристиками. JSON-файл можно перенести на другой компьютер и вручную добавить товары в WooCommerce.</p>
       </section>
       <CatalogEditor products={products} client:only="react" />
     </main>
