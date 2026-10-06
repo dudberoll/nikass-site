@@ -134,6 +134,7 @@ REMOTE
   done
   curl --fail --silent "http://127.0.0.1:$TUNNEL_PORT/health/ready" >/dev/null || fail 'SSH-туннель до API не работает.'
   PUBLIC_API_URL="$SITE_URL" \
+  PUBLIC_TEST_MODE=true \
   CATALOG_BUILD_API_URL="http://127.0.0.1:$TUNNEL_PORT" \
   PUBLIC_PRIVACY_URL="$PUBLIC_PRIVACY_URL" \
   PUBLIC_TERMS_URL="$PUBLIC_TERMS_URL" \
