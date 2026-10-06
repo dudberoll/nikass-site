@@ -97,7 +97,7 @@ test("checkout offers delivery and pickup before the address step", async ({ pag
   await page.getByRole("button", { name: "Перейти к адресу" }).click();
   const addressStep = page.locator("fieldset:not([hidden])");
   await expect(addressStep).toBeVisible();
-  await expect(addressStep.getByLabel("Информация о самовывозе").getByText("Москва, ул. Лесная, 3", { exact: true })).toBeVisible();
+  await expect(addressStep.getByLabel("Информация о самовывозе").getByText("Москва, Электролитный проезд, 3, стр. 2", { exact: true })).toBeVisible();
   await expect(addressStep.locator("#addressSearch")).toHaveCount(0);
 });
 
