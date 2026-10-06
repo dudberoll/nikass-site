@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import {
-  orderQuoteRequestSchema,
   orderTotalsSchema,
   type PaymentStatusResponse,
 } from '@web-app-demo/contracts'
@@ -22,29 +21,30 @@ export class PaymentsService {
 
   async start(token: string) {
     const row = await this.findByToken(token)
-    if (row.state !== 'quoted') throw new PaymentFailure('conflict', 'Заказ уже обрабатывается. Обновите статус заказа.')
-    if (row.expiresAt.getTime() <= Date.now()) throw new PaymentFailure('conflict', 'Расчёт устарел. Проверьте заказ заново.')
-    const input = orderQuoteRequestSchema.parse(row.input)
-    const totals = orderTotalsSchema.parse(row.totals)
-    if (totals.totalMinor <= 0) throw new PaymentFailure('invalid', 'Заказ на нулевую сумму не требует онлайн-оплаты.')
-
     if (row.paymentId) {
       const current = await this.provider.get(row.paymentId)
       await this.reconcile(row, current)
-      if (current.status !== 'canceled' && current.confirmationUrl) return { paymentId: row.paymentId, confirmationUrl: current.confirmationUrl }
+      if (current.status === 'pending' && current.confirmationUrl) return { paymentId: row.paymentId, confirmationUrl: current.confirmationUrl, attemptId: row.id }
       throw new PaymentFailure('conflict', 'Платёж уже начат. Обновите статус оплаты.')
     }
+
+    if (row.state !== 'quoted') throw new PaymentFailure('conflict', 'Заказ уже обрабатывается. Обновите статус заказа.')
+    if (row.expiresAt.getTime() <= Date.now()) throw new PaymentFailure('conflict', 'Расчёт устарел. Проверьте заказ заново.')
+    const totals = orderTotalsSchema.parse(row.totals)
+    if (totals.totalMinor <= 0) throw new PaymentFailure('invalid', 'Заказ на нулевую сумму не требует онлайн-оплаты.')
+    const returnUrl = new URL(this.returnUrl)
+    returnUrl.hash = new URLSearchParams({ attempt: row.id }).toString()
 
     const payment = await this.provider.create({
       amountMinor: totals.totalMinor,
       description: `NIKASS: ${totals.items.map((item) => `${item.name} × ${item.quantity}`).join(', ')}`,
       idempotenceKey: createHash('sha256').update(`nikass-payment:${row.id}`).digest('hex'),
       metadata: { attemptId: row.id },
-      returnUrl: this.returnUrl,
+      returnUrl: returnUrl.href,
     })
     this.validatePayment(row, payment)
     await this.store.attachPayment(row.id, payment.id, paymentState(payment))
-    return { paymentId: payment.id, confirmationUrl: payment.confirmationUrl! }
+    return { paymentId: payment.id, confirmationUrl: payment.confirmationUrl!, attemptId: row.id }
   }
 
   async status(paymentId: string): Promise<PaymentStatusResponse> {

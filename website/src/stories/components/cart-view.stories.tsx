@@ -5,7 +5,7 @@ import { products } from './fixtures'
 const meta = {
   component: CartView,
   title: 'Components/Cart View',
-  args: { products },
+  args: { products, apiBase: 'http://localhost:3000' },
 } satisfies Meta<typeof CartView>
 
 export default meta

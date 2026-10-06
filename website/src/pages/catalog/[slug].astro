@@ -96,8 +96,10 @@ const articleLink = article && `/blog/${article.slug}?from=${encodeURIComponent(
         modelDetails.forEach((block) => { block.hidden = block.dataset.productDetailSku !== selectedSku; });
       };
       const productImage = document.querySelector("[data-product-image]");
+      const productSku = document.querySelector(".product-sku");
       window.addEventListener("nikass:product-variant-change", (event) => {
         selectModelDetails(event.detail?.sku ?? "");
+        if (event.detail?.displaySku && productSku) productSku.textContent = `Артикул: ${event.detail.displaySku}`;
         if (event.detail?.image) productImage?.setAttribute("src", event.detail.image);
       });
     </script>

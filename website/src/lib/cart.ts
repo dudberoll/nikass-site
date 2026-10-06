@@ -7,7 +7,7 @@ const MAX_QUANTITY = 99;
 
 export type CartLine = { productSlug: string; variantSku: string; quantity: number };
 export type CartStorageError = "read-failed" | "write-failed";
-export type CartState = { items: CartLine[]; error: CartStorageError | null };
+export type CartState = { items: CartLine[]; error: CartStorageError | null; revision?: string };
 
 function isCartLine(value: unknown): value is CartLine {
   if (!value || typeof value !== "object") return false;
@@ -29,13 +29,17 @@ export function normalizeCart(value: unknown): CartLine[] {
   return [...lines.values()];
 }
 
-export function parseCart(raw: string | null): CartLine[] {
-  if (!raw) return [];
+function parseCartState(raw: string | null): CartState {
+  if (!raw) return { items: [], error: null };
   try {
-    const value = JSON.parse(raw) as { version?: unknown; items?: unknown };
-    return value.version === CART_STORAGE_VERSION ? normalizeCart(value.items) : [];
-  } catch { return []; }
+    const value = JSON.parse(raw) as { version?: unknown; items?: unknown; revision?: unknown };
+    if (value.version !== CART_STORAGE_VERSION) return { items: [], error: null };
+    return { items: normalizeCart(value.items), error: null,
+      ...(typeof value.revision === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.revision) ? { revision: value.revision } : {}) };
+  } catch { return { items: [], error: null }; }
 }
+
+export function parseCart(raw: string | null): CartLine[] { return parseCartState(raw).items; }
 
 export function addCartItem(cart: CartLine[], product: Pick<Product, "slug" | "variants">, variantSku: string, quantity = 1) {
   const next = normalizeCart(cart);
@@ -65,7 +69,7 @@ export function getCartCount(cart: CartLine[]) {
 
 export function readCart(): CartState {
   if (typeof window === "undefined") return { items: [], error: null };
-  try { return { items: parseCart(sessionStorage.getItem(CART_STORAGE_KEY)), error: null }; }
+  try { return parseCartState(sessionStorage.getItem(CART_STORAGE_KEY)); }
   catch { return { items: [], error: "read-failed" }; }
 }
 
@@ -73,11 +77,17 @@ export function saveCart(cart: CartLine[]): CartState {
   const items = normalizeCart(cart);
   if (typeof window === "undefined") return { items, error: null };
   let error: CartStorageError | null = null;
-  try { sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify({ version: CART_STORAGE_VERSION, items })); }
+  let revision: string | undefined;
+  try { revision = crypto.randomUUID(); sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify({ version: CART_STORAGE_VERSION, items, revision })); }
   catch { error = "write-failed"; }
-  const state = { items, error };
+  const state = { items, error, ...(error ? {} : { revision }) };
   window.dispatchEvent(new CustomEvent(CART_CHANGED_EVENT, { detail: state }));
   return state;
+}
+
+export function clearCartIfUnchanged(revision?: string): CartState {
+  const current = readCart();
+  return !current.error && revision && current.revision === revision ? saveCart([]) : current;
 }
 
 export function subscribeToCart(listener: (state: CartState) => void) {

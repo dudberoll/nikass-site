@@ -45,6 +45,7 @@ export const orderResultSchema = z.object({
 export const paymentStartResponseSchema = z.object({
   paymentId: z.string().uuid(),
   confirmationUrl: z.string().url(),
+  attemptId: z.string().uuid().optional(),
 }).strict()
 export const paymentStatusRequestSchema = z.object({ paymentId: z.string().uuid() }).strict()
 export const paymentStatusResponseSchema = z.object({

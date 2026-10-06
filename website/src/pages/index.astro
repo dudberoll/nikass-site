@@ -340,6 +340,12 @@ const heroPosition = (index: number) => {
         if (event.key === "Tab" && !chatWidget?.hidden) trapChatFocus(event, chatWidget);
         if (event.key === "Escape") setChatOpen(false);
       });
+      const chatUrl = new URL(location.href);
+      if (chatUrl.searchParams.get("chat") === "open") {
+        chatUrl.searchParams.delete("chat");
+        history.replaceState(history.state, "", chatUrl);
+        setChatOpen(true);
+      }
 
       const heroCarousel = document.querySelector("[data-hero-carousel]");
       if (heroCarousel) {

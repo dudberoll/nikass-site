@@ -42,10 +42,10 @@ test('starts a hosted payment from server totals and reconciles a success', asyn
   }
   const service = new PaymentsService(store, provider, 'http://localhost:4322/checkout', true)
 
-  expect(await service.start('checkout-token')).toEqual({ paymentId, confirmationUrl: 'https://yoomoney.ru/checkout/test' })
+  expect(await service.start('checkout-token')).toEqual({ paymentId, confirmationUrl: 'https://yoomoney.ru/checkout/test', attemptId })
   expect(calls.amountMinor).toBe(2500)
   expect(calls.idempotenceKey).toMatch(/^[a-f0-9]{64}$/)
-  expect(calls.returnUrl).toBe('http://localhost:4322/checkout')
+  expect(calls.returnUrl).toBe(`http://localhost:4322/checkout#attempt=${attemptId}`)
 
   providerPayment = { ...providerPayment, status: 'succeeded', paid: true }
   expect(await service.status(paymentId)).toEqual({ paymentId, paymentState: 'succeeded', fulfillmentState: 'queued', orderNumber: null })

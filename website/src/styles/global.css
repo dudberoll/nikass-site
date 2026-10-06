@@ -453,6 +453,14 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .catalog-category-buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: -20px 0 40px; }
 .catalog-category-buttons :is(button, a) { display: flex; align-items: center; justify-content: center; text-align: center; text-decoration: none; min-height: 48px; padding: 12px 18px; border: 1px solid #d4d4ce; border-radius: 40px; background: #fff; color: #111; font-size: 14px; font-weight: 500; transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .15s ease; }
 .catalog-category-buttons :is(button, a):hover, .catalog-category-buttons :is(button, a).is-active { border-color: #111; background: #111; color: #fff; transform: translateY(-1px); }
+.catalog-guide { margin: 40px 0 28px; }
+.catalog-guide h2 { margin: 0 0 12px; font-size: clamp(20px, 2.4vw, 28px); font-weight: 500; line-height: 1.1; letter-spacing: -.04em; }
+.catalog-guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.catalog-guide-grid li { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: start; gap: 12px; min-width: 0; padding: 18px; background: #fff; }
+.catalog-guide-grid li > span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #c9151e; color: #fff; font-size: 13px; font-weight: 600; }
+.catalog-guide-grid h3 { margin: 2px 0 6px; font-size: 16px; font-weight: 500; line-height: 1.15; }
+.catalog-guide-grid p { margin: 0; color: #555; font-size: 14px; line-height: 1.4; }
+.catalog-guide-cta { margin-top: 18px; }
 @media (min-width: 901px) {
   .catalog-category-buttons { grid-template-columns: repeat(24, minmax(0, 1fr)); }
   .catalog-category-buttons button:nth-child(1) { grid-column: span 4; }
@@ -646,6 +654,14 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cart-checkout-note { min-height: 16px; margin: 12px 0 0; color: #a34b3a; font-size: 12px; }
 .cart-empty { padding: 42px 0; }
 .cart-empty p { margin: 0 0 24px; color: #666; }
+.cart-payment-choice { display: grid; gap: 24px; max-width: 820px; padding: 30px; background: #fff; }
+.cart-payment-choice h2 { margin: 0; font-size: 24px; font-weight: 500; letter-spacing: -.03em; }
+.cart-payment-choice > p { margin: 0; max-width: 620px; color: #555; line-height: 1.5; }
+.cart-pending-payments, .cart-pending-payment { display: grid; gap: 16px; min-width: 0; }
+.cart-pending-payment { padding-bottom: 24px; border-bottom: 1px solid #deded9; }
+.cart-pending-payment .checkout-total-list { margin: 0; }
+.cart-pending-payment > strong { font-size: 22px; font-weight: 600; }
+.cart-payment-choice button { width: fit-content; max-width: 100%; }
 .checkout-page { max-width: 1040px; }
 .checkout-page > h1 { max-width: 720px; margin: 18px 0 14px; font-size: clamp(38px, 6vw, 76px); font-weight: 500; line-height: .96; letter-spacing: -.06em; }
 .checkout-lead { max-width: 600px; margin: 0 0 14px; color: #5f5f5b; font-size: 20px; line-height: 1.25; }
@@ -893,6 +909,14 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
   .info-contact-actions .store-primary-button { width: 100%; }
   .return-steps { grid-template-columns: 1fr; }
   .catalog-toolbar { display: grid; grid-template-columns: 1fr 1fr; }
+  .catalog-guide { margin: 28px 0 20px; }
+  .catalog-guide h2 { margin-bottom: 10px; font-size: 20px; }
+  .catalog-guide-grid { grid-template-columns: 1fr; gap: 6px; }
+  .catalog-guide-grid li { grid-template-columns: 22px minmax(0, 1fr); gap: 8px; padding: 8px 12px; }
+  .catalog-guide-grid li > span { width: 22px; height: 22px; font-size: 11px; }
+  .catalog-guide-grid h3 { display: inline; margin: 0; font-size: 13px; }
+  .catalog-guide-grid h3::after { content: ":"; }
+  .catalog-guide-grid p { display: inline; margin-left: 4px; font-size: 12px; line-height: 1.35; }
   .catalog-toolbar .catalog-search { grid-column: auto; }
   .catalog-toolbar label { min-width: 0; }
   .store-product-grid { gap: 10px; }
@@ -927,6 +951,8 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
   .checkout-form legend, .checkout-result h2 { font-size: 22px; }
   .checkout-actions { align-items: stretch; flex-direction: column; }
   .checkout-actions :is(.store-primary-button, .checkout-secondary-button) { width: 100%; }
+  .cart-payment-choice { padding: 22px; }
+  .cart-payment-choice button { width: 100%; }
 }
 
 /* Unified storefront behavior, kept inside the Astra visual system. */

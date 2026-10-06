@@ -16,7 +16,7 @@ export default function ProductVariantSelector({ product }: { product: Product }
     if (requestedSku && product.variants.some((item) => item.sku === requestedSku)) setSku(requestedSku);
   }, [product]);
   useEffect(() => {
-    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku, image: variant.image ?? product.image } }));
+    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku, displaySku: displayProductSku(product, variant.sku), image: variant.image ?? product.image } }));
   }, [variant?.sku]);
   if (!variant) return <p>Варианты пока не добавлены.</p>;
 

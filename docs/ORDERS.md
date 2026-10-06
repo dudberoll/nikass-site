@@ -22,7 +22,9 @@ the current tab; PostgreSQL stores its hash. Never log request bodies or tokens.
 - `POST /api/orders/status`: same token, returns only state/order number. This legacy/manual-order
   endpoint remains available for the non-payment path.
 - `POST /api/orders/payment`: same token, creates one hosted YooKassa payment from the stored server
-  totals and returns its provider redirect URL. The idempotency key is derived from the private
+  totals and returns its provider redirect URL plus a public `attemptId` recovery marker. Existing
+  pending payments can be resumed after the quote's 15-minute expiry; terminal payments never
+  return an active payment link. The idempotency key is derived from the private
   checkout attempt; the browser never sends an amount or payment credentials.
 - `POST /api/orders/payment/status`: payment id, which the backend reconciles with a fresh YooKassa
   `GET /v3/payments/{id}` before returning payment and fulfillment state.
@@ -54,12 +56,34 @@ No real notification or actual order was sent during implementation.
 Customer contacts and address remain in form memory and server-side storage,
 never checkout `localStorage` or `sessionStorage`. Opening checkout rewrites
 legacy saved snapshots without customer data, including after payment returns.
-Browser recovery keeps only cart identifiers, quote totals, the opaque checkout
-capability and payment ID; public status responses never include contacts.
+Browser recovery keeps only cart identifiers and a cart revision, quote totals, the opaque checkout
+capability, payment ID and public attempt marker; public status responses never include contacts.
 After a redirect, contact details are intentionally omitted from the receipt UI.
 Checkout API URLs require HTTPS except for local loopback development. Telegram,
 WooCommerce and payment credentials remain backend-only. Raw card details are
 entered only on the hosted payment page.
+
+Opening `/cart` checks saved payments in the current tab with the backend. Before
+showing the basket, pending payments offer “Продолжить предыдущую оплату” or
+“Перейти к новой корзине”, with a warning that both paid attempts produce separate
+orders. Proceeding leaves the old payment active and hands off the current basket
+as a fresh checkout; it does not cancel or mutate the old attempt. Succeeded and
+canceled payments do not block the basket. If status verification fails, the saved
+payment remains recoverable and the user can still proceed with the current basket.
+Previous payment snapshots stay in `nikass-checkout-payments` for the tab's lifetime,
+without contacts. New hosted payments return to `/checkout#attempt=<uuid>` so an
+older payment can recover its own snapshot even after a newer checkout; the fragment
+grants no API access and is removed after recovery. Payment links created before
+this change retain their original return URL; use the basket's continuation action
+to select their snapshot before returning. Recovery requires the original tab's
+session storage. Each cart write creates a new revision, which checkout captures
+and preserves through quotes, payment redirects and archived snapshots. Starting
+another basket from a receipt clears the cart only when its revision still matches
+that checkout; a rebuilt basket with identical items is preserved. Legacy snapshots
+without a revision never automatically clear the shopping basket.
+Publish the updated website before the backend: its optional `attemptId` accepts
+old responses, while the old website's strict schema rejects the new response field.
+No database migration or payment-provider configuration change is required.
 
 `YOO_KASSA_FULFILLMENT_MODE=disabled` continues to skip WooCommerce creation and
 paid-order notifications, including successful test payments. Activation requires
