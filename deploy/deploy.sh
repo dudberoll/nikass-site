@@ -53,7 +53,7 @@ REMOTE
 publish() {
   [[ "$SITE_URL" == "https://$DEPLOY_HOST" ]] || fail 'SITE_URL должен быть HTTPS-адресом этого VPS без пути.'
   [[ "${PUBLIC_PRIVACY_URL:-}" == https://* ]] || fail 'Для checkout нужен опубликованный HTTPS-адрес PUBLIC_PRIVACY_URL.'
-  for command in git bun docker curl; do command -v "$command" >/dev/null || fail "Не найдена команда $command."; done
+  for command in git bun docker curl gzip; do command -v "$command" >/dev/null || fail "Не найдена команда $command."; done
   docker buildx version >/dev/null || fail 'Нужен Docker Buildx.'
 
   cd "$ROOT"
@@ -100,7 +100,16 @@ REMOTE
   bun run typecheck:backend
   bun run typecheck:website
   docker buildx build --platform linux/amd64 --load -f backend/Dockerfile -t "nikass-api:$release" .
-  docker save "nikass-api:$release" | ssh "$TARGET" docker load
+  local image_fingerprint remote_fingerprint=
+  image_fingerprint="$(docker image inspect "nikass-api:$release" --format '{{.Os}}/{{.Architecture}} {{json .Config}} {{json .RootFS.Layers}}')"
+  if [[ -n "$previous" ]]; then
+    remote_fingerprint="$(ssh "$TARGET" "docker image inspect 'nikass-api:$previous' --format '{{.Os}}/{{.Architecture}} {{json .Config}} {{json .RootFS.Layers}}'" 2>/dev/null || true)"
+  fi
+  if [[ -n "$remote_fingerprint" && "$image_fingerprint" == "$remote_fingerprint" ]]; then
+    ssh "$TARGET" docker tag "nikass-api:$previous" "nikass-api:$release"
+  else
+    docker save "nikass-api:$release" | gzip -1 | ssh "$TARGET" docker load
+  fi
 
   activated=1
   previous_arg="${previous:-none}"
@@ -140,7 +149,8 @@ REMOTE
   [[ -f website/dist/index.html && -f website/dist/checkout/index.html ]] || fail 'Сборка сайта неполная.'
 
   ssh "$TARGET" "mkdir -p '/var/www/nikass/releases/$release'"
-  rsync -rlptz --delete website/dist/ "$TARGET:/var/www/nikass/releases/$release/"
+  local link_dest="${previous:+--link-dest=/var/www/nikass/releases/$previous}"
+  rsync -rlptz --delete ${link_dest:+"$link_dest"} website/dist/ "$TARGET:/var/www/nikass/releases/$release/"
   ssh "$TARGET" bash -s -- "$release" <<'REMOTE'
 set -Eeuo pipefail
 release="$1"
