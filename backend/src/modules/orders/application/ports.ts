@@ -4,6 +4,7 @@ export class OrderFailure extends Error {
   constructor(readonly kind: 'invalid' | 'unavailable' | 'conflict' | 'not_found', message: string) { super(message) }
 }
 export type OrderProvider = {
+  assertInStock(input: OrderQuoteRequest): Promise<void>
   quote(input: OrderQuoteRequest): Promise<{ cartToken: string; totals: OrderTotals }>
   submit(cartToken: string, input: OrderQuoteRequest, totals: OrderTotals): Promise<string>
 }

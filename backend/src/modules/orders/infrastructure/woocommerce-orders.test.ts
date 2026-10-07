@@ -13,7 +13,7 @@ test('uses native WooCommerce coupon/stock validation, zero-priced shipping and 
   const provider = createWooCommerceOrders(config, (async (url: URL, init: RequestInit) => {
     const body = init.body ? JSON.parse(String(init.body)) : undefined
     calls.push({ url, body, headers: new Headers(init.headers) })
-    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple' }])
+    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple', stock_status: 'instock' }])
     if (url.pathname.endsWith('/orders')) return Response.json({ id: 12, number: 'N-12', status: 'pending' })
     return Response.json(url.pathname.endsWith('/cart') && reads++ === 0 ? { items: [] } : cart, { headers: { 'Cart-Token': 'private-cart' } })
   }) as (url: URL, init?: RequestInit) => Promise<Response>)
@@ -58,7 +58,7 @@ test('propagates Store API nonce and refreshed cart token during quote and reval
   const provider = createWooCommerceOrders(config, (async (url: URL, init: RequestInit) => {
     const call: { url: URL; headers: Headers; responseHeaders?: Headers } = { url, headers: new Headers(init.headers) }
     calls.push(call)
-    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple' }])
+    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple', stock_status: 'instock' }])
     if (url.pathname.endsWith('/orders')) return Response.json({ id: 12, number: 'N-12', status: 'pending' })
     const headers = { 'Cart-Token': `cart-${++storeResponses}`, Nonce: `nonce-${storeResponses}` }
     const response = Response.json(url.pathname.endsWith('/cart') && cartReads++ === 0 ? { items: [] } : cart, { headers })
@@ -83,7 +83,7 @@ test('rejects paid-only shipping', async () => {
   let reads = 0
   const paidCart = { ...cart, shipping_rates: [{ package_id: 0, shipping_rates: [{ rate_id: 'flat_rate:1', method_id: 'flat_rate', price: '100000' }] }] }
   const provider = createWooCommerceOrders(config, (async (url: URL) => {
-    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple' }])
+    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple', stock_status: 'instock' }])
     return Response.json(url.pathname.endsWith('/cart') && reads++ === 0 ? { items: [] } : paidCart, { headers: { 'Cart-Token': 'private-cart' } })
   }) as (url: URL, init?: RequestInit) => Promise<Response>)
   await expect(provider.quote(input)).rejects.toThrow('Бесплатная доставка')
@@ -124,7 +124,7 @@ test('logs only the error type for WooCommerce request timeout', async () => {
 
 test('WooCommerce coupon restrictions block the quote without accepting a client discount', async () => {
   const provider = createWooCommerceOrders(config, (async (url: URL) => {
-    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple' }])
+    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple', stock_status: 'instock' }])
     if (url.pathname.endsWith('/cart/apply-coupon')) return Response.json({ code: 'woocommerce_rest_cart_coupon_error' }, { status: 400 })
     return Response.json(url.pathname.endsWith('/cart') ? { items: [] } : cart, { headers: { 'Cart-Token': 'private-cart' } })
   }) as (url: URL, init?: RequestInit) => Promise<Response>)
@@ -138,7 +138,7 @@ test('keeps the selected delivery method when delivery and pickup are both free'
   const deliveryInput = { ...input, customer: { ...input.customer, deliveryMethod: 'delivery' as const } }
   const provider = createWooCommerceOrders(config, (async (url: URL, init: RequestInit) => {
     calls.push({ url, body: init.body ? JSON.parse(String(init.body)) : undefined })
-    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple' }])
+    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple', stock_status: 'instock' }])
     if (url.pathname.endsWith('/orders')) return Response.json({ id: 12, number: 'N-12', status: 'pending' })
     return Response.json(url.pathname.endsWith('/cart') && reads++ === 0 ? { items: [] } : ratesCart, { headers: { 'Cart-Token': 'private-cart' } })
   }) as (url: URL, init?: RequestInit) => Promise<Response>)
@@ -147,4 +147,31 @@ test('keeps the selected delivery method when delivery and pickup are both free'
   expect(calls.find(({ url }) => url.pathname.endsWith('/cart/select-shipping-rate'))?.body).toEqual({ package_id: 0, rate_id: 'cdek:1' })
   await provider.submit(quote.cartToken, deliveryInput, quote.totals)
   expect(calls.at(-1)?.body.shipping_lines).toEqual([{ method_id: 'cdek', total: '0.00' }])
+})
+
+test('rejects zero-stock and backorder SKUs before adding them to a Woo cart', async () => {
+  for (const status of ['outofstock', 'onbackorder']) {
+    let addCalls = 0
+    const provider = createWooCommerceOrders(config, async (url, init) => {
+      if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple', stock_status: status }])
+      if (url.pathname.endsWith('/cart/add-item')) addCalls += 1
+      return Response.json({ items: [] }, { headers: { 'Cart-Token': 'private-cart' } })
+    })
+
+    await expect(provider.quote(input)).rejects.toThrow('Товара сейчас нет в наличии')
+    expect(addCalls).toBe(0)
+  }
+})
+
+test('checks the selected Woo variation stock status, not only its parent', async () => {
+  let addCalls = 0
+  const provider = createWooCommerceOrders(config, async (url) => {
+    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: '', type: 'variable', stock_status: 'instock' }])
+    if (url.pathname.endsWith('/variations')) return Response.json([{ id: 2, sku: 'S1', stock_status: 'outofstock' }])
+    if (url.pathname.endsWith('/cart/add-item')) addCalls += 1
+    return Response.json({ items: [] }, { headers: { 'Cart-Token': 'private-cart' } })
+  })
+
+  await expect(provider.quote(input)).rejects.toThrow('Товара сейчас нет в наличии')
+  expect(addCalls).toBe(0)
 })

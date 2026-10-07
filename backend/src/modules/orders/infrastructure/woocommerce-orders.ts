@@ -3,13 +3,14 @@ import type { OrderQuoteRequest, OrderTotals } from '@web-app-demo/contracts'
 import { OrderFailure, type OrderProvider, type PaidOrderProvider } from '../application/ports'
 
 const minor = z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER))
+const stockStatus = z.enum(['instock', 'onbackorder', 'outofstock'])
 const cartSchema = z.object({
   items: z.array(z.object({ id: z.number().int().positive(), sku: z.string().min(1), name: z.string().min(1), quantity: z.number().int().positive(), totals: z.object({ line_total: minor, line_total_tax: minor }) })),
   totals: z.object({ currency_code: z.literal('RUB'), currency_minor_unit: z.literal(2), total_price: minor, total_discount: minor, total_discount_tax: minor, total_shipping: minor, total_shipping_tax: minor }),
   shipping_rates: z.array(z.object({ package_id: z.number().int(), shipping_rates: z.array(z.object({ rate_id: z.string(), price: minor, method_id: z.string() })) })).default([]),
   errors: z.array(z.unknown()).default([]),
 })
-const productsSchema = z.array(z.object({ id: z.number().int().positive(), slug: z.string(), sku: z.string(), type: z.string().optional() }))
+const productsSchema = z.array(z.object({ id: z.number().int().positive(), slug: z.string(), sku: z.string(), type: z.string().optional(), stock_status: stockStatus }))
 const orderSchema = z.object({ id: z.number().int().positive(), number: z.string().optional(), status: z.enum(['pending', 'on-hold', 'processing', 'completed']) })
 
 type Config = { productsEndpoint: string; storeEndpoint: string; consumerKey: string; consumerSecret: string; timeoutMs: number }
@@ -65,6 +66,35 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
     if (parsed.data.errors.length) throw new OrderFailure('invalid', 'Проверьте наличие товаров и промокод.')
     return parsed.data
   }
+  const productReferenceInStock = async (item: OrderQuoteRequest['cart']['items'][number]) => {
+    const url = new URL(config.productsEndpoint)
+    url.searchParams.set('slug', item.slug)
+    url.searchParams.set('status', 'publish')
+    const products = productsSchema.parse((await request(url, undefined, undefined, true)).data)
+    const product = products.find((value) => value.slug === item.slug)
+    if (!product) throw new OrderFailure('invalid', 'Товар больше не в наличии. Удалите его из корзины и оставьте заявку о поступлении.')
+
+    let status = product.stock_status
+    let variationId: number | undefined
+    if (product.type === 'variable') {
+      const variantsUrl = new URL(config.productsEndpoint.replace(/\/$/, '') + `/${product.id}/variations`)
+      variantsUrl.searchParams.set('sku', item.sku)
+      const variants = z.array(z.object({ id: z.number().int().positive(), sku: z.string(), stock_status: stockStatus })).parse((await request(variantsUrl, undefined, undefined, true)).data)
+      const variant = variants.find((value) => value.sku === item.sku)
+      if (!variant) throw new OrderFailure('invalid', 'Вариант товара больше не в наличии. Оставьте заявку о поступлении.')
+      status = variant.stock_status
+      variationId = variant.id
+    } else if (product.sku !== item.sku) {
+      throw new OrderFailure('invalid', 'Артикул товара изменился. Обновите корзину.')
+    }
+
+    if (status !== 'instock') throw new OrderFailure('invalid', 'Товара сейчас нет в наличии. Удалите его из корзины и оставьте заявку о поступлении.')
+    return { productId: product.id, variationId }
+  }
+  const productIdInStock = async (item: OrderQuoteRequest['cart']['items'][number]) => {
+    const product = await productReferenceInStock(item)
+    return product.variationId ?? product.productId
+  }
   const submitOrder = async (cartToken: string, input: OrderQuoteRequest, totals: OrderTotals, paidPaymentId?: string) => {
     const session: StoreSession = { cartToken }
     const fresh = parseCart((await request(storeUrl('cart'), undefined, session)).data)
@@ -77,10 +107,22 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
       const rate = preferredFreeRate(shipping_rates, input.customer.deliveryMethod)
       return rate ? [{ method_id: rate.method_id, total: '0.00' }] : []
     })
+    const lineItems = await Promise.all(totals.items.map(async (line) => {
+      const item = input.cart.items.find(({ sku }) => sku === line.sku)
+      if (!item) throw new OrderFailure('invalid', 'Состав заказа изменился. Проверьте заказ заново.')
+      const product = await productReferenceInStock(item)
+      return {
+        product_id: product.productId,
+        ...(product.variationId ? { variation_id: product.variationId } : {}),
+        name: line.name,
+        quantity: line.quantity,
+        total: (line.totalMinor / 100).toFixed(2),
+      }
+    }))
     const response = await request(adminUrl('orders'), {
       status: paid ? 'processing' : 'pending', set_paid: paid, billing, shipping,
       ...(paid ? { payment_method: 'yookassa', payment_method_title: 'ЮKassa', transaction_id: paidPaymentId, meta_data: [{ key: 'nikass_payment_id', value: paidPaymentId }] } : {}),
-      line_items: totals.items.map(({ name, quantity, totalMinor }) => ({ name, quantity, total: (totalMinor / 100).toFixed(2) })),
+      line_items: lineItems,
       customer_note: input.customer.comment,
       ...(selectedRates.length ? { shipping_lines: selectedRates } : {}),
     }, undefined, true)
@@ -89,27 +131,16 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
     return order.data.number ?? String(order.data.id)
   }
   return {
+    assertInStock: async (input) => {
+      for (const item of input.cart.items) await productIdInStock(item)
+    },
     quote: async (input) => {
       const session: StoreSession = {}
       const first = await request(storeUrl('cart'), undefined, session)
       if (!session.cartToken) throw new OrderFailure('unavailable', 'Магазин не создал корзину.')
       if (z.object({ items: z.array(z.unknown()) }).parse(first.data).items.length) throw new OrderFailure('unavailable', 'Магазин вернул непустую новую корзину.')
       for (const item of input.cart.items) {
-        const url = new URL(config.productsEndpoint)
-        url.searchParams.set('slug', item.slug)
-        url.searchParams.set('status', 'publish')
-        const products = productsSchema.parse((await request(url, undefined, undefined, true)).data)
-        const product = products.find((value) => value.slug === item.slug)
-        if (!product) throw new OrderFailure('invalid', 'Товар больше недоступен.')
-        let id = product.id
-        if (product.type === 'variable') {
-          const variantsUrl = new URL(config.productsEndpoint.replace(/\/$/, '') + `/${id}/variations`)
-          variantsUrl.searchParams.set('sku', item.sku)
-          const variants = z.array(z.object({ id: z.number().int().positive(), sku: z.string() })).parse((await request(variantsUrl, undefined, undefined, true)).data)
-          const variant = variants.find((value) => value.sku === item.sku)
-          if (!variant) throw new OrderFailure('invalid', 'Вариант товара больше недоступен.')
-          id = variant.id
-        } else if (product.sku !== item.sku) throw new OrderFailure('invalid', 'Артикул товара изменился.')
+        const id = await productIdInStock(item)
         await request(storeUrl('cart/add-item'), { id, quantity: item.quantity }, session)
       }
       let cart = parseCart((await request(storeUrl('cart/update-customer'), addresses(input), session)).data)

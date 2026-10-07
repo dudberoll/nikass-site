@@ -28,6 +28,7 @@ export class OrdersService {
     const input = orderQuoteRequestSchema.parse(row.input)
     const totals = orderTotalsSchema.parse(row.totals)
     if (!row.cartToken) throw new OrderFailure('conflict', 'Корзина недоступна. Проверьте заказ заново.')
+    await this.provider.assertInStock(input)
     if (!await this.store.claim(row.id, new Date())) return this.status(token)
     let orderNumber: string
     try {
