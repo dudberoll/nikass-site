@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test'
+import { catalogAvailabilityResponseSchema } from '@web-app-demo/contracts'
 
 import type { DbClient } from '../../../db'
 import { createApp } from '../../../app'
@@ -62,6 +63,21 @@ test('exposes the public catalog list and product routes', async () => {
   expect(await detail.json()).toMatchObject({ product: {
     slug: 'nikass-ns-31', packageContents: ['Станция'], warranty: '1 год со дня продажи',
   } })
+})
+
+test('serves the compact availability contract without HTTP caching', async () => {
+  const api = app()
+  const response = await api.request('/api/catalog/availability')
+  const body = await response.json()
+
+  expect(response.status).toBe(200)
+  expect(response.headers.get('Cache-Control')).toBe('no-store')
+  expect(body).toEqual({
+    items: [{ slug: 'nikass-ns-31', variants: [{ sku: 'NS31-300-288', availability: 'in-stock' }] }],
+    cachedAt: expect.any(String),
+    stale: false,
+  })
+  expect(catalogAvailabilityResponseSchema.parse(body)).toEqual(body)
 })
 
 test('rejects invalid catalog queries and reports missing products', async () => {

@@ -1,9 +1,10 @@
 import { cartReviewRequestSchema, paymentStartResponseSchema, paymentStatusResponseSchema } from "@web-app-demo/contracts";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AVAILABILITY_LABELS, displayProductSku, formatPrice, formatVariantPrice, type Product } from "../data/catalog";
 import { getCartCount, readCart, removeCartItem, saveCart, setCartItemQuantity, subscribeToCart, type CartLine, type CartStorageError } from "../lib/cart";
 import { readSavedPayments, requestCheckout, saveCheckoutSnapshot, type SavedPayment } from "../lib/checkout-session";
+import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
 
 function resolve(lines: CartLine[], products: Product[]) {
   return lines.flatMap((line) => {
@@ -15,7 +16,9 @@ function resolve(lines: CartLine[], products: Product[]) {
   });
 }
 
-export default function CartView({ products, apiBase }: { products: Product[]; apiBase: string }) {
+export default function CartView({ products: cachedProducts, apiBase }: { products: Product[]; apiBase: string }) {
+  const { stock, failed } = useCatalogAvailability();
+  const products = useMemo(() => cachedProducts.map((product) => applyProductAvailability(product, stock)), [cachedProducts, stock]);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [error, setError] = useState<CartStorageError | null>(null);
@@ -95,11 +98,14 @@ export default function CartView({ products, apiBase }: { products: Product[]; a
   const total = lines.reduce((sum, { line, variant }) => sum + line.quantity * variant.price, 0);
   const pendingPrice = lines.some(({ variant }) => variant.availability === "preorder");
   const hasDemo = lines.some(({ product }) => product.demo);
+  const preorder = lines.some(({ variant }) => variant.availability === "preorder");
   const unavailable = lines.some(({ variant }) => variant.availability === "unavailable");
-  const blocked = hasDemo || unavailable;
+  const blocked = hasDemo || preorder || unavailable;
   function update(next: CartLine[]) { const state = saveCart(next); setCart(state.items); setError(state.error); }
   function checkout() {
     if (hasDemo) return setCheckoutError("Удалите тестовые экземпляры из корзины, чтобы оформить заказ.");
+    if (preorder) return setCheckoutError("Этот товар можно только добавить в список ожидания. Удалите его из корзины и оставьте заявку на странице товара.");
+    if (unavailable) return setCheckoutError("Удалите недоступные товары из корзины перед оформлением.");
     const parsed = cartReviewRequestSchema.safeParse({ version: 1, items: cart.map((line) => ({ slug: line.productSlug, sku: line.variantSku, quantity: line.quantity })) });
     if (!parsed.success) return setCheckoutError("Проверьте состав и количество товаров.");
     if (saveCart(cart).error) return setCheckoutError("Не удалось сохранить корзину. Проверьте доступ к хранилищу браузера.");
@@ -107,6 +113,7 @@ export default function CartView({ products, apiBase }: { products: Product[]; a
   }
 
   return <>
+    {failed && <p className="cart-checkout-note" role="status">Не удалось обновить наличие. Проверим его перед оплатой.</p>}
     {paymentError && <p className="cart-checkout-note" role="status">{paymentError}</p>}
     <div className="cart-layout">
     <div className="cart-lines" aria-label="Товары в корзине">{lines.map(({ line, product, variant }) => <article className="cart-line" key={`${line.productSlug}:${line.variantSku}`}>
@@ -115,15 +122,16 @@ export default function CartView({ products, apiBase }: { products: Product[]; a
         <p className="store-product-category">{product.category}</p><h2><a href={`/catalog/${product.slug}`}>{product.name}</a></h2>
         {product.demo && <p className="store-product-card-description">Тестовый экземпляр — не продаётся</p>}
         <p>SKU: {displayProductSku(product, variant.sku)} · {AVAILABILITY_LABELS[variant.availability]}</p><strong>{formatVariantPrice(variant)}</strong>
+        {variant.availability === "preorder" && <p className="cart-checkout-note">Этот вариант нельзя купить сейчас. Удалите его из корзины и оставьте заявку на странице товара.</p>}
         {variant.availability === "unavailable" && <p className="cart-checkout-note">Этот вариант больше недоступен. Удалите его перед оформлением.</p>}
         <div className="cart-quantity" role="group" aria-label={`Количество ${product.name}`}>
           <button type="button" aria-label="Уменьшить количество" onClick={() => update(setCartItemQuantity(cart, line.productSlug, line.variantSku, line.quantity - 1))}>−</button>
           <span aria-live="polite">{line.quantity}</span>
-          <button type="button" aria-label="Увеличить количество" disabled={line.quantity >= 99 || variant.availability === "unavailable"} onClick={() => update(setCartItemQuantity(cart, line.productSlug, line.variantSku, line.quantity + 1))}>+</button>
+          <button type="button" aria-label="Увеличить количество" disabled={line.quantity >= 99 || variant.availability !== "in-stock"} onClick={() => update(setCartItemQuantity(cart, line.productSlug, line.variantSku, line.quantity + 1))}>+</button>
           <button className="cart-remove" type="button" onClick={() => update(removeCartItem(cart, line.productSlug, line.variantSku))}>Удалить</button>
         </div>
       </div>
     </article>)}</div>
-    <aside className="cart-summary"><p className="store-eyebrow">ИТОГО</p><h2>Ваш заказ</h2><div className="cart-summary-row"><span>Товаров</span><strong>{getCartCount(cart)}</strong></div><div className="cart-summary-row cart-summary-total"><span>Сумма</span><strong>{pendingPrice ? "Цена уточняется" : formatPrice(total)}</strong></div><p>Перед заказом сервер ещё раз проверит цену, наличие и промокод.</p><button className="store-primary-button" type="button" disabled={blocked} onClick={checkout}>Перейти к оформлению</button><button className="cart-clear" type="button" onClick={() => { if (confirm("Очистить всю корзину?")) update([]); }}>Очистить корзину</button>{unavailable && <p className="cart-checkout-note">В корзине есть недоступный вариант.</p>}{hasDemo && <p className="cart-checkout-note">Удалите тестовые экземпляры из корзины, чтобы оформить заказ.</p>}{checkoutError && <p className="cart-checkout-note" role="alert">{checkoutError}</p>}</aside>
+    <aside className="cart-summary"><p className="store-eyebrow">ИТОГО</p><h2>Ваш заказ</h2><div className="cart-summary-row"><span>Товаров</span><strong>{getCartCount(cart)}</strong></div><div className="cart-summary-row cart-summary-total"><span>Сумма</span><strong>{pendingPrice ? "Цена уточняется" : formatPrice(total)}</strong></div><p>Перед заказом сервер ещё раз проверит цену, наличие и промокод.</p><button className="store-primary-button" type="button" disabled={blocked} onClick={checkout}>Перейти к оформлению</button><button className="cart-clear" type="button" onClick={() => { if (confirm("Очистить всю корзину?")) update([]); }}>Очистить корзину</button>{preorder && <p className="cart-checkout-note">Товары с нулевым остатком нельзя оформить или оплатить. Для уведомления откройте карточку товара и оставьте заявку.</p>}{unavailable && <p className="cart-checkout-note">В корзине есть недоступный вариант.</p>}{hasDemo && <p className="cart-checkout-note">Удалите тестовые экземпляры из корзины, чтобы оформить заказ.</p>}{checkoutError && <p className="cart-checkout-note" role="alert">{checkoutError}</p>}</aside>
   </div></>;
 }

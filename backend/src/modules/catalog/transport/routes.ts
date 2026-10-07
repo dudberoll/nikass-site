@@ -1,4 +1,4 @@
-import { apiErrorSchema, cartReviewRequestSchema, cartReviewResponseSchema, restockRequestSchema, restockResponseSchema } from '@web-app-demo/contracts'
+import { apiErrorSchema, cartReviewRequestSchema, cartReviewResponseSchema, catalogAvailabilityResponseSchema, restockRequestSchema, restockResponseSchema } from '@web-app-demo/contracts'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 
 import { validationErrorHook } from '../../../http/errors'
@@ -53,6 +53,18 @@ const getCatalogProductRoute = createRoute({
 
 export function createCatalogRoutes(service: CatalogService, restock: RestockService) {
   const routes = new OpenAPIHono({ defaultHook: validationErrorHook })
+
+  routes.openapi(createRoute({
+    method: 'get', path: '/availability',
+    responses: {
+      200: { content: { 'application/json': { schema: catalogAvailabilityResponseSchema } }, description: 'Variant availability; cached for at most one minute' },
+      503: { content: errorContent, description: 'Catalog provider is unavailable' },
+    },
+  }), async (c) => {
+    c.header('Cache-Control', 'no-store')
+    const result = await executeCatalog(() => service.availability())
+    return c.json(catalogAvailabilityResponseSchema.parse(result), 200)
+  })
 
   routes.openapi(createRoute({
     method: 'post', path: '/restock',

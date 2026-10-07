@@ -1,20 +1,23 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 
 import { AVAILABILITY_LABELS, displayProductSku, formatPrice, formatVariantPrice, getSelectedVariant, isVariantAddable, type Product } from "../data/catalog";
 import { addCartItem, readCart, saveCart } from "../lib/cart";
 import RestockRequest from "./RestockRequest";
+import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
 
 const MAX_QUANTITY = 99;
 
-export default function ProductVariantSelector({ product }: { product: Product }) {
+export default function ProductVariantSelector({ product: cachedProduct }: { product: Product }) {
+  const { stock, failed } = useCatalogAvailability();
+  const product = useMemo(() => applyProductAvailability(cachedProduct, stock), [cachedProduct, stock]);
   const [sku, setSku] = useState(product.variants[0]?.sku);
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
   const variant = getSelectedVariant(product, sku);
   useEffect(() => {
     const requestedSku = new URLSearchParams(window.location.search).get("variant");
-    if (requestedSku && product.variants.some((item) => item.sku === requestedSku)) setSku(requestedSku);
-  }, [product]);
+    if (requestedSku && cachedProduct.variants.some((item) => item.sku === requestedSku)) setSku(requestedSku);
+  }, [cachedProduct]);
   useEffect(() => {
     if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku, displaySku: displayProductSku(product, variant.sku), image: variant.image ?? product.image } }));
   }, [variant?.sku]);
@@ -35,9 +38,10 @@ export default function ProductVariantSelector({ product }: { product: Product }
       <span>{variant.label} · SKU {displayProductSku(product, variant.sku)}</span>
       <strong>{formatVariantPrice(variant)}</strong>
       {variant.availability !== "preorder" && variant.oldPrice && <del>{formatPrice(variant.oldPrice)}</del>}
-      <span className={`product-availability is-${variant.availability}`}>{AVAILABILITY_LABELS[variant.availability]}</span>
+      <span className={`product-availability is-${variant.availability}`} aria-live="polite">{AVAILABILITY_LABELS[variant.availability]}</span>
     </div>
-    {variant.availability === "preorder" ? <RestockRequest product={product} variant={variant} large key={variant.sku} /> : <div className="product-variant-purchase">
+    <RestockRequest product={product} variant={variant} large showTrigger={variant.availability === "preorder"} key={variant.sku} />
+    {variant.availability !== "preorder" && <div className="product-variant-purchase">
       <div className="cart-quantity" role="group" aria-label={`Количество ${product.name}`}>
         <button type="button" aria-label="Уменьшить количество" disabled={quantity <= 1} onClick={() => setQuantity((current) => Math.max(1, current - 1))}>−</button>
         <span aria-live="polite">{quantity}</span>
@@ -45,6 +49,7 @@ export default function ProductVariantSelector({ product }: { product: Product }
       </div>
       <button className="store-add-button store-add-button-large" type="button" disabled={!isVariantAddable(variant)} data-cart-stage={isVariantAddable(variant) ? "ready" : "blocked"} onClick={add}>{variant.availability === "unavailable" ? "Недоступен" : "Добавить в корзину"}</button>
     </div>}
+    {failed && <p className="store-added-note" role="status">Не удалось обновить наличие. Проверим его перед оплатой.</p>}
     <p className="store-added-note" role="status" aria-live="polite">{message}{message.startsWith("Товар") && <a href="/cart">Открыть корзину</a>}</p>
   </section>;
 }

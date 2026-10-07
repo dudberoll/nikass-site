@@ -1,4 +1,4 @@
-import { cartReviewRequestSchema, cartReviewResponseSchema, type CartReviewRequest, type CartReviewResponse } from '@web-app-demo/contracts'
+import { cartReviewRequestSchema, cartReviewResponseSchema, type CartReviewRequest, type CartReviewResponse, type CatalogAvailabilityResponse } from '@web-app-demo/contracts'
 import { CatalogFailure, type CatalogListQuery, type CatalogProduct } from '../domain/catalog'
 import type { CatalogClock, CatalogSource } from './ports'
 
@@ -34,6 +34,18 @@ export class CatalogService {
   private refreshPromise: Promise<CacheEntry> | undefined
 
   constructor(private readonly dependencies: CatalogServiceDependencies) {}
+
+  async availability(): Promise<CatalogAvailabilityResponse> {
+    const snapshot = await this.snapshot(Math.min(this.dependencies.cacheTtlMs, 60_000))
+    return {
+      items: snapshot.products.map(({ slug, variants }) => ({
+        slug,
+        variants: variants.map(({ sku, availability }) => ({ sku, availability })),
+      })),
+      cachedAt: snapshot.fetchedAt.toISOString(),
+      stale: snapshot.stale,
+    }
+  }
 
   async list(query: CatalogListQuery): Promise<CatalogListResult> {
     const snapshot = await this.snapshot()
@@ -87,13 +99,13 @@ export class CatalogService {
     return result.data
   }
 
-  private async snapshot(): Promise<CacheEntry & { stale: boolean }> {
+  private async snapshot(maxAgeMs = this.dependencies.cacheTtlMs): Promise<CacheEntry & { stale: boolean }> {
     const current = this.cache
     const age = current
       ? this.dependencies.clock.now().getTime() - current.fetchedAt.getTime()
       : Number.POSITIVE_INFINITY
 
-    if (current && age >= 0 && age < this.dependencies.cacheTtlMs) {
+    if (current && age >= 0 && age < maxAgeMs) {
       return { ...current, stale: false }
     }
 

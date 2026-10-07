@@ -293,7 +293,7 @@ function attributesLabel(attributes: WooVariation['attributes']) {
 
 function availability(status: string | null | undefined): CatalogAvailability {
   if (status === 'instock') return 'in-stock'
-  if (status === 'onbackorder') return 'preorder'
+  if (status === 'onbackorder' || status === 'outofstock') return 'preorder'
   return 'unavailable'
 }
 

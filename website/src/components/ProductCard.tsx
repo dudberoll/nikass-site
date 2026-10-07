@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AVAILABILITY_LABELS, formatVariantPrice, getProductPrice, getSelectedVariant, productAvailability, type Product } from "../data/catalog";
 import RestockRequest from "./RestockRequest";
+import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
 
-export default function ProductCard({ product, appearance = "catalog" }: { product: Product; appearance?: "catalog" | "bestseller" }) {
+export default function ProductCard({ product: cachedProduct, appearance = "catalog" }: { product: Product; appearance?: "catalog" | "bestseller" }) {
+  const { stock } = useCatalogAvailability();
+  const product = useMemo(() => applyProductAvailability(cachedProduct, stock), [cachedProduct, stock]);
   const [selectedSku, setSelectedSku] = useState<string>();
   const [variantsExpanded, setExpanded] = useState(false);
   const bestseller = appearance === "bestseller";
@@ -14,6 +17,7 @@ export default function ProductCard({ product, appearance = "catalog" }: { produ
   const productHref = `/catalog/${product.slug}${selectedSku ? `?variant=${encodeURIComponent(selectedSku)}` : ""}`;
   const moreVariantsOnDesktop = product.variants.length > 4;
   const moreVariantsOnPhone = product.variants.length > 2;
+  const restock = variant?.availability === "preorder" && (product.variants.length === 1 || Boolean(selectedSku));
   return <article className={bestseller ? "orbea-bestseller-card" : "store-product-card"} data-product-card data-variant-count={product.variants.length}>
     <a className={bestseller ? "orbea-bestseller-image" : "store-product-image"} href={productHref}><img src={variant?.image ?? product.image} alt={product.name} loading="lazy" /></a>
     <div className={bestseller ? "orbea-bestseller-copy" : "store-product-card-body"}>
@@ -36,11 +40,10 @@ export default function ProductCard({ product, appearance = "catalog" }: { produ
           </button>}
         </div>
       </>}
-      <span className={`product-availability is-${availability}`}>{AVAILABILITY_LABELS[availability]}</span>
+      <span className={`product-availability is-${availability}`} aria-live="polite">{AVAILABILITY_LABELS[availability]}</span>
       <div className={bestseller ? "store-product-bottom orbea-bestseller-price" : "store-product-bottom"}><strong>{price.label}</strong>{price.oldPriceLabel && <del>{price.oldPriceLabel}</del>}</div>
-      {variant?.availability === "preorder" && (product.variants.length === 1 || selectedSku)
-        ? <RestockRequest product={product} variant={variant} key={variant.sku} />
-        : <a className="store-add-button" href={productHref}>Выбрать вариант</a>}
+      {variant && <RestockRequest product={product} variant={variant} showTrigger={Boolean(restock)} key={variant.sku} />}
+      {!restock && <a className="store-add-button" href={productHref}>Выбрать вариант</a>}
     </div>
   </article>;
 }

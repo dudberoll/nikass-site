@@ -36,6 +36,73 @@ const product = (overrides: Partial<CatalogProduct> = {}): CatalogProduct => ({
 })
 
 describe('CatalogService', () => {
+  test('availability caps the shared catalog cache at 60 seconds and marks a stale fallback', async () => {
+    let now = new Date('2026-09-08T10:00:00.000Z')
+    let calls = 0
+    let unavailable = false
+    const service = new CatalogService({
+      cacheTtlMs: 300_000,
+      clock: { now: () => now },
+      source: { listProducts: async () => {
+        calls += 1
+        if (unavailable) throw new CatalogFailure('unavailable', 'provider down')
+        return [product()]
+      } },
+    })
+
+    const first = await service.availability()
+    now = new Date(now.getTime() + 59_999)
+    expect(await service.availability()).toEqual(first)
+    expect(calls).toBe(1)
+
+    now = new Date(now.getTime() + 1)
+    unavailable = true
+    expect(await service.availability()).toEqual({ ...first, stale: true })
+    expect(calls).toBe(2)
+  })
+
+  test('availability respects a configured cache TTL shorter than one minute', async () => {
+    let now = new Date('2026-09-08T10:00:00.000Z')
+    let calls = 0
+    const service = new CatalogService({
+      cacheTtlMs: 30_000,
+      clock: { now: () => now },
+      source: { listProducts: async () => {
+        calls += 1
+        return [product({ variants: [{ sku: 'STATION-300', label: '300 Вт', price: 24990,
+          availability: calls === 1 ? 'in-stock' : 'preorder' }] })]
+      } },
+    })
+
+    expect((await service.availability()).items[0]?.variants[0]?.availability).toBe('in-stock')
+    now = new Date(now.getTime() + 29_999)
+    await service.availability()
+    expect(calls).toBe(1)
+    now = new Date(now.getTime() + 1)
+    expect((await service.availability()).items[0]?.variants[0]?.availability).toBe('preorder')
+    expect(calls).toBe(2)
+  })
+
+  test('deduplicates concurrent cold availability refreshes', async () => {
+    let calls = 0
+    let resolveProducts!: (products: readonly CatalogProduct[]) => void
+    const pending = new Promise<readonly CatalogProduct[]>((resolve) => { resolveProducts = resolve })
+    const service = new CatalogService({
+      cacheTtlMs: 60_000,
+      clock: { now: () => new Date('2026-09-08T10:00:00.000Z') },
+      source: { listProducts: async () => { calls += 1; return pending } },
+    })
+
+    const first = service.availability()
+    const second = service.availability()
+    await Promise.resolve()
+    expect(calls).toBe(1)
+    resolveProducts([product()])
+    const [left, right] = await Promise.all([first, second])
+    expect(left).toEqual(right)
+    expect(calls).toBe(1)
+  })
+
   test('caches successful reads for five minutes and serves stale data during an outage', async () => {
     let now = new Date('2026-09-08T10:00:00.000Z')
     let calls = 0
@@ -108,7 +175,7 @@ describe('CatalogService', () => {
     expect(gap.items.map(({ slug }) => slug)).toEqual(['solar'])
   })
 
-  test('does not hide a cold-start provider failure', async () => {
+  test('does not hide a cold-start provider failure from list or availability', async () => {
     const service = new CatalogService({
       cacheTtlMs: 300_000,
       clock: { now: () => new Date() },
@@ -120,6 +187,7 @@ describe('CatalogService', () => {
     })
 
     await expect(service.list(query())).rejects.toBeInstanceOf(CatalogFailure)
+    await expect(service.availability()).rejects.toBeInstanceOf(CatalogFailure)
   })
 })
 

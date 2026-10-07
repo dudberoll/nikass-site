@@ -1,13 +1,13 @@
 import { Call02Icon, TelegramIcon, WhatsappIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { restockChannelLabels, restockRequestSchema, restockResponseSchema, type RestockChannel } from "@web-app-demo/contracts";
-import { useId, useRef, useState, type SyntheticEvent } from "react";
+import { useEffect, useId, useRef, useState, type SyntheticEvent } from "react";
 import { displayProductSku, type Product, type ProductVariant } from "../data/catalog";
 
 const channels = ["phone", "telegram", "max", "whatsapp"] as const;
 const icons = { phone: Call02Icon, telegram: TelegramIcon, whatsapp: WhatsappIcon };
 
-export default function RestockRequest({ product, variant, large = false }: { product: Product; variant: ProductVariant; large?: boolean }) {
+export default function RestockRequest({ product, variant, large = false, showTrigger = true }: { product: Product; variant: ProductVariant; large?: boolean; showTrigger?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const requestId = useRef<string>("");
   const id = useId();
@@ -16,9 +16,11 @@ export default function RestockRequest({ product, variant, large = false }: { pr
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [offered, setOffered] = useState(showTrigger);
   const privacyUrl = import.meta.env.PUBLIC_PRIVACY_URL || "";
   const apiBase = (import.meta.env.PUBLIC_API_URL || "http://localhost:3000").replace(/\/$/, "");
   const phone = channel === "phone" || channel === "whatsapp";
+  useEffect(() => { if (showTrigger) setOffered(true); }, [showTrigger]);
 
   async function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,9 +52,11 @@ export default function RestockRequest({ product, variant, large = false }: { pr
     finally { setBusy(false); }
   }
 
+  // Keep an opened request and its contact when a background refresh reports a restock.
+  if (!showTrigger && !offered) return null;
   return <>
-    <button className={`store-add-button${large ? " store-add-button-large" : ""}`} type="button" aria-haspopup="dialog" aria-controls={`${id}-dialog`}
-      onClick={() => dialog.current?.showModal()}>Сообщить о поступлении</button>
+    {showTrigger && <button className={`store-add-button${large ? " store-add-button-large" : ""}`} type="button" aria-haspopup="dialog" aria-controls={`${id}-dialog`}
+      onClick={() => dialog.current?.showModal()}>Сообщить о поступлении</button>}
     <dialog ref={dialog} id={`${id}-dialog`} className="restock-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`}
       onCancel={(event) => { if (busy) event.preventDefault(); }}>
       <button className="restock-close" type="button" aria-label="Закрыть окно" disabled={busy} onClick={() => dialog.current?.close()}>×</button>

@@ -138,3 +138,17 @@ test('recognizes discounted stock in any category position and preserves its own
     variants: [{ sku: 'NS-31-OUTLET-1', price: 8000, oldPrice: 10000 }],
   })
 })
+
+test('maps zero-stock products to the restock-request preorder state', async () => {
+  const source = createWooCommerceCatalogSource({
+    productsEndpoint: 'https://woo.example.com/products', consumerKey: 'ck_test',
+    consumerSecret: 'cs_test', requestTimeoutMs: 1_000,
+  }, async () => Response.json([
+    { id: 44, name: 'Нет остатка', slug: 'zero-stock', sku: 'ZERO', price: '100', stock_status: 'outofstock' },
+    { id: 45, name: 'Есть остаток', slug: 'in-stock', sku: 'AVAILABLE', price: '100', stock_status: 'instock' },
+  ]))
+
+  const products = await source.listProducts()
+
+  expect(products.map(({ variants }) => variants[0]?.availability)).toEqual(['preorder', 'in-stock'])
+})
