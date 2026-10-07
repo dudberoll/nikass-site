@@ -51,7 +51,10 @@ docker() {
 }
 ssh() {
   case "$*" in
-    *'docker image inspect'*) printf '%s' "$REMOTE_FINGERPRINT" ;;
+    *'docker image inspect'*)
+      if [[ "$REMOTE_FINGERPRINT" == candidate-present ]]; then
+        if [[ "$*" == *runtime-v1* ]]; then printf 'runtime-v1'; else printf 'runtime-v2'; fi
+      else printf '%s' "$REMOTE_FINGERPRINT"; fi ;;
     *'docker tag'*) printf 'reused\\n' ;;
     *'docker load'*) printf 'uploaded:'; gzip -dc ;;
     *) return 1 ;;
@@ -67,6 +70,7 @@ transfer
     ['existing', 'runtime-v1', 'reused\n'],
     ['existing', 'runtime-v2', 'uploaded:fixture-image'],
     ['', '', 'uploaded:fixture-image'],
+    ['existing', 'candidate-present', 'reused\n'],
   ]) {
     const result = run(previous, fingerprint)
     assert.equal(result.status, 0, result.stderr)
