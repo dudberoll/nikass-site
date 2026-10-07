@@ -319,18 +319,18 @@ operations state. Never force-unlock an active holder or a different root.
 
 ## Own server
 
-For the current NIKASS test stage on Beget VPS, use [deploy/README.md](../deploy/README.md).
-It runs PostgreSQL 18, the API, and the scheduler through Docker Compose, and serves only the
-active `website/dist` release through Nginx with HTTPS and a password. `NODE_ENV=staging` permits
-YooKassa's test shop and `YOO_KASSA_FULFILLMENT_MODE=disabled`, while secure cookies and a
-separate runtime database role remain enabled. Private filesystem storage is mounted on the VPS
-for this stage. A real production release requires a separate storage and payment activation
-review; do not change `NODE_ENV` or fulfillment mode merely to remove the test banner.
-On 2026-10-07 the owner explicitly activated a closed live-payment check on the Beget IP:
-`YOO_KASSA_TEST_MODE=false` and WooCommerce fulfillment are enabled on the existing release,
-while `NODE_ENV=staging` and the storefront password remain. This does not publish the site
-on its domain. The applied configuration and pending real-purchase check are recorded in
-[deploy/README.md](../deploy/README.md).
+For NIKASS on Beget VPS, use [deploy/README.md](../deploy/README.md).
+PostgreSQL 18, the API and scheduler run through Docker Compose; Nginx serves the
+active `website/dist` release on `https://nikass.ru` without a storefront password.
+On 2026-10-07 the owner activated the public domain after the closed IP stage.
+`www` and the old IP redirect to the domain; the old payment webhook is preserved.
+WooCommerce remains on its existing Beget hosting, reached through a TLS-verified
+Nginx upstream pinned to its original IP. Do not shut down that hosting.
+YooKassa live mode, WooCommerce fulfillment, VAT 5% and Telegram settings are preserved;
+return and notification URLs use the domain. The owner performs the real-purchase check.
+`NODE_ENV=staging` remains because private filesystem storage is mounted on the VPS;
+secure cookies and the separate runtime database role remain enabled. Switching to
+`production` requires prepared S3 storage, not bypassing the storage guard.
 
 ## Local validation
 
