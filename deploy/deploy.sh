@@ -100,12 +100,14 @@ REMOTE
   bun run typecheck:backend
   bun run typecheck:website
   docker buildx build --platform linux/amd64 --load -f backend/Dockerfile -t "nikass-api:$release" .
-  local image_id image_fingerprint remote_fingerprint=
-  image_id="$(docker image inspect "nikass-api:$release" --format '{{.Id}}')"
+  local image_fingerprint remote_candidates remote_image= candidate_id candidate_fingerprint
   image_fingerprint="$(docker image inspect "nikass-api:$release" --format '{{.Os}}/{{.Architecture}} {{json .Config}} {{json .RootFS.Layers}}')"
-  remote_fingerprint="$(ssh "$TARGET" "docker image inspect '$image_id' --format '{{.Os}}/{{.Architecture}} {{json .Config}} {{json .RootFS.Layers}}'" 2>/dev/null || true)"
-  if [[ -n "$remote_fingerprint" && "$image_fingerprint" == "$remote_fingerprint" ]]; then
-    ssh "$TARGET" docker tag "$image_id" "nikass-api:$release"
+  remote_candidates="$(ssh "$TARGET" "docker image ls --filter 'reference=nikass-api:*' --quiet --no-trunc | sort -u | xargs --no-run-if-empty docker image inspect --format '{{.Id}} {{.Os}}/{{.Architecture}} {{json .Config}} {{json .RootFS.Layers}}'" 2>/dev/null || true)"
+  while read -r candidate_id candidate_fingerprint; do
+    if [[ "$candidate_fingerprint" == "$image_fingerprint" ]]; then remote_image="$candidate_id"; break; fi
+  done <<< "$remote_candidates"
+  if [[ -n "$remote_image" ]]; then
+    ssh "$TARGET" docker tag "$remote_image" "nikass-api:$release"
   else
     docker save "nikass-api:$release" | gzip -1 | ssh "$TARGET" docker load
   fi

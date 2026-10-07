@@ -53,9 +53,9 @@ ssh() {
   case "$*" in
     *'docker image inspect'*)
       if [[ "$REMOTE_FINGERPRINT" == candidate-present ]]; then
-        if [[ "$*" == *runtime-v1* ]]; then printf 'runtime-v1'; else printf 'runtime-v2'; fi
-      else printf '%s' "$REMOTE_FINGERPRINT"; fi ;;
-    *'docker tag'*) printf 'reused\\n' ;;
+        printf 'sha256:previous runtime-v2\\nsha256:candidate runtime-v1\\n'
+      elif [[ -n "$REMOTE_FINGERPRINT" ]]; then printf 'sha256:candidate %s\\n' "$REMOTE_FINGERPRINT"; fi ;;
+    *'docker tag'*) [[ "$*" == *sha256:candidate* ]] || return 1; printf 'reused\\n' ;;
     *'docker load'*) printf 'uploaded:'; gzip -dc ;;
     *) return 1 ;;
   esac
