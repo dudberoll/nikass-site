@@ -153,6 +153,31 @@ the internal Telegram notification still says `Тестовая оплата`.
 Fields validate format, lengths, required values and Russian phone/postcode;
 they do not verify that a street/building exists. The form also collects the region required by native WooCommerce address validation; installed address customizations must be checked against these fields.
 
+### YooKassa fiscal receipts
+
+On 2026-10-07 the live shop rejected creation with `400 invalid_request`, parameter
+`receipt`: `/v3/me` reports fiscalization enabled with provider `yoo_receipt`.
+This shop requires receipt data with every payment. The owner confirmed VAT 5%,
+mapped to `YOO_KASSA_RECEIPT_VAT_CODE=7` using the
+[official VAT reference](https://yookassa.ru/developers/payment-acceptance/receipts/54fz/yoomoney/parameters-values).
+This backend setting has no default rate. A fiscalized shop with no configured
+rate stops before payment creation instead of guessing VAT; a shop without
+fiscalization retains the existing receipt-free flow.
+
+The receipt contains the customer's existing checkout email and authoritative
+WooCommerce line amounts after discounts. Items are physical goods (`commodity`,
+`piece`) paid before delivery/collection (`full_prepayment`); `internet=true`.
+Rounding splits a line into at most two unit prices so its sum remains exact.
+Zero-price units are omitted because YooKassa requires positive receipt amounts.
+Mismatched totals and more than 80 receipt positions stop before payment creation.
+Receipt contacts and request bodies are not logged or saved in browser storage.
+
+This change sends the initial prepayment receipt. Automatic receipts at handover,
+refunds, and reconciliation of receipt registration are not implemented here.
+When handing over prepaid goods, the owner must arrange the separate prepayment
+offset receipt described in
+[YooKassa's receipt flow](https://yookassa.ru/developers/payment-acceptance/receipts/54fz/yoomoney/payments).
+
 ## Recovery and retention
 
 `submitting` or `uncertain` means a remote write may already have succeeded.

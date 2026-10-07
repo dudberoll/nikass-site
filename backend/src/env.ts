@@ -52,6 +52,7 @@ const envSchema = z.object({
   ORDERS_ENABLED: booleanStringSchema,
   YOO_KASSA_ENABLED: booleanStringSchema,
   YOO_KASSA_TEST_MODE: booleanStringSchema,
+  YOO_KASSA_RECEIPT_VAT_CODE: z.preprocess((value) => value === '' ? undefined : value, z.coerce.number().int().min(1).max(12).optional()),
   YOO_KASSA_SHOP_ID: optionalStringSchema,
   YOO_KASSA_SECRET_KEY: optionalStringSchema,
   YOO_KASSA_API_URL: stringWithDefault('https://api.yookassa.ru'),
@@ -681,7 +682,7 @@ function validateOrdersEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx)
 
 function validateYooKassaEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx) {
   if (!env.YOO_KASSA_ENABLED) {
-    for (const key of ['YOO_KASSA_SHOP_ID', 'YOO_KASSA_SECRET_KEY', 'YOO_KASSA_RETURN_URL'] as const) {
+    for (const key of ['YOO_KASSA_SHOP_ID', 'YOO_KASSA_SECRET_KEY', 'YOO_KASSA_RETURN_URL', 'YOO_KASSA_RECEIPT_VAT_CODE'] as const) {
       if (env[key] !== undefined) ctx.addIssue({ code: 'custom', path: [key], message: `${key} is set but YOO_KASSA_ENABLED=false, so it would be ignored` })
     }
     if (env.YOO_KASSA_FULFILLMENT_MODE !== 'disabled') ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_FULFILLMENT_MODE'], message: 'YOO_KASSA_FULFILLMENT_MODE requires YOO_KASSA_ENABLED=true' })

@@ -5,7 +5,7 @@ import { createOrderStore } from './infrastructure/orders-store'
 import { OrdersService } from './application/orders-service'
 import type { OrderProvider } from './application/ports'
 import { PaymentsService } from './application/payments-service'
-import type { ProviderPayment } from './application/ports'
+import type { PaymentProvider, ProviderPayment } from './application/ports'
 
 const url = process.env.TEST_DATABASE_URL
 ;(url ? describe : describe.skip)('orders persistence', () => {
@@ -32,8 +32,11 @@ const url = process.env.TEST_DATABASE_URL
     const paymentId = randomUUID()
     let payment: ProviderPayment = { id: paymentId, status: 'pending', paid: false, test: true,
       amount: { value: '250.00', currency: 'RUB' }, metadata: { attemptId: row.id }, confirmationUrl: 'https://example.test/payment' }
-    const payments = new PaymentsService(store, { create: async () => payment, get: async () => payment }, 'https://example.test/checkout', true, { assertInStock: async () => undefined })
+    let paymentInput: Parameters<PaymentProvider['create']>[0] | undefined
+    const payments = new PaymentsService(store, { create: async (value) => { paymentInput = value; return payment }, get: async () => payment }, 'https://example.test/checkout', true, { assertInStock: async () => undefined })
     await payments.start(quote.checkoutToken)
+    expect(paymentInput?.customerEmail).toBe('anna@example.test')
+    expect(paymentInput?.items).toEqual(totals.items)
     await payments.webhook({ type: 'notification', event: 'payment.succeeded', object: { id: paymentId, status: 'succeeded', paid: true } })
     expect((await store.findById(row.id))?.paymentState).toBe('pending')
     expect(await db.taskOutbox.count({ where: { dedupeKey: `${row.id}:telegram` } })).toBe(0)

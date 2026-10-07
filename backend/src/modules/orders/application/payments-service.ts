@@ -45,6 +45,8 @@ export class PaymentsService {
 
     const payment = await this.provider.create({
       amountMinor: totals.totalMinor,
+      customerEmail: input.customer.email,
+      items: totals.items,
       description: `NIKASS: ${totals.items.map((item) => `${item.name} × ${item.quantity}`).join(', ')}`,
       idempotenceKey: createHash('sha256').update(`nikass-payment:${row.id}`).digest('hex'),
       metadata: { attemptId: row.id },

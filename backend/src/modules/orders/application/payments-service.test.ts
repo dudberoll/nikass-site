@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test'
+import { orderTotalsSchema } from '@web-app-demo/contracts'
 
 import { PaymentsService } from './payments-service'
 import { OrderFailure, type CheckoutAttempt, type PaymentProvider, type PaymentStore, type ProviderPayment } from './ports'
@@ -25,9 +26,9 @@ const row: CheckoutAttempt = {
 
 test('starts a hosted payment from server totals and reconciles a success', async () => {
   let providerPayment: ProviderPayment = { id: paymentId, status: 'pending', paid: false, test: true, amount: { value: '25.00', currency: 'RUB' }, confirmationUrl: 'https://yoomoney.ru/checkout/test', metadata: { attemptId } }
-  const calls: { amountMinor?: number; idempotenceKey?: string; returnUrl?: string } = {}
+  const calls: Partial<Parameters<PaymentProvider['create']>[0]> = {}
   const provider: PaymentProvider = {
-    create: async (value) => { calls.amountMinor = value.amountMinor; calls.idempotenceKey = value.idempotenceKey; calls.returnUrl = value.returnUrl; return providerPayment },
+    create: async (value) => { Object.assign(calls, value); return providerPayment },
     get: async () => providerPayment,
   }
   const store: PaymentStore & { find(tokenHash: string): Promise<CheckoutAttempt | null> } = {
@@ -44,6 +45,8 @@ test('starts a hosted payment from server totals and reconciles a success', asyn
 
   expect(await service.start('checkout-token')).toEqual({ paymentId, confirmationUrl: 'https://yoomoney.ru/checkout/test', attemptId })
   expect(calls.amountMinor).toBe(2500)
+  expect(calls.customerEmail).toBe(input.customer.email)
+  expect(calls.items).toEqual(orderTotalsSchema.parse(row.totals).items)
   expect(calls.idempotenceKey).toMatch(/^[a-f0-9]{64}$/)
   expect(calls.returnUrl).toBe(`http://localhost:4322/checkout#attempt=${attemptId}`)
 

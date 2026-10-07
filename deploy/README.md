@@ -127,7 +127,12 @@ YOO_KASSA_TEST_MODE=false
 YOO_KASSA_FULFILLMENT_MODE=woocommerce
 YOO_KASSA_TEST_FULFILLMENT_ENABLED=false
 YOO_KASSA_RETURN_URL=https://93.188.186.9/checkout
+YOO_KASSA_RECEIPT_VAT_CODE=7
 ```
+
+Для включённых «Чеков от ЮKassa» владелец подтвердил НДС 5% (код `7`).
+Платёж передаёт email покупателя и товарные позиции чека по серверному расчёту;
+правила и ограничения описаны в [docs/ORDERS.md](../docs/ORDERS.md#yookassa-fiscal-receipts).
 
 В боевом кабинете HTTP-уведомления направлены на
 `https://93.188.186.9/api/orders/payment/webhook`; включены `payment.succeeded`,

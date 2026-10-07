@@ -486,6 +486,17 @@ describe('YooKassa env', () => {
     JWT_SECRET: '12345678901234567890123456789012',
   }
 
+  test('validates explicit receipt VAT codes without choosing a default rate', () => {
+    const payment = { ...base, YOO_KASSA_ENABLED: 'true', YOO_KASSA_SHOP_ID: '123',
+      YOO_KASSA_SECRET_KEY: 'fixture-key', YOO_KASSA_RETURN_URL: 'http://localhost:4322/checkout' }
+    expect(loadEnv({ ...payment, YOO_KASSA_RECEIPT_VAT_CODE: '' }).YOO_KASSA_RECEIPT_VAT_CODE).toBeUndefined()
+    expect(loadEnv({ ...payment, YOO_KASSA_RECEIPT_VAT_CODE: '7' }).YOO_KASSA_RECEIPT_VAT_CODE).toBe(7)
+    for (const value of ['0', '13', '1.5', 'invalid']) {
+      expect(() => loadEnv({ ...payment, YOO_KASSA_RECEIPT_VAT_CODE: value })).toThrow('YOO_KASSA_RECEIPT_VAT_CODE')
+    }
+    expect(() => loadEnv({ ...base, YOO_KASSA_RECEIPT_VAT_CODE: '7' })).toThrow('YOO_KASSA_RECEIPT_VAT_CODE')
+  })
+
   test('accepts a local test-store configuration', () => {
     expect(loadEnv({
       ...base,

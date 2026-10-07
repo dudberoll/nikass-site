@@ -46,7 +46,7 @@ export class PaymentFailure extends Error {
 }
 
 export type PaymentProvider = {
-  create(input: { amountMinor: number; description: string; idempotenceKey: string; metadata: { attemptId: string }; returnUrl: string }): Promise<ProviderPayment>
+  create(input: { amountMinor: number; description: string; idempotenceKey: string; metadata: { attemptId: string }; returnUrl: string; customerEmail: string; items: OrderTotals['items'] }): Promise<ProviderPayment>
   get(paymentId: string): Promise<ProviderPayment>
 }
 
