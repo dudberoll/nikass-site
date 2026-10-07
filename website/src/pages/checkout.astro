@@ -31,7 +31,7 @@ const yandexSuggestApiKey = import.meta.env.PUBLIC_YANDEX_SUGGEST_API_KEY ?? "";
     <main class="store-main checkout-page" id="main-content">
       <p class="store-eyebrow">NIKASS / ОФОРМЛЕНИЕ</p>
       <h1>Ваш заказ</h1>
-      <p class="checkout-lead">После оплаты результат подтвердится на этой странице. Менеджер свяжется с вами в течение 1 часа и уточнит способ получения заказа.</p>
+      <p class="checkout-lead">После оплаты результат подтвердится на этой странице. Менеджер свяжется с вами в течение 1 часа в рабочее время и уточнит способ получения заказа.</p>
       <p class="checkout-lead">При выборе доставки её стоимость рассчитывается менеджером при подтверждении заказа. Доставка оплачивается отдельно.</p>
       <Checkout {apiBase} {privacyUrl} {termsUrl} {yandexSuggestApiKey} client:load />
     </main>

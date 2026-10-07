@@ -72,9 +72,9 @@ export default function RestockRequest({ product, variant, large = false, showTr
               onClick={() => { setChannel(value); setContact(""); setError(""); requestId.current = ""; }} key={value}>
               {value === "max" ? <span className="restock-max-icon" aria-hidden="true">M</span> : <HugeiconsIcon icon={icons[value]} size={24} aria-hidden="true" />}
               <span>{restockChannelLabels[value]}</span></button>)}</div>
-            <label className="restock-contact" htmlFor={`${id}-contact`}>{phone ? "Номер телефона" : channel === "telegram" ? "Никнейм Telegram" : "Никнейм или ссылка на профиль MAX"}
+            <label className="restock-contact" htmlFor={`${id}-contact`}>{phone ? "Номер телефона" : channel === "telegram" ? "Никнейм Telegram" : "Никнейм, ссылка на профиль или номер телефона MAX"}
               <input id={`${id}-contact`} name="contact" type={phone ? "tel" : "text"} autoComplete={phone ? "tel" : "off"} maxLength={150} required
-                placeholder={phone ? "+7 999 123-45-67" : channel === "telegram" ? "@username" : "Никнейм или https://max.ru/…"}
+                placeholder={phone ? "+7 999 123-45-67" : channel === "telegram" ? "@username" : "+7 999 123-45-67, @username или https://max.ru/…"}
                 value={contact} onChange={(event) => { setContact(event.target.value); setError(""); requestId.current = ""; }} aria-describedby={`${id}-error`} />
             </label>
             <div className="restock-trap" aria-hidden="true"><label>Ваш сайт<input name="website" tabIndex={-1} autoComplete="off" /></label></div>

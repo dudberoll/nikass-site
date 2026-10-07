@@ -6,9 +6,10 @@ test('validates and normalizes contacts for each restock channel', () => {
   for (const [channel, contact, normalized] of [
     ['phone', '8 (999) 123-45-67', '+79991234567'], ['whatsapp', '+7 999 123-45-67', '+79991234567'],
     ['telegram', 'https://t.me/customer_test', '@customer_test'], ['max', 'https://max.ru/u/customer_test', 'https://max.ru/u/customer_test'],
+    ['max', '8 (999) 123-45-67', '+79991234567'],
   ]) expect(restockRequestSchema.parse({ ...request, channel, contact }).contact).toBe(normalized)
   for (const input of [{ channel: 'whatsapp', contact: '@username' }, { channel: 'telegram', contact: 'Имя' },
-    { channel: 'max', contact: 'https://example.com/profile' }, { channel: 'phone', contact: '123' },
+    { channel: 'max', contact: 'https://example.com/profile' }, { channel: 'max', contact: '12' }, { channel: 'phone', contact: '123' },
     { channel: 'telegram', contact: '@customer_test', consent: false }, { channel: 'phone', contact: '+79991234567', website: 'spam' },
     { channel: 'phone', contact: '+79991234567', price: 1 }]) {
     expect(restockRequestSchema.safeParse({ ...request, ...input }).success).toBe(false)

@@ -2,6 +2,8 @@ import { z } from 'zod'
 
 export const restockChannelSchema = z.enum(['phone', 'telegram', 'max', 'whatsapp'])
 export const restockChannelLabels = { phone: 'Телефон', telegram: 'Telegram', max: 'MAX', whatsapp: 'WhatsApp' } as const
+const isPhone = (value: string) => /^\+?[1-9]\d{9,14}$/.test(value.replace(/[\s()-]/g, ''))
+const normalizePhone = (value: string) => `+${value.replace(/[^\d]/g, '').replace(/^8(?=\d{10}$)/, '7')}`
 
 export const restockRequestSchema = z.strictObject({
   requestId: z.uuid(),
@@ -12,16 +14,17 @@ export const restockRequestSchema = z.strictObject({
   consent: z.literal(true, { error: 'Подтвердите согласие на обработку контакта.' }),
   website: z.literal('').default(''),
 }).superRefine(({ channel, contact }, ctx) => {
-  const valid = channel === 'phone' || channel === 'whatsapp'
-    ? /^\+?[1-9]\d{9,14}$/.test(contact.replace(/[\s()-]/g, ''))
-    : channel === 'telegram'
-      ? /^@?[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(contact.replace(/^https:\/\/t\.me\//, ''))
-      : /^@?[a-zA-Z0-9_.-]{3,100}$/.test(contact) || /^https:\/\/max\.ru\/[a-zA-Z0-9/_-]+$/.test(contact)
+  const phone = isPhone(contact)
+  const valid = channel === 'telegram'
+    ? /^@?[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(contact.replace(/^https:\/\/t\.me\//, ''))
+    : channel === 'max'
+      ? phone || /^@?[a-zA-Z0-9_.-]{3,100}$/.test(contact) || /^https:\/\/max\.ru\/[a-zA-Z0-9/_-]+$/.test(contact)
+      : phone
   if (!valid) ctx.addIssue({ code: 'custom', path: ['contact'], message: channel === 'telegram'
     ? 'Укажите @username или ссылку https://t.me/username.'
-    : channel === 'max' ? 'Укажите публичный никнейм или ссылку на профиль MAX.' : 'Укажите телефон с кодом страны, например +7 999 123-45-67.' })
-}).transform((input) => ({ ...input, contact: input.channel === 'phone' || input.channel === 'whatsapp'
-  ? `+${input.contact.replace(/[^\d]/g, '').replace(/^8(?=\d{10}$)/, '7')}`
+    : channel === 'max' ? 'Укажите телефон с кодом страны, никнейм или ссылку на профиль MAX.' : 'Укажите телефон с кодом страны, например +7 999 123-45-67.' })
+}).transform((input) => ({ ...input, contact: input.channel === 'phone' || input.channel === 'whatsapp' || input.channel === 'max' && isPhone(input.contact)
+  ? normalizePhone(input.contact)
   : input.channel === 'telegram' ? `@${input.contact.replace(/^https:\/\/t\.me\//, '').replace(/^@/, '')}` : input.contact }))
 
 export const restockResponseSchema = z.object({ requestId: z.uuid(), status: z.literal('accepted') })

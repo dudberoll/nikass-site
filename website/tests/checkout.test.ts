@@ -5,13 +5,15 @@ import { fileURLToPath } from "node:url";
 import { paymentResultMessage } from "../src/components/Checkout";
 
 const checkout = readFileSync(fileURLToPath(new URL("../src/components/Checkout.tsx", import.meta.url)), "utf8");
+const checkoutPage = readFileSync(fileURLToPath(new URL("../src/pages/checkout.astro", import.meta.url)), "utf8");
 
 test("checkout displays contacts from memory while preserving payment and order summaries", () => {
   assert.match(checkout, /customerSnapshotSchema/);
   assert.match(checkout, /setCustomer\(snapshot\)/);
   assert.match(checkout, /h2>Ожидает оплаты<\/h2>/);
   assert.match(checkout, /h2>Успешная оплата<\/h2>/);
-  assert.match(checkout, /Менеджер свяжется с вами в течение часа, чтобы подтвердить все данные и заказ/);
+  assert.match(checkout, /Менеджер свяжется с вами в течение часа в рабочее время, чтобы подтвердить все данные и заказ/);
+  assert.match(checkoutPage, /Менеджер свяжется с вами в течение 1 часа в рабочее время и уточнит способ получения заказа/);
   assert.match(checkout, /<dt>Имя<\/dt>/);
   assert.match(checkout, /<dt>Фамилия<\/dt>/);
   assert.match(checkout, /<dt>Телефон<\/dt>/);
