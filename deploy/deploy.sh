@@ -4,12 +4,13 @@ set -Eeuo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEPLOY_HOST="${DEPLOY_HOST:-}"
 SITE_URL="${SITE_URL:-}"
+SITE_ACCESS="${SITE_ACCESS:-protected}"
 TUNNEL_PORT="${TUNNEL_PORT:-18080}"
 TARGET="deploy@$DEPLOY_HOST"
 
 fail() { echo "Ошибка: $*" >&2; exit 1; }
 usage() {
-  echo 'DEPLOY_HOST=IP SITE_URL=https://IP PUBLIC_PRIVACY_URL=https://... ./deploy/deploy.sh publish'
+  echo 'DEPLOY_HOST=IP SITE_URL=https://DOMAIN SITE_ACCESS=public PUBLIC_PRIVACY_URL=https://... ./deploy/deploy.sh publish'
   echo 'DEPLOY_HOST=IP ./deploy/deploy.sh list'
   echo 'DEPLOY_HOST=IP ./deploy/deploy.sh rollback RELEASE'
 }
@@ -51,7 +52,13 @@ fi
 REMOTE
 }
 publish() {
-  [[ "$SITE_URL" == "https://$DEPLOY_HOST" ]] || fail 'SITE_URL должен быть HTTPS-адресом этого VPS без пути.'
+  [[ "$SITE_URL" =~ ^https://[a-zA-Z0-9.-]+$ ]] || fail 'SITE_URL должен быть HTTPS-origin без пути.'
+  local expected_status
+  case "$SITE_ACCESS" in
+    protected) expected_status=401 ;;
+    public) expected_status=200 ;;
+    *) fail 'SITE_ACCESS должен быть protected или public.' ;;
+  esac
   [[ "${PUBLIC_PRIVACY_URL:-}" == https://* ]] || fail 'Для checkout нужен опубликованный HTTPS-адрес PUBLIC_PRIVACY_URL.'
   for command in git bun docker curl gzip; do command -v "$command" >/dev/null || fail "Не найдена команда $command."; done
   docker buildx version >/dev/null || fail 'Нужен Docker Buildx.'
@@ -163,13 +170,13 @@ mv -Tf /var/www/nikass/current.next /var/www/nikass/current
 printf 'APP_IMAGE_TAG=%s\n' "$release" > /srv/nikass/release.env.tmp
 mv /srv/nikass/release.env.tmp /srv/nikass/release.env
 REMOTE
-  [[ "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$SITE_URL/")" == 401 ]] || fail 'Публичный сайт не отвечает ожидаемым запросом пароля.'
+  [[ "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$SITE_URL/")" == "$expected_status" ]] || fail 'Сайт не отвечает ожидаемым статусом доступа.'
   [[ "$(ssh "$TARGET" 'curl --silent --output /dev/null --write-out "%{http_code}" http://127.0.0.1:8080/health/ready')" == 200 ]] || fail 'API не готов после публикации.'
   activated=0
   kill "$tunnel_pid" 2>/dev/null || true
   wait "$tunnel_pid" 2>/dev/null || true
   trap - EXIT
-  echo "Опубликован $release на $SITE_URL. Оформление заказа доступно после входа tester."
+  echo "Опубликован $release на $SITE_URL (доступ: $SITE_ACCESS)."
 }
 list() { ssh "$TARGET" 'find /var/www/nikass/releases -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | sort -r'; }
 rollback() {

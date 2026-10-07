@@ -167,6 +167,43 @@ sudo SITE_IP=93.188.186.9 bash /srv/nikass/setup-site.sh
 
 Certbot выпустит короткоживущий сертификат на IP, затем `htpasswd` попросит придумать пароль для пользователя `tester`. HTTP переводится на HTTPS, пароль запрашивается только по HTTPS. Автоматическое обновление обеспечивает таймер Certbot; проверьте `sudo certbot renew --dry-run`.
 
+### Переход на nikass.ru
+
+Домен витрины и API — `https://nikass.ru`; `www.nikass.ru` перенаправляется на него.
+В DNS Beget изменяются только A-записи корня и `www` на `93.188.186.9`; MX, TXT
+и почтовые поддомены сохраняются. Прежний WooCommerce остаётся на `87.236.16.43`.
+Конфигурация `nginx-domain.conf.example` направляет туда `/wp-json`, админку,
+страницу входа и WordPress-ресурсы с прежним Host и проверкой сертификата.
+Это сохраняет текущие API-ключи, изображения, товары и заказы без переноса базы.
+Не отключайте прежний хостинг. Если его IP меняется, обновите upstream Nginx.
+
+На VPS вместе обновляются `CORS_ORIGINS`, `WEBAPP_ORIGIN`,
+`PRIVATE_STORAGE_LOCAL_PUBLIC_URL` и `YOO_KASSA_RETURN_URL=https://nikass.ru/checkout`.
+Боевые ключи, НДС 5% (`YOO_KASSA_RECEIPT_VAT_CODE=7`), WooCommerce и Telegram сохраняются.
+В кабинете ЮKassa URL уведомлений — `https://nikass.ru/api/orders/payment/webhook`,
+события — `payment.succeeded`, `payment.waiting_for_capture`, `payment.canceled`.
+Старый webhook по IP сохраняется для уже созданных платежей.
+
+Сертификат для `nikass.ru` и `www.nikass.ru` можно получить заранее через DNS-01;
+после переключения DNS переведите его на автоматическое обновление HTTP-01:
+`certbot reconfigure --cert-name nikass.ru --webroot -w /var/www/html`.
+Проверьте таймер `snap.certbot.renew.timer`. Применяйте Nginx только после `nginx -t`.
+На время подготовки оставьте пароль, опубликуйте витрину с новым `PUBLIC_API_URL`,
+проверьте HTTPS, каталог и API, затем снимите `auth_basic` только с витрины.
+Пользовательская авторизация API и WooCommerce остаётся включённой.
+
+Следующие публикации открытого сайта:
+
+```bash
+DEPLOY_HOST=93.188.186.9 SITE_URL=https://nikass.ru SITE_ACCESS=public \
+PUBLIC_PRIVACY_URL=https://nikass.ru/privacy-policy ./deploy/deploy.sh publish
+```
+
+`SITE_ACCESS=protected` остаётся значением по умолчанию для закрытых проверок.
+`NODE_ENV=staging` сохраняется из-за текущего filesystem storage; публичный домен
+не включает отсутствующие загрузки и не меняет платёжный режим. Его перевод в
+`production` требует отдельно подготовленного S3, а не отключения этой проверки.
+
 ## 3. Публикация
 
 Публикуйте только после commit/push в `main`: скрипт требует чистый Git и точное совпадение с `origin/main`. Команда запускается на компьютере из корня проекта:

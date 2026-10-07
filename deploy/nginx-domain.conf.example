@@ -1,0 +1,54 @@
+# WooCommerce stays on the existing Beget hosting. Pin its origin to avoid a DNS loop.
+server {
+    listen 80;
+    server_name nikass.ru www.nikass.ru;
+    location /.well-known/acme-challenge/ { root /var/www/html; }
+    location / { return 301 https://nikass.ru$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    server_name www.nikass.ru;
+    ssl_certificate /etc/letsencrypt/live/nikass.ru/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/nikass.ru/privkey.pem;
+    return 301 https://nikass.ru$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name nikass.ru;
+    ssl_certificate /etc/letsencrypt/live/nikass.ru/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/nikass.ru/privkey.pem;
+
+    root /var/www/nikass/current;
+    index index.html;
+    client_max_body_size 28m;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Authorization "";
+    }
+    location /storage/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+    location ~ ^/(wp-json(?:/|$)|wp-admin(?:/|$)|wp-content(?:/|$)|wp-includes(?:/|$)|wp-login\.php$|xmlrpc\.php$) {
+        proxy_pass https://87.236.16.43;
+        proxy_ssl_server_name on;
+        proxy_ssl_name nikass.ru;
+        proxy_ssl_verify on;
+        proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+        proxy_set_header Host nikass.ru;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

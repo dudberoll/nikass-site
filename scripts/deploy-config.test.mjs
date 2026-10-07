@@ -7,6 +7,23 @@ import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const source = readFileSync(resolve(root, 'deploy/deploy.sh'), 'utf8')
+
+test('VPS publication accepts a separate HTTPS storefront domain and checks its access mode', () => {
+  const settings = source.match(/publish\(\) \{\n([\s\S]*?)\n  for command/)[1]
+  const run = (url, access) => spawnSync('bash', ['-s'], {
+    encoding: 'utf8', env: { ...process.env, SITE_URL: url, SITE_ACCESS: access },
+    input: `set -Eeuo pipefail\nDEPLOY_HOST=93.188.186.9\nPUBLIC_PRIVACY_URL=https://nikass.ru/privacy-policy\nfail() { exit 1; }\ncheck() {\n${settings}\nprintf '%s' "$expected_status"\n}\ncheck\n`,
+  })
+  for (const [url, access, status] of [['https://nikass.ru', 'public', '200'], ['https://93.188.186.9', 'protected', '401']]) {
+    const result = run(url, access)
+    assert.equal(result.status, 0, result.stderr)
+    assert.equal(result.stdout, status)
+  }
+  for (const [url, access] of [['http://nikass.ru', 'public'], ['https://nikass.ru/checkout', 'public'], ['https://nikass.ru', 'invalid']]) {
+    assert.notEqual(run(url, access).status, 0)
+  }
+  assert.match(source, /== "\$expected_status"/)
+})
 const preflight = source.match(/ssh "\$TARGET" bash -s -- "\$previous_arg" <<'REMOTE' \|\| fail [^\n]+\n([\s\S]*?)\nREMOTE/)[1]
   .replace('cd /srv/nikass\n', '')
 

@@ -121,7 +121,7 @@ recording it as `removed`. Payments are never half-present and are never reintro
 | Is deployment needed now, or local-only for the moment?                                      | Нужны скрипты для публикации тестового сайта; фактическая публикация после настройки VPS, домена и секретов. |
 | Where are your users, and must the data stay in Russia?                                      | _unanswered_ |
 | Hosting, picked by the agent from the answer above: DigitalOcean / Yandex Cloud / own server | Собственный Beget VPS для текущей тестовой версии. |
-| Production domains / URLs for API, webapp, and website; is Yandex CDN needed now?            | _unanswered_ |
+| Production domains / URLs for API, webapp, and website; is Yandex CDN needed now?            | 2026-10-07 владелец выбрал публичный `https://nikass.ru` на VPS `93.188.186.9`, API на том же origin; `www` перенаправляется на основной домен. WooCommerce остаётся на прежнем Beget-хостинге `87.236.16.43`, API/админка/ресурсы доступны через Nginx. Webapp отложен, CDN не нужен. |
 | Which surfaces are released first                                                            | `website`, backend API, scheduler, PostgreSQL 18; `webapp` и mobile отложены. |
 
 **Ask the audience question, not the provider question.** A product owner knows where their users
