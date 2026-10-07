@@ -326,6 +326,11 @@ YooKassa's test shop and `YOO_KASSA_FULFILLMENT_MODE=disabled`, while secure coo
 separate runtime database role remain enabled. Private filesystem storage is mounted on the VPS
 for this stage. A real production release requires a separate storage and payment activation
 review; do not change `NODE_ENV` or fulfillment mode merely to remove the test banner.
+On 2026-10-07 the owner explicitly activated a closed live-payment check on the Beget IP:
+`YOO_KASSA_TEST_MODE=false` and WooCommerce fulfillment are enabled on the existing release,
+while `NODE_ENV=staging` and the storefront password remain. This does not publish the site
+on its domain. The applied configuration and pending real-purchase check are recorded in
+[deploy/README.md](../deploy/README.md).
 
 ## Local validation
 

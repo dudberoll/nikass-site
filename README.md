@@ -4,9 +4,9 @@
 > вариантами, корзиной и guest checkout.
 > Запуск сайта вместе с API: `bun run dev:storefront`.
 > Товарные маршруты: `/`, `/catalog`, `/catalog/[slug]`, `/cart`, `/checkout`.
-> Каталог backend уже читает WooCommerce REST API; production-заказы, доступы и публикация ещё не настроены.
+> Закрытый VPS `https://93.188.186.9` использует боевую YooKassa, создание заказов в WooCommerce и Telegram. Контрольная реальная покупка ещё не подтверждена; публичный запуск на домене остаётся следующим этапом.
 
-Скрипты для тестовой публикации на Beget VPS: [deploy/README.md](deploy/README.md).
+Скрипты для закрытой публикации на Beget VPS: [deploy/README.md](deploy/README.md).
 
 <p align="center">
   <img src="docs/assets/vibe_tmpl_schema.png" alt="Vibe Coding Template architecture schema" width="100%">

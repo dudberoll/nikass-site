@@ -142,6 +142,14 @@ the internal Telegram notification still says `Тестовая оплата`.
    be configured. A real webhook needs a public HTTPS API URL configured in YooKassa; localhost
    cannot receive it.
 
+9. For the owner-authorized closed live check on the Beget IP, use the live Shop ID/key,
+   `YOO_KASSA_TEST_MODE=false`, `YOO_KASSA_FULFILLMENT_MODE=woocommerce` and
+   `YOO_KASSA_TEST_FULFILLMENT_ENABLED=false`. Keep the password on the storefront;
+   only the existing `/api/orders/payment/webhook` exception is public. On 2026-10-07
+   these settings were applied to the existing VPS release and the live shop was verified
+   through `/v3/me`. A real purchase and its WooCommerce/Telegram outcome still need
+   owner verification. See [../deploy/README.md](../deploy/README.md).
+
 Fields validate format, lengths, required values and Russian phone/postcode;
 they do not verify that a street/building exists. The form also collects the region required by native WooCommerce address validation; installed address customizations must be checked against these fields.
 

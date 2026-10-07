@@ -1,8 +1,8 @@
-# NIKASS: тестовый сайт на Beget VPS
+# NIKASS: закрытый сайт на Beget VPS
 
-Этот вариант публикует **рабочую тестовую версию**: Astro storefront, Bun API, PostgreSQL 18 и планировщик на одном VPS. YooKassa использует тестовый магазин. После успешной оплаты сайт сверяет платёж, но не создаёт реальный WooCommerce order. Публичная страница закрыта паролем; YooKassa webhook доступен без него и проверяется backend через API YooKassa.
+Этот вариант публикует Astro storefront, Bun API, PostgreSQL 18 и планировщик на одном VPS. С 2026-10-07 включён боевой магазин YooKassa и создание оплаченных заказов в WooCommerce. Сайт остаётся закрытым паролем до контрольной покупки; YooKassa webhook доступен без пароля и проверяется backend через API YooKassa.
 
-Нужны VPS Beget с Ubuntu и установленными Docker/Compose (образ Docker), 2 ГБ RAM как минимум, публичный IPv4, SSH-ключ, WooCommerce REST/Store API, тестовый Shop ID и ключ YooKassa. Certbot устанавливается из Snap, поскольку сертификаты Let's Encrypt для IP требуют версии 5.4+ и профиля `shortlived`; сертификат действует около шести дней и обновляется автоматически. Для оформления нужны реальные опубликованные HTTPS-адреса политики конфиденциальности и условий покупки. Без этих документов форма специально не отправляет персональные данные.
+Нужны VPS Beget с Ubuntu и установленными Docker/Compose (образ Docker), 2 ГБ RAM как минимум, публичный IPv4, SSH-ключ, WooCommerce REST/Store API, Shop ID и ключ YooKassa выбранного магазина. Certbot устанавливается из Snap, поскольку сертификаты Let's Encrypt для IP требуют версии 5.4+ и профиля `shortlived`; сертификат действует около шести дней и обновляется автоматически. Для оформления нужны реальные опубликованные HTTPS-адреса политики конфиденциальности и условий покупки. Без этих документов форма специально не отправляет персональные данные.
 
 ## SSH-доступ к текущему VPS
 
@@ -89,9 +89,9 @@ scp deploy/compose.yml deploy/init-app-role.sh deploy/nginx-site.conf.example de
 ssh deploy@VPS_IP 'cp /srv/nikass/.env.example /srv/nikass/.env && cp /srv/nikass/runtime.env.example /srv/nikass/runtime.env && chmod 600 /srv/nikass/.env /srv/nikass/runtime.env'
 ```
 
-На VPS заполните `/srv/nikass/.env` и `/srv/nikass/runtime.env`. Для `POSTGRES_PASSWORD` и `POSTGRES_APP_PASSWORD` создайте **разные** значения командой `openssl rand -hex 24`. Подставьте первое в `MIGRATION_DATABASE_URL`, второе — в `DATABASE_URL`; `JWT_SECRET` создайте командой `openssl rand -hex 32`. В runtime-конфигурации уже указаны IP VPS и WooCommerce API для `nikass.ru`; задайте WooCommerce ключи, тестовые YooKassa Shop ID/secret и одноразовые `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` для первого запуска БД. Пароль администратора не короче 12 символов. Не сохраняйте заполненные файлы в Git и не присылайте их в чат. API и scheduler получают только `runtime.env`, пароль владельца БД им недоступен.
+На VPS заполните `/srv/nikass/.env` и `/srv/nikass/runtime.env`. Для `POSTGRES_PASSWORD` и `POSTGRES_APP_PASSWORD` создайте **разные** значения командой `openssl rand -hex 24`. Подставьте первое в `MIGRATION_DATABASE_URL`, второе — в `DATABASE_URL`; `JWT_SECRET` создайте командой `openssl rand -hex 32`. В runtime-конфигурации уже указаны IP VPS и WooCommerce API для `nikass.ru`; задайте WooCommerce ключи и YooKassa Shop ID/secret выбранного магазина и одноразовые `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` для первого запуска БД. Пароль администратора не короче 12 символов. Не сохраняйте заполненные файлы в Git и не присылайте их в чат. API и scheduler получают только `runtime.env`, пароль владельца БД им недоступен.
 
-WooCommerce Store API должен быть доступен извне, иметь российскую зону доставки и `free_shipping` с названием «СДЭК»; остальные требования описаны в [docs/ORDERS.md](../docs/ORDERS.md). Тестовый YooKassa webhook задайте как `https://ДОМЕН/api/orders/payment/webhook`.
+WooCommerce Store API должен быть доступен извне, иметь российскую зону доставки и `free_shipping` с названием «СДЭК»; остальные требования описаны в [docs/ORDERS.md](../docs/ORDERS.md). YooKassa webhook задайте как `https://ДОМЕН/api/orders/payment/webhook`.
 
 AI-чат включается в `runtime.env` только при наличии ключа провайдера (`AI_PROVIDER=chat-completions`, `AI_API_URL`, `AI_API_KEY`, `AI_MODEL`). Подсказки адресов включаются публичным `PUBLIC_YANDEX_SUGGEST_API_KEY` при запуске сборки; без него адрес можно ввести вручную. Отправка email в этом тестовом профиле отключена.
 
@@ -112,11 +112,38 @@ docker compose --env-file .env --env-file release.env -f compose.yml up -d --for
 ```
 
 Все участники выбранной группы видят уведомления, включая контакты из заявок на поступление.
-Витрина использует обычные тексты оформления и подтверждения оплаты. Это не переключает
-саму YooKassa на реальные платежи: текущие `YOO_KASSA_TEST_MODE=true` и
-`YOO_KASSA_FULFILLMENT_MODE=disabled` остаются настройками тестового VPS до отдельной
-активации по [docs/ORDERS.md](../docs/ORDERS.md). Внутренние Telegram-уведомления о
-тестовых платежах сохраняют пометку для менеджеров.
+Витрина использует обычные тексты оформления и подтверждения оплаты. Платёжный режим
+задаётся отдельно на backend. Внутренние Telegram-уведомления о тестовых платежах
+сохраняют пометку для менеджеров.
+
+### Закрытая проверка боевого магазина по IP
+
+Владелец активировал этот этап 2026-10-07: сначала проверить реальную оплату на
+`https://93.188.186.9`, затем подключить домен и открыть сайт покупателям.
+На VPS применены боевые Shop ID/ключ, проверенные через `/v3/me`, и настройки:
+
+```env
+YOO_KASSA_TEST_MODE=false
+YOO_KASSA_FULFILLMENT_MODE=woocommerce
+YOO_KASSA_TEST_FULFILLMENT_ENABLED=false
+YOO_KASSA_RETURN_URL=https://93.188.186.9/checkout
+```
+
+В боевом кабинете HTTP-уведомления направлены на
+`https://93.188.186.9/api/orders/payment/webhook`; включены `payment.succeeded`,
+`payment.waiting_for_capture` и `payment.canceled`. API и scheduler пересозданы
+на существующем релизе `20261007011019-01fe3f471f76`; оба получают Telegram-настройки
+группы менеджеров. `NODE_ENV=staging` и пароль на сайте сохранены: это закрытая
+проверка с реальными списаниями, а не публичный production-релиз.
+
+Проверено: API готов, `/v3/me` сообщает `enabled` и `test=false`, группа Telegram
+доступна серверу, сайт отвечает 401 без пароля, webhook принимает запрос без пароля
+и отклоняет некорректное тело с 400. Реальная покупка и создание оплаченного заказа
+ещё не подтверждены. Контрольную оплату завершает владелец со своими данными;
+после неё проверить заказ в WooCommerce и сообщение в Telegram.
+Когда сайт переедет на домен, обновить `YOO_KASSA_RETURN_URL`, HTTP-уведомления,
+`PUBLIC_API_URL`, CORS и HTTPS вместе. Адрес возврата должен совпадать с origin
+оформления, чтобы браузер восстановил оплату.
 
 ## 2. HTTPS и пароль
 

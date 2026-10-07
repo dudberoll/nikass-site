@@ -29,8 +29,8 @@ If no GitHub destination is chosen, the repository is left without `origin` and 
 
 | Question                                                  | Answer       |
 | --------------------------------------------------------- | ------------ |
-| What product do you want to build first?                  | Публичный storefront NIKASS на Astro + React с каталогом WooCommerce, корзиной, гостевым заказом и тестовой hosted-оплатой YooKassa. |
-| What is the first user journey that must work end to end? | Главная → каталог NIKASS → карточка товара → корзина → двухшаговое оформление → проверка цены и наличия в backend → hosted-тест YooKassa → подтверждение результата на checkout. Рабочий WooCommerce order подключается отдельным production-шагом. AI-консультант остаётся отдельной опцией. |
+| What product do you want to build first?                  | Storefront NIKASS на Astro + React с каталогом WooCommerce, корзиной, гостевым заказом и hosted-оплатой YooKassa. Сначала закрытая проверка боевого магазина по IP, затем публичный запуск на домене. |
+| What is the first user journey that must work end to end? | Главная → каталог NIKASS → карточка товара → корзина → оформление → серверная проверка цены и наличия → боевой платёж YooKassa → оплаченный заказ WooCommerce → Telegram менеджерам → подтверждение на checkout. Сначала проверить этот путь на закрытом VPS по IP. AI-консультант остаётся отдельной опцией. |
 
 ## 3. Active surfaces
 
@@ -62,7 +62,7 @@ Ask about product needs, not implementations. Mark what the first version actual
 
 | Question                                                                                          | Answer       |
 | ------------------------------------------------------------------------------------------------- | ------------ |
-| What the first version explicitly should NOT do (write "nothing ruled out" if that is the answer) | Личный кабинет, подписки, загрузка пользовательских файлов, RAG, хранение истории и операторский чат не входят в текущую версию; production-активация оплаты будет отдельным шагом. |
+| What the first version explicitly should NOT do (write "nothing ruled out" if that is the answer) | Личный кабинет, подписки, загрузка пользовательских файлов, RAG, хранение истории и операторский чат не входят в текущую версию; публичный запуск на домене следует после закрытой проверки боевой оплаты по IP. |
 
 ## 5. Files, images, and media
 
@@ -182,7 +182,7 @@ A capability with no row is `absent` by default. Add the row instead of assuming
 | Apple storefront prototype | removed | Старые Apple Store/Shop Mac маршруты удалены из активной website-поверхности; NIKASS использует собственные публичные маршруты. |
 | NIKASS storefront catalog | included | `/`, `/catalog`, `/catalog/[slug]`, `/cart` и `/checkout` образуют путь на данных WooCommerce API, ограниченных выбранными артикулами CSV. Корзина хранит только slug/SKU/quantity в версионированном `sessionStorage`; checkout передаёт оплату на hosted YooKassa. |
 | NIKASS restock requests | available | Для выбранного варианта `onbackorder` покупка заменяется кнопкой «Сообщить о поступлении». Телефон, Telegram, MAX или WhatsApp собираются с согласием; заявки атомарно сохраняются в PostgreSQL и передаются менеджеру через Telegram/outbox. Менеджер пишет покупателям сам. Нужны миграции, работающий scheduler, `ORDER_TELEGRAM_BOT_TOKEN` / `ORDER_TELEGRAM_CHAT_ID` и `PUBLIC_PRIVACY_URL`. Контакт удаляется из базы после доставки; неотправленные заявки остаются для восстановления. |
-| NIKASS paid-order Telegram notifications | available | После серверной проверки YooKassa и подтверждённого создания заказа в WooCommerce группа менеджеров получает названия/SKU, количество, суммы, имя, телефон, email, способ получения, адрес и комментарий. Получатель и ключ бота заданы только на backend; контакты checkout не сохраняются в браузере. Доставка через outbox, без предпросмотра ссылок и с защитой пересылки. Текущий тестовый `YOO_KASSA_FULFILLMENT_MODE=disabled` не создаёт реальные заказы и не отправляет такие уведомления; для рабочего режима нужен отдельный запуск `woocommerce`. |
+| NIKASS paid-order Telegram notifications | available | После серверной проверки YooKassa и подтверждённого создания заказа в WooCommerce группа менеджеров получает названия/SKU, количество, суммы, имя, телефон, email, способ получения, адрес и комментарий. Получатель и ключ бота заданы только на backend; контакты checkout не сохраняются в браузере. Доставка через outbox, без предпросмотра ссылок и с защитой пересылки. На закрытом VPS 2026-10-07 включены боевой магазин и `YOO_KASSA_FULFILLMENT_MODE=woocommerce`; Telegram-настройки применены к API и scheduler. Реальная покупка и уведомление по ней ещё не подтверждены. |
 | NIKASS discounted catalog | included | `/discounted` сразу показывает все уценённые товары без выбора категории; поиск и сортировка сохраняются, параметр `category` игнорируется. Ссылка последняя в категориях обычного каталога. Отдельные экземпляры WooCommerce с категорией «Уценённые товары» исключаются из обычной витрины и используют общую корзину/checkout. Обычная цена зачёркнута, причина уценки и фотографии берутся из товара; реальные экземпляры добавляет владелец позже. Локальный `CATALOG_DEMO_DISCOUNTED=true` добавляет по одному тестовому варианту каждой обычной карточки со скидкой 20%; образцы имеют отдельные SKU, поддерживают корзину и не допускаются к оформлению. |
 | NIKASS service center page | included | Публичная `/service-center` описывает послегарантийный ремонт товаров NIKASS всех категорий, бесплатную диагностику, оригинальные комплектующие, сертифицированных специалистов, гарантию на работы и детали; контакты центра ожидают уточнения. |
 | Локальный редактор каталога | included | `/catalog-editor` сохраняет описания карточек и характеристики в браузере только для подготовки и предпросмотра; архив статического сайта запускается без backend/WooCommerce, правки можно экспортировать и импортировать JSON-файлом. Публичный каталог не применяет браузерные правки: характеристики, комплектация и гарантия хранятся в атрибутах существующих товаров WooCommerce и попадают на сайт после ручной пересборки. Цены, наличие и WooCommerce редактор не меняет. |
@@ -192,7 +192,7 @@ A capability with no row is `absent` by default. Add the row instead of assuming
 | Automatic SSG rebuild           | absent   | Durable desired/published revision state, single-flight deployment reconciliation, immutable atomic/blue-green release promotion, public-marker verification, and a provider adapter are not implemented. Yandex additionally needs a separate builder/upload component. See `docs/WEB_SURFACES.md`.                                                                                                                 |
 | NIKASS runtime availability | included | Владелец 2026-10-07 выбрал немедленный показ сохранённой цены и фоновое обновление наличия. `GET /api/catalog/availability` отдаёт статусы по исходным slug/SKU, используя существующий WooCommerce-кэш с пределом 60 секунд. Каталог, хиты на главной, страница товара и корзина используют общий запрос/таймер в браузере. Закончился товар — покупка заменяется заявкой; поступил снова — возвращается покупка. Статический контент и числовые цены сохраняются до ручной пересборки. |
 | Website cart handoff | included | Корзина `website` хранит только slug/SKU/quantity в версионном sessionStorage и открывает единый same-origin `/checkout`; цену и остаток повторно проверяет backend. |
-| Browser checkout / payments | available | Единый активный гостевой checkout находится в `website`: двухшаговая форма собирает данные, сервер считает итог, YooKassa возвращает hosted-ссылку и после возврата backend сверяет платёж. Локальный `YOO_KASSA_FULFILLMENT_MODE=disabled` не создаёт рабочий WooCommerce order; для production нужны миграция, HTTPS webhook и отдельная активация fulfillment. |
+| Browser checkout / payments | available | Единый активный гостевой checkout находится в `website`: двухшаговая форма собирает данные, сервер считает итог, YooKassa возвращает hosted-ссылку и после возврата backend сверяет платёж. На закрытом VPS 2026-10-07 применены боевые реквизиты, `YOO_KASSA_TEST_MODE=false`, WooCommerce fulfillment и HTTPS webhook по IP. Публичный запуск на домене следует после контрольной покупки; она ещё не подтверждена. |
 | Push notifications              | absent   | No push code here. Expo Push comes from the mobile template line.                                                                                                                                                                                                                                                                                                                                                    |
 | Social sign-in (Apple / Google) | absent   | No social auth here. It comes from the mobile template line.                                                                                                                                                                                                                                                                                                                                                         |
 | Real-time / WebSockets          | absent   | Requires an explicit product need.                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -267,6 +267,19 @@ Verified by the agent during setup, not asked.
 Публичные тексты оформления и подтверждения оплаты больше не содержат тестовых
 формулировок. Это подготовка витрины к запуску; реальные платежи и fulfillment
 активируются отдельно по `docs/ORDERS.md`.
+
+### NIKASS closed live check — 2026-10-07
+
+Владелец выбрал сначала боевой магазин на закрытом паролем VPS по IP, затем
+переход на домен и открытие сайта. Боевые реквизиты взяты из предоставленного
+`backend/.env` и проверены через YooKassa `/v3/me`: магазин включён, `test=false`.
+На существующем релизе VPS `20261007011019-01fe3f471f76` включены WooCommerce
+fulfillment и Telegram в API/scheduler. Webhook боевого кабинета направлен на
+`https://93.188.186.9/api/orders/payment/webhook`, возврат — на `/checkout` того же IP.
+Пароль и `NODE_ENV=staging` сохранены. Прежний SSH-блокер устранён прямым
+соединением через `en0`; Telegram-группа доступна серверу. Проверены настройки,
+готовность API и доступность webhook; контрольную реальную оплату завершает
+владелец. Создание оплаченного заказа и его Telegram-уведомление пока не проверены.
 
 ### NIKASS orders stage — 2026-09-08
 
