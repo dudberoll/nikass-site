@@ -57,6 +57,7 @@ const envSchema = z.object({
   YOO_KASSA_API_URL: stringWithDefault('https://api.yookassa.ru'),
   YOO_KASSA_RETURN_URL: optionalUrlSchema,
   YOO_KASSA_FULFILLMENT_MODE: z.enum(['disabled', 'woocommerce']).default('disabled'),
+  YOO_KASSA_TEST_FULFILLMENT_ENABLED: booleanStringSchema,
   WOOCOMMERCE_STORE_ENDPOINT: optionalUrlSchema,
   ORDER_MANAGER_EMAIL: z.preprocess((v) => v === '' ? undefined : v, z.string().email().optional()),
   ORDER_TELEGRAM_BOT_TOKEN: optionalStringSchema,
@@ -684,6 +685,7 @@ function validateYooKassaEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCt
       if (env[key] !== undefined) ctx.addIssue({ code: 'custom', path: [key], message: `${key} is set but YOO_KASSA_ENABLED=false, so it would be ignored` })
     }
     if (env.YOO_KASSA_FULFILLMENT_MODE !== 'disabled') ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_FULFILLMENT_MODE'], message: 'YOO_KASSA_FULFILLMENT_MODE requires YOO_KASSA_ENABLED=true' })
+    if (env.YOO_KASSA_TEST_FULFILLMENT_ENABLED) ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_TEST_FULFILLMENT_ENABLED'], message: 'YOO_KASSA_TEST_FULFILLMENT_ENABLED requires YOO_KASSA_ENABLED=true' })
     return
   }
 
@@ -716,7 +718,10 @@ function validateYooKassaEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCt
   if (env.YOO_KASSA_FULFILLMENT_MODE === 'woocommerce' && !env.ORDERS_ENABLED) {
     ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_FULFILLMENT_MODE'], message: 'YOO_KASSA_FULFILLMENT_MODE=woocommerce requires ORDERS_ENABLED=true' })
   }
-  if (env.YOO_KASSA_TEST_MODE && env.YOO_KASSA_FULFILLMENT_MODE !== 'disabled') {
-    ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_FULFILLMENT_MODE'], message: 'Test payments must not create real WooCommerce orders' })
+  if (env.YOO_KASSA_TEST_FULFILLMENT_ENABLED && (env.NODE_ENV === 'production' || !env.YOO_KASSA_TEST_MODE || env.YOO_KASSA_FULFILLMENT_MODE !== 'woocommerce')) {
+    ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_TEST_FULFILLMENT_ENABLED'], message: 'Test fulfillment is allowed only for YooKassa test payments on a non-production backend with WooCommerce fulfillment enabled' })
+  }
+  if (env.YOO_KASSA_TEST_MODE && env.YOO_KASSA_FULFILLMENT_MODE !== 'disabled' && !env.YOO_KASSA_TEST_FULFILLMENT_ENABLED) {
+    ctx.addIssue({ code: 'custom', path: ['YOO_KASSA_TEST_FULFILLMENT_ENABLED'], message: 'Set YOO_KASSA_TEST_FULFILLMENT_ENABLED=true explicitly to create WooCommerce orders from test payments outside production' })
   }
 }

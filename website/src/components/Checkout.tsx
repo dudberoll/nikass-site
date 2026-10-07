@@ -34,6 +34,19 @@ function PaymentDetails({ quote, customer }: { quote: Quote; customer: CustomerS
   </>;
 }
 
+function paymentResultMessage(payment: Payment, testMode = false) {
+  if (testMode) {
+    if (payment.fulfillmentState === "skipped") return "Тестовая оплата подтверждена, но заказ в WooCommerce не создавался.";
+    if (payment.fulfillmentState === "uncertain") return "Тестовая оплата подтверждена, проверьте создание заказа в WooCommerce.";
+    return payment.orderNumber
+      ? `Тестовая оплата подтверждена. Создан заказ №${payment.orderNumber}; деньги не списывались.`
+      : "Тестовая оплата подтверждена, заказ передан на оформление; деньги не списывались.";
+  }
+  if (payment.fulfillmentState === "skipped") return "Оплата подтверждена, но заказ не оформлен. Свяжитесь с нами для уточнения дальнейших действий.";
+  if (payment.fulfillmentState === "uncertain") return "Оплата подтверждена, но оформление заказа требует проверки менеджером.";
+  return payment.orderNumber ? `Номер заказа: ${payment.orderNumber}` : "Оплата подтверждена, заказ передан на оформление.";
+}
+
 function readCheckout(): Initial {
   try {
     const params = new URLSearchParams(location.hash.slice(1));
@@ -66,6 +79,7 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, te
   const [customer, setCustomer] = useState<CustomerSnapshot | null>(null);
   const [paymentId, setPaymentId] = useState(initial.paymentId);
   const [payment, setPayment] = useState<Payment | null>(null);
+  const [confirmationUrl, setConfirmationUrl] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState(initial.error);
@@ -195,8 +209,15 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, te
   async function refreshPayment(id = paymentId) {
     if (!id || busy) return;
     setBusy(true); setError("");
-    try { setPayment(await requestCheckout(apiBase, "/api/orders/payment/status", { paymentId: id }, paymentStatusResponseSchema)); }
-    catch { setError("Статус оплаты временно недоступен."); }
+    setConfirmationUrl(null);
+    try {
+      const status = await requestCheckout(apiBase, "/api/orders/payment/status", { paymentId: id }, paymentStatusResponseSchema);
+      setPayment(status);
+      if (status.paymentState !== "pending" || !quote) return;
+      const existing = await requestCheckout(apiBase, "/api/orders/payment", { checkoutToken: quote.checkoutToken }, paymentStartResponseSchema);
+      if (existing.paymentId !== id) throw new Error("Сервис вернул другую оплату. Обновите страницу.");
+      setConfirmationUrl(existing.confirmationUrl);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Статус оплаты временно недоступен."); }
     finally { setBusy(false); }
   }
   function edit() { try { if (!cart) return; saveCheckoutSnapshot({ cart, cartRevision: initial.cartRevision }); setQuote(null); setCustomer(null); setPaymentId(null); setPayment(null); setError(""); } catch { setError("Не удалось сохранить корзину."); } }
@@ -224,9 +245,9 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, te
   if (!cart) return <div className="cart-empty"><h2>Оформление недоступно</h2><p>{error}</p><a className="store-primary-button" href="/cart">Вернуться в корзину</a></div>;
   return <div className="checkout-shell">
     {error && <p className="checkout-error" role="alert">{error}</p>}
-    {payment?.paymentState === "succeeded" ? <section className="checkout-result" aria-live="polite"><p className="store-eyebrow">ОПЛАТА ПРОШЛА</p><h2>Успешная оплата</h2>{!testMode && payment.fulfillmentState !== "skipped" && <p>Менеджер свяжется с вами в течение часа, чтобы подтвердить все данные и заказ</p>}<PaymentDetails quote={quote!} customer={customer} /><p>{testMode || payment.fulfillmentState === "skipped" ? "Оплата подтверждена, но заказ не оформлен. Свяжитесь с нами для уточнения дальнейших действий." : payment.fulfillmentState === "uncertain" ? "Оплата подтверждена, но оформление заказа требует проверки менеджером." : payment.orderNumber ? `Номер заказа: ${payment.orderNumber}` : "Оплата подтверждена, заказ передан на оформление."}</p><button className="store-primary-button" type="button" onClick={newCart}>Перейти к новой корзине</button></section>
+    {payment?.paymentState === "succeeded" ? <section className="checkout-result" aria-live="polite"><p className="store-eyebrow">{testMode ? "ТЕСТОВАЯ ОПЛАТА ПРОШЛА" : "ОПЛАТА ПРОШЛА"}</p><h2>{testMode ? "Тестовая оплата успешна" : "Успешная оплата"}</h2>{!testMode && payment.fulfillmentState !== "skipped" && <p>Менеджер свяжется с вами в течение часа, чтобы подтвердить все данные и заказ</p>}<PaymentDetails quote={quote!} customer={customer} /><p>{paymentResultMessage(payment, testMode)}</p><button className="store-primary-button" type="button" onClick={newCart}>Перейти к новой корзине</button></section>
       : payment?.paymentState === "canceled" ? <section className="checkout-result" aria-live="polite"><h2>Оплата отменена</h2><p>Заказ не оформлен. Вы можете вернуться к данным и повторить попытку.</p><button className="store-primary-button" type="button" onClick={edit}>Вернуться к заказу</button></section>
-      : paymentId ? <section className="checkout-result" aria-live="polite"><h2>Ожидает оплаты</h2><p>Платёж ещё не подтверждён. Мы сверяем результат с YooKassa.</p><PaymentDetails quote={quote!} customer={customer} /><button className="store-primary-button" type="button" disabled={busy} onClick={() => refreshPayment()}>{busy ? "Проверяем…" : "Обновить статус"}</button></section>
+      : paymentId ? <section className="checkout-result" aria-live="polite"><h2>Ожидает оплаты</h2><p>Платёж ещё не подтверждён. Мы ожидаем оплату через {payment?.paymentState === "pending" && confirmationUrl ? <a href={confirmationUrl} rel="noreferrer">YooKassa</a> : "YooKassa"}.</p><PaymentDetails quote={quote!} customer={customer} /><button className="store-primary-button" type="button" disabled={busy} onClick={() => refreshPayment()}>{busy ? "Проверяем…" : "Обновить статус"}</button></section>
       : quote ? <section className="checkout-result"><h2>Проверьте итоговую сумму</h2><ul className="checkout-total-list">{quote.totals.items.map((item) => <li key={item.sku}><span>{item.name} · {item.quantity} шт.</span><strong>{money(item.totalMinor)}</strong></li>)}</ul><div className="checkout-summary-line"><span>Скидка</span><strong>{money(quote.totals.discountMinor)}</strong></div><div className="checkout-summary-line checkout-summary-total"><span>Итого</span><strong>{money(quote.totals.totalMinor)}</strong></div><p>Расчёт действителен 15 минут. Далее откроется защищённая страница YooKassa.</p><div className="checkout-actions"><button className="store-primary-button" type="button" disabled={busy} onClick={startPayment}>{busy ? "Открываем оплату…" : "Перейти к оплате"}</button><button className="checkout-secondary-button" type="button" disabled={busy} onClick={edit}>Изменить данные</button></div></section>
       : <form className="checkout-form" onSubmit={review} noValidate>
         <ol className="checkout-steps" aria-label="Шаги оформления"><li className={step === 1 ? "is-active" : "is-complete"} aria-current={step === 1 ? "step" : undefined}><span>1</span>Личные данные</li><li className={step === 2 ? "is-active" : step === 3 ? "is-complete" : ""} aria-current={step === 2 ? "step" : undefined}><span>2</span>Способ доставки</li><li className={step === 3 ? "is-active" : ""} aria-current={step === 3 ? "step" : undefined}><span>3</span>Адрес</li></ol>

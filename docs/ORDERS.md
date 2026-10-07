@@ -76,19 +76,24 @@ older payment can recover its own snapshot even after a newer checkout; the frag
 grants no API access and is removed after recovery. Payment links created before
 this change retain their original return URL; use the basket's continuation action
 to select their snapshot before returning. Recovery requires the original tab's
-session storage. Each cart write creates a new revision, which checkout captures
-and preserves through quotes, payment redirects and archived snapshots. Starting
-another basket from a receipt clears the cart only when its revision still matches
+session storage. On checkout return, a verified pending payment recovers its existing
+hosted URL through the checkout capability when it still passes the backend stock check;
+the public status response does not expose payment links. Each cart write creates a
+new revision, which checkout captures and preserves through quotes, payment redirects
+and archived snapshots. Starting another basket from a receipt clears the cart only when its revision still matches
 that checkout; a rebuilt basket with identical items is preserved. Legacy snapshots
 without a revision never automatically clear the shopping basket.
 Publish the updated website before the backend: its optional `attemptId` accepts
 old responses, while the old website's strict schema rejects the new response field.
 No database migration or payment-provider configuration change is required.
 
-`YOO_KASSA_FULFILLMENT_MODE=disabled` continues to skip WooCommerce creation and
-paid-order notifications, including successful test payments. Activation requires
-an explicit environment change to `woocommerce`; this feature does not change
-the safe test environment automatically.
+`YOO_KASSA_FULFILLMENT_MODE=disabled` skips WooCommerce creation and paid-order
+notifications, including successful test payments. Successful test payments can
+create orders in the configured WooCommerce store only when the non-production
+backend explicitly sets `YOO_KASSA_FULFILLMENT_MODE=woocommerce` and
+`YOO_KASSA_TEST_FULFILLMENT_ENABLED=true`. Production rejects the test-only flag.
+The WooCommerce order itself has no test label and looks like a normal paid order;
+the internal Telegram notification still says `Тестовая оплата`.
 
 ## Activation
 
@@ -122,12 +127,20 @@ the safe test environment automatically.
    global usage limits, and real delivery addresses. No live WooCommerce was
    available for these checks; mocked adapter tests do not prove store behavior.
 
-8. For the YooKassa test store, locally or on the password-protected Beget test VPS, set `YOO_KASSA_ENABLED=true`, `YOO_KASSA_TEST_MODE=true`,
-   the test Shop ID/key and `YOO_KASSA_RETURN_URL` to the exact `/checkout` URL used by the
-   browser (`http://127.0.0.1:4322/checkout` locally, `https://YOUR_DOMAIN/checkout` on the VPS). Keep
-   `YOO_KASSA_FULFILLMENT_MODE=disabled`: payment status is reconciled and shown in the storefront,
-   but no order is created in the real WooCommerce store. A real webhook needs a public HTTPS API
-   URL configured in YooKassa; localhost cannot receive it.
+8. For YooKassa test payments, locally or on the password-protected Beget test VPS, set
+   `YOO_KASSA_ENABLED=true`, `YOO_KASSA_TEST_MODE=true`, the test Shop ID/key and
+   `YOO_KASSA_RETURN_URL` to the exact `/checkout` URL used by the browser
+   (`http://127.0.0.1:4322/checkout` locally, `https://YOUR_DOMAIN/checkout` on the VPS).
+   Before creating a payment, the backend checks `/v3/me` and refuses if the connected shop's
+   `test` mode does not match `YOO_KASSA_TEST_MODE`.
+   Keep fulfillment disabled by default. To deliberately test order creation in the configured
+   WooCommerce store, also set `YOO_KASSA_FULFILLMENT_MODE=woocommerce` and
+   `YOO_KASSA_TEST_FULFILLMENT_ENABLED=true`; this is rejected in production. A successful test
+   payment creates a normal paid/processing WooCommerce order, can reduce stock, and may trigger
+   WooCommerce emails or integrations. Use test customer contact details. Before deleting a test
+   order, move it to Cancelled so WooCommerce restores tracked stock; cancellation emails may also
+   be configured. A real webhook needs a public HTTPS API URL configured in YooKassa; localhost
+   cannot receive it.
 
 Fields validate format, lengths, required values and Russian phone/postcode;
 they do not verify that a street/building exists. The form also collects the region required by native WooCommerce address validation; installed address customizations must be checked against these fields.
