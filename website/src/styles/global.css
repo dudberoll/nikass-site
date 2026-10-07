@@ -438,7 +438,7 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 
 /* Store pages share the catalog/cart flow without changing the homepage layout. */
 .store-page { background: #f6f6f4; color: #111; }
-.about-page .orbea-header { background: #fff; color: #111; box-shadow: 0 1px 0 rgba(0,0,0,.12); }
+.about-page .orbea-header { position: sticky; background: #fff; color: #111; box-shadow: 0 1px 0 rgba(0,0,0,.12); }
 .store-logo { display: inline-flex; width: 92px; align-items: center; }
 .store-footer a { transition: opacity .15s ease; }
 .store-footer a:hover { opacity: .55; }
@@ -899,7 +899,7 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
   .store-intro h1, .cart-page > h1 { font-size: 46px; }
   .info-sections { gap: 52px; }
   .info-section { gap: 22px; }
-  .info-intro h1 { font-size: 46px; }
+  .info-intro h1 { font-size: clamp(28px, 7vw, 46px); overflow-wrap: anywhere; }
   .info-card-grid-payment, .info-columns { grid-template-columns: 1fr; }
   .info-card { min-height: 0; padding: 20px; }
   .info-section-compact { padding: 22px 20px; }

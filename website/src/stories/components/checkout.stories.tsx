@@ -7,7 +7,7 @@ const meta = {
   args: {
     apiBase: '',
     privacyUrl: '/privacy',
-    termsUrl: '/terms',
+    termsUrl: '/payment-and-delivery',
     yandexSuggestApiKey: '',
   },
 } satisfies Meta<typeof Checkout>

@@ -9,7 +9,7 @@ TARGET="deploy@$DEPLOY_HOST"
 
 fail() { echo "Ошибка: $*" >&2; exit 1; }
 usage() {
-  echo 'DEPLOY_HOST=IP SITE_URL=https://IP PUBLIC_PRIVACY_URL=https://... PUBLIC_TERMS_URL=https://... ./deploy/deploy.sh publish'
+  echo 'DEPLOY_HOST=IP SITE_URL=https://IP PUBLIC_PRIVACY_URL=https://... ./deploy/deploy.sh publish'
   echo 'DEPLOY_HOST=IP ./deploy/deploy.sh list'
   echo 'DEPLOY_HOST=IP ./deploy/deploy.sh rollback RELEASE'
 }
@@ -52,7 +52,7 @@ REMOTE
 }
 publish() {
   [[ "$SITE_URL" == "https://$DEPLOY_HOST" ]] || fail 'SITE_URL должен быть HTTPS-адресом этого VPS без пути.'
-  [[ "${PUBLIC_PRIVACY_URL:-}" == https://* && "${PUBLIC_TERMS_URL:-}" == https://* ]] || fail 'Для checkout нужны опубликованные HTTPS-адреса PUBLIC_PRIVACY_URL и PUBLIC_TERMS_URL.'
+  [[ "${PUBLIC_PRIVACY_URL:-}" == https://* ]] || fail 'Для checkout нужен опубликованный HTTPS-адрес PUBLIC_PRIVACY_URL.'
   for command in git bun docker curl; do command -v "$command" >/dev/null || fail "Не найдена команда $command."; done
   docker buildx version >/dev/null || fail 'Нужен Docker Buildx.'
 
@@ -75,8 +75,8 @@ cd /srv/nikass
 for key in POSTGRES_PASSWORD POSTGRES_APP_PASSWORD MIGRATION_DATABASE_URL; do
   grep -Eq "^${key}=[^[:space:]]+" .env
 done
-for key in DATABASE_URL JWT_SECRET CORS_ORIGINS WOOCOMMERCE_PRODUCTS_ENDPOINT WOOCOMMERCE_STORE_ENDPOINT WOOCOMMERCE_CONSUMER_KEY WOOCOMMERCE_CONSUMER_SECRET YOO_KASSA_SHOP_ID YOO_KASSA_SECRET_KEY YOO_KASSA_RETURN_URL; do
-  grep -Eq "^${key}=[^[:space:]]+" runtime.env
+for key in DATABASE_URL JWT_SECRET CORS_ORIGINS WOOCOMMERCE_PRODUCTS_ENDPOINT WOOCOMMERCE_STORE_ENDPOINT WOOCOMMERCE_CONSUMER_KEY WOOCOMMERCE_CONSUMER_SECRET YOO_KASSA_SHOP_ID YOO_KASSA_SECRET_KEY YOO_KASSA_RETURN_URL ORDER_TELEGRAM_BOT_TOKEN ORDER_TELEGRAM_CHAT_ID; do
+  grep -Eq "^${key}=[^[:space:]]+" runtime.env || { echo "На VPS не задана $key." >&2; exit 1; }
 done
 ! grep -Eq 'YOUR_DOMAIN|YOUR_WOO_SITE|:APP_PASSWORD@|:POSTGRES_PASSWORD@' .env runtime.env
 if [[ "$1" == none ]]; then
@@ -134,10 +134,8 @@ REMOTE
   done
   curl --fail --silent "http://127.0.0.1:$TUNNEL_PORT/health/ready" >/dev/null || fail 'SSH-туннель до API не работает.'
   PUBLIC_API_URL="$SITE_URL" \
-  PUBLIC_TEST_MODE=true \
   CATALOG_BUILD_API_URL="http://127.0.0.1:$TUNNEL_PORT" \
   PUBLIC_PRIVACY_URL="$PUBLIC_PRIVACY_URL" \
-  PUBLIC_TERMS_URL="$PUBLIC_TERMS_URL" \
   bun run build:website
   [[ -f website/dist/index.html && -f website/dist/checkout/index.html ]] || fail 'Сборка сайта неполная.'
 
@@ -160,7 +158,7 @@ REMOTE
   kill "$tunnel_pid" 2>/dev/null || true
   wait "$tunnel_pid" 2>/dev/null || true
   trap - EXIT
-  echo "Опубликован $release на $SITE_URL. Тестовый checkout доступен после входа tester."
+  echo "Опубликован $release на $SITE_URL. Оформление заказа доступно после входа tester."
 }
 list() { ssh "$TARGET" 'find /var/www/nikass/releases -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | sort -r'; }
 rollback() {

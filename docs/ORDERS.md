@@ -110,7 +110,7 @@ the internal Telegram notification still says `Тестовая оплата`.
    «Согласование с менеджером»; clear cheque-specific descriptions/instructions.
    This native gateway places nonzero orders on hold and reduces stock without
    taking payment. Zero-value orders use WooCommerce's free-order completion path.
-4. Configure approved `PUBLIC_PRIVACY_URL` and `PUBLIC_TERMS_URL` in `website`.
+4. Configure the approved `PUBLIC_PRIVACY_URL` in `website`. Purchase terms link to the site's `/payment-and-delivery` page; `PUBLIC_TERMS_URL` is no longer used.
    Until documents exist, the form can validate fields but refuses sending personal data.
    Set `PUBLIC_API_URL` and backend CORS origins to the actual storefront/API locations.
 5. Configure real backend email delivery, `ORDER_MANAGER_EMAIL`,
@@ -164,7 +164,7 @@ reconciliation. WooCommerce retains the authoritative order under its own policy
 ## Local checks
 
 - `bun test backend/src/modules/orders/infrastructure/notifications.test.ts backend/src/modules/orders/infrastructure/orders-store.test.ts` — full paid-order details, fixed recipient, unpaid/unfinished delivery rejection, long messages and safe errors.
-- `WEBSITE_E2E_PORT=4346 PUBLIC_API_URL=http://127.0.0.1:4346 PUBLIC_PRIVACY_URL=https://example.test/privacy PUBLIC_TERMS_URL=https://example.test/terms PUBLIC_YANDEX_SUGGEST_API_KEY= bun run --cwd website e2e -- checkout-privacy.spec.ts --project=desktop` — legacy contact cleanup and no contact persistence through quote/payment redirects, with mocked API/payment responses.
+- `WEBSITE_E2E_PORT=4346 PUBLIC_API_URL=http://127.0.0.1:4346 PUBLIC_PRIVACY_URL=https://example.test/privacy PUBLIC_YANDEX_SUGGEST_API_KEY= bun run --cwd website e2e -- checkout-privacy.spec.ts --project=desktop` — legacy contact cleanup and no contact persistence through quote/payment redirects, with mocked API/payment responses.
 - `bun test packages/contracts/src/orders.test.ts backend/src/modules/orders/application backend/src/modules/orders/infrastructure/woocommerce-orders.test.ts backend/src/modules/orders/transport`
 - `bun test backend/src/modules/orders/application/payments-service.test.ts backend/src/env.test.ts` — payment amount/mode binding and YooKassa environment guard.
 - `bun run --cwd backend test:integration src/modules/orders/orders.integration.test.ts` — requires Docker.

@@ -8,7 +8,7 @@ const { compact = false } = Astro.props;
 
 <section class:list={["orbea-about", { "orbea-about-compact": compact }]} id="about" aria-labelledby="orbea-about-title">
   <div class="orbea-about-media">
-    <img src="/assets/images/about-nikass.png" alt="NIKASS — энергия там, где она нужна" loading="lazy" decoding="async" />
+    <img src="/assets/images/about-nikass.png" alt="NIKASS — энергия там, где она нужна" width="1770" height="889" loading="lazy" decoding="async" />
   </div>
 
   <div class="orbea-about-content">
@@ -80,8 +80,6 @@ const { compact = false } = Astro.props;
     display: block;
     width: 100%;
     height: auto;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
   }
 
   .orbea-about-content {
