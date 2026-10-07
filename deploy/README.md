@@ -14,6 +14,62 @@ ssh -i ~/.ssh/id_ed25519 root@93.188.186.9
 
 Приватный ключ остаётся на Mac и в репозиторий не копируется. До запуска `server-setup.sh` подключайтесь как `root`; после него для обычной работы используйте `deploy@93.188.186.9`.
 
+### Если VPN мешает подключению на Mac
+
+7 октября 2026 года SSH зависал с `Connection timed out during banner exchange`, а HTTPS — с таймаутом TLS. Соединение шло через VPN-интерфейс `utun4`; напрямую через Wi-Fi `en0` оба подключения работали. В этом случае проверка SSH-ключа ещё не началась. Прежняя ошибка `Permission denied` была связана со склеившимися строками ключей в `authorized_keys` и исправлялась отдельно.
+
+Проверьте прямое подключение, оставив VPN включённым:
+
+```bash
+ssh -i ~/.ssh/id_ed25519 \
+  -o 'ProxyCommand=/usr/bin/nc -b en0 -G 8 %h %p' \
+  -o BatchMode=yes -o ConnectTimeout=10 \
+  deploy@93.188.186.9 'printf "SSH OK\n"'
+
+curl --interface en0 --silent --show-error --output /dev/null \
+  --write-out 'HTTPS=%{http_code}\n' --connect-timeout 5 --max-time 10 \
+  https://93.188.186.9/
+```
+
+Ожидаемые результаты: `SSH OK` и `HTTPS=401` — сайт требует пароль. `en0` — активный Wi-Fi-интерфейс этого Mac; при другом подключении найдите имя интерфейса через `networksetup -listallhardwareports` и замените `en0` в командах. SSH остаётся зашифрованным, используется существующий ключ. Настройки VPN и сервера не меняются.
+
+Для **полного деплоя** нужны прямые подключения SSH, `rsync` и финальной HTTPS-проверки. Из корня проекта вместо обычной команды публикации выполните блок ниже. Требования чистой, синхронизированной с GitHub ветки `main` сохраняются; временные обёртки удаляются при завершении. Проверки локального API через SSH-туннель идут обычным способом.
+
+```bash
+bash <<'DIRECT_DEPLOY'
+set -Eeuo pipefail
+deploy_net_tmp=$(mktemp -d /tmp/nikass-deploy-net.XXXXXX)
+trap 'rm -f "$deploy_net_tmp/ssh" "$deploy_net_tmp/curl"; rmdir "$deploy_net_tmp"' EXIT
+
+cat > "$deploy_net_tmp/ssh" <<'SSH_WRAPPER'
+#!/bin/bash
+exec /usr/bin/ssh -i "$HOME/.ssh/id_ed25519" \
+  -o 'ProxyCommand=/usr/bin/nc -b en0 -G 8 %h %p' "$@"
+SSH_WRAPPER
+
+cat > "$deploy_net_tmp/curl" <<'CURL_WRAPPER'
+#!/bin/bash
+for arg in "$@"; do
+  case "$arg" in
+    https://93.188.186.9|https://93.188.186.9/*)
+      exec /usr/bin/curl --interface en0 "$@" ;;
+  esac
+done
+exec /usr/bin/curl "$@"
+CURL_WRAPPER
+
+chmod 700 "$deploy_net_tmp/ssh" "$deploy_net_tmp/curl"
+export PATH="$deploy_net_tmp:/opt/homebrew/bin:$HOME/.bun/bin:$PATH"
+export RSYNC_RSH="$deploy_net_tmp/ssh"
+DEPLOY_HOST=93.188.186.9 \
+SITE_URL=https://93.188.186.9 \
+PUBLIC_PRIVACY_URL=https://nikass.ru/privacy-policy \
+./deploy/deploy.sh publish
+DIRECT_DEPLOY
+```
+
+Этот способ проверен успешным деплоем релиза `01fe3f4`. Если прямое подключение тоже не работает, проверьте состояние VPS в Beget и доступность SSH/HTTPS; таймаут сам по себе не доказывает проблему с ключом.
+
 ## 1. Подготовка VPS
 
 Из корня репозитория скопируйте скрипты на сервер и выполните подготовку. `DEPLOY_PUBLIC_KEY` — **публичный** SSH-ключ компьютера, с которого будете выкладывать сайт.
