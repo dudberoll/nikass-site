@@ -1,16 +1,74 @@
-<aside class="cookie-notice" data-cookie-notice aria-label="Уведомление об использовании файлов cookie">
-  <p>Мы используем технические файлы cookie и аналогичные технологии для работы сайта. Нажимая «Согласен», вы даёте согласие на их использование в соответствии с <a href="/privacy-policy">Политикой конфиденциальности</a>.</p>
-  <button class="store-primary-button" type="button" data-cookie-consent>Согласен</button>
+---
+const metrikaId = "113580532";
+---
+
+<aside class="cookie-notice" data-cookie-notice data-metrika-id={metrikaId || undefined} aria-label="Настройки файлов cookie">
+  {metrikaId ? (
+    <>
+      <p>Сайт использует обязательные cookie. С вашего разрешения подключим Яндекс Метрику для подсчёта посещений и источников переходов. Подробнее — в <a href="/privacy-policy">Политике конфиденциальности</a>.</p>
+      <button class="store-primary-button" type="button" data-metrika-consent="accepted">Разрешить аналитику</button>
+      <button class="checkout-secondary-button" type="button" data-metrika-consent="rejected">Только обязательные</button>
+    </>
+  ) : (
+    <>
+      <p>Мы используем технические файлы cookie и аналогичные технологии для работы сайта. Нажимая «Согласен», вы даёте согласие на их использование в соответствии с <a href="/privacy-policy">Политикой конфиденциальности</a>.</p>
+      <button class="store-primary-button" type="button" data-cookie-consent>Согласен</button>
+    </>
+  )}
 </aside>
 
 <script is:inline>
   const cookieNotice = document.querySelector("[data-cookie-notice]");
   const cookieConsentName = "nikass_cookie_consent";
-  if (cookieNotice instanceof HTMLElement) {
-    cookieNotice.hidden = document.cookie.split(";").some((cookie) => cookie.trim() === `${cookieConsentName}=accepted`);
-    cookieNotice.querySelector("[data-cookie-consent]")?.addEventListener("click", () => {
-      document.cookie = `${cookieConsentName}=accepted; Max-Age=15552000; Path=/; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
-      cookieNotice.hidden = true;
+  const analyticsConsentName = "nikass_analytics_consent";
+  const readCookie = (name) => document.cookie.split(";").map((cookie) => cookie.trim()).find((cookie) => cookie.startsWith(`${name}=`))?.slice(name.length + 1);
+  const saveCookie = (name, value) => {
+    document.cookie = `${name}=${value}; Max-Age=15552000; Path=/; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
+  };
+  const loadMetrika = (counterId) => {
+    if (window.ym) return;
+    (function (m, e, t, r, i, k, a) {
+      m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments); };
+      m[i].l = 1 * new Date();
+      k = e.createElement(t);
+      a = e.getElementsByTagName(t)[0];
+      k.async = 1;
+      k.src = `${r}?id=${counterId}`;
+      a.parentNode.insertBefore(k, a);
+    })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    window.ym(counterId, "init", {
+      ssr: true,
+      webvisor: false,
+      clickmap: false,
+      referrer: document.referrer,
+      url: location.href,
+      accurateTrackBounce: true,
+      trackLinks: true,
     });
+  };
+
+  if (cookieNotice instanceof HTMLElement) {
+    const counterId = cookieNotice.dataset.metrikaId;
+    if (counterId) {
+      const analyticsConsent = readCookie(analyticsConsentName);
+      cookieNotice.hidden = analyticsConsent === "accepted" || analyticsConsent === "rejected";
+      if (analyticsConsent === "accepted") loadMetrika(counterId);
+      cookieNotice.querySelectorAll("[data-metrika-consent]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const choice = button.dataset.metrikaConsent;
+          if (choice !== "accepted" && choice !== "rejected") return;
+          saveCookie(cookieConsentName, "accepted");
+          saveCookie(analyticsConsentName, choice);
+          if (choice === "accepted") loadMetrika(counterId);
+          cookieNotice.hidden = true;
+        });
+      });
+    } else {
+      cookieNotice.hidden = readCookie(cookieConsentName) === "accepted";
+      cookieNotice.querySelector("[data-cookie-consent]")?.addEventListener("click", () => {
+        saveCookie(cookieConsentName, "accepted");
+        cookieNotice.hidden = true;
+      });
+    }
   }
 </script>
