@@ -1,4 +1,4 @@
-export type CdekTariff = { tariff_code: number; tariff_name: string; period_min: number; period_max: number; delivery_sum: number };
+export type CdekTariff = { tariff_code: number; tariff_name: string; tariff_description?: string; delivery_mode: number; period_min: number; period_max: number; delivery_sum: number };
 export type CdekOffice = { city_code: number; city: string; name: string; address: string; code: string; type: string; postal_code?: string };
 export type CdekAddressTarget = { address?: string; formatted?: string; name?: string };
 export type CdekWidgetInstance = {
