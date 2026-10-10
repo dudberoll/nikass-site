@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { cdekParcelsResponseSchema, cartReviewRequestSchema } from "@web-app-demo/contracts";
 import { loadCdekWidget, type CdekWidgetInstance, type CdekTariff } from "../lib/cdek-widget";
+import { selectCdekDeliveryOptions, type CdekDeliveryOption } from "../lib/cdek-tariffs";
 import { readCart, subscribeToCart, type CartLine } from "../lib/cart";
 import { formatYandexSuggestion, parseYandexAddress, yandexSuggestType, type YandexSuggestResult } from "../lib/yandex-address";
 
@@ -84,7 +85,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [parcels, setParcels] = useState<ReturnType<typeof cdekParcelsResponseSchema.parse> | null>(null);
   const [parcelsLoading, setParcelsLoading] = useState(false);
   const [parcelsError, setParcelsError] = useState("");
-  const [tariffs, setTariffs] = useState<CdekTariff[]>([]);
+  const [tariffs, setTariffs] = useState<CdekDeliveryOption[]>([]);
   const [selectedTariffCode, setSelectedTariffCode] = useState<number | null>(null);
   const [tariffsLoading, setTariffsLoading] = useState(false);
   const [tariffsError, setTariffsError] = useState("");
@@ -212,7 +213,8 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     void loadCdekWidget().then(() => {
       if (!active || !window.CDEKWidget) return;
       widget.current = new window.CDEKWidget({
-        from: "Москва", root: "cdek-sandbox-map-widget", apiKey: cdekYandexApiKey,
+        // The map chooses the point; delivery prices are calculated in step 3.
+        from: null, root: "cdek-sandbox-map-widget", apiKey: cdekYandexApiKey,
         servicePath, canChoose: true, popup: false,
         hideDeliveryOptions: { office: false, door: true }, goods: parcels?.canCalculate ? parcels.parcels : [], officesRaw: offices,
         defaultLocation: center, lang: "rus", currency: "RUB",
@@ -279,12 +281,10 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
         });
         const value: unknown = await response.json();
         if (!response.ok) throw new Error();
-        const modes = deliveryMode === "office" ? [2, 4] : [1, 3];
-        const nextTariffs = parseTariffs(value).filter((tariff) => modes.includes(tariff.delivery_mode))
-          .sort((a, b) => a.delivery_sum - b.delivery_sum || a.period_min - b.period_min);
+        const nextTariffs = selectCdekDeliveryOptions(parseTariffs(value), deliveryMode);
         if (controller.signal.aborted) return;
         setTariffs(nextTariffs);
-        setSelectedTariffCode((current) => nextTariffs.some((tariff) => tariff.tariff_code === current) ? current : nextTariffs[0]?.tariff_code ?? null);
+        setSelectedTariffCode((current) => nextTariffs.some((option) => option.tariff?.tariff_code === current) ? current : nextTariffs.find((option) => option.tariff)?.tariff?.tariff_code ?? null);
       } catch {
         if (!controller.signal.aborted) {
           setTariffs([]);
@@ -456,7 +456,8 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   }
 
   const visibleOffices = rankedOffices.slice(0, 5);
-  const selectedTariff = tariffs.find((tariff) => tariff.tariff_code === selectedTariffCode);
+  const selectedOption = tariffs.find((option) => option.tariff?.tariff_code === selectedTariffCode);
+  const selectedTariff = selectedOption?.tariff;
 
   function renderTariffState() {
     if (cartReadFailed) return <p className="checkout-error" role="alert">Не удалось прочитать корзину в этом браузере.</p>;
@@ -471,11 +472,11 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     if (tariffsLoading) return <p className="checkout-hint" role="status">Рассчитываем тарифы СДЭК…</p>;
     if (tariffsError) return <p className="checkout-error" role="alert">{tariffsError}</p>;
     if (tariffs.length === 0) return <p className="checkout-hint" role="status">Для этого адреса тарифы не найдены.</p>;
-    return <ul className="cdek-sandbox-tariffs" aria-live="polite">{tariffs.map((tariff) => <li key={tariff.tariff_code}>
-      <button className={`cdek-sandbox-tariff${selectedTariffCode === tariff.tariff_code ? " is-selected" : ""}`} type="button" aria-pressed={selectedTariffCode === tariff.tariff_code} onClick={() => setSelectedTariffCode(tariff.tariff_code)}>
-        <span className="cdek-sandbox-tariff-copy"><strong>{tariff.tariff_name}</strong>{tariff.tariff_description && <small>{tariff.tariff_description}</small>}</span>
-        <span className="cdek-sandbox-tariff-meta"><strong>{money(Math.round(tariff.delivery_sum * 100))}</strong><small>{tariff.period_min === tariff.period_max ? `${tariff.period_min} дн.` : `${tariff.period_min}–${tariff.period_max} дн.`}</small></span>
-        {selectedTariffCode === tariff.tariff_code && <span className="cdek-sandbox-selected-mark" aria-hidden="true">✓</span>}
+    return <ul className="cdek-sandbox-tariffs" aria-live="polite">{tariffs.map(({ label, tariff }) => <li key={label}>
+      <button className={`cdek-sandbox-tariff${tariff && selectedTariffCode === tariff.tariff_code ? " is-selected" : ""}`} type="button" disabled={!tariff} aria-pressed={Boolean(tariff && selectedTariffCode === tariff.tariff_code)} onClick={() => tariff && setSelectedTariffCode(tariff.tariff_code)}>
+        <span className="cdek-sandbox-tariff-copy"><strong>{label}</strong><small>{tariff ? deliveryMode === "office" ? "До пункта выдачи СДЭК" : "Курьером по адресу" : "Недоступна для этого адреса и корзины"}</small></span>
+        {tariff && <span className="cdek-sandbox-tariff-meta"><strong>{money(Math.round(tariff.delivery_sum * 100))}</strong><small>{tariff.period_min === tariff.period_max ? `${tariff.period_min} дн.` : `${tariff.period_min}–${tariff.period_max} дн.`}</small></span>}
+        {tariff && selectedTariffCode === tariff.tariff_code && <span className="cdek-sandbox-selected-mark" aria-hidden="true">✓</span>}
       </button>
     </li>)}</ul>;
   }
@@ -565,7 +566,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       <h2 id="cdek-tariff-title">3. Тариф</h2>
       <p className="cdek-sandbox-step-description">Выберите удобный вариант доставки. Стоимость рассчитывается по корзине.</p>
       {renderTariffState()}
-      {selectedTariff && <p className="cdek-sandbox-tariff-note" role="status">Выбрано: {selectedTariff.tariff_name} · {money(Math.round(selectedTariff.delivery_sum * 100))}. Доставка оплачивается отдельно.</p>}
+      {selectedTariff && <p className="cdek-sandbox-tariff-note" role="status">Выбрано: {selectedOption.label} · {money(Math.round(selectedTariff.delivery_sum * 100))}. Доставка оплачивается отдельно.</p>}
       <div className="checkout-actions cdek-sandbox-actions"><a className="store-primary-button" href="/checkout">Перейти к оплате</a></div>
     </section>
   </div>;

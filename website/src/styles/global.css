@@ -761,7 +761,6 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-results h3 { margin: 0 0 10px; font-size: 16px; font-weight: 500; }
 .cdek-sandbox-results .checkout-hint { margin: 0 0 12px; }
 .cdek-sandbox-results ul, .cdek-sandbox-tariffs { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.cdek-sandbox-tariffs { max-height: 480px; overflow: auto; }
 .cdek-sandbox-point { display: grid; width: 100%; gap: 3px; padding: 8px 10px; border: 1px solid #deded9; border-radius: 14px; background: #fff; color: #111; text-align: left; cursor: pointer; }
 .cdek-sandbox-point:hover, .cdek-sandbox-point.is-selected { border-color: #bc1c28; }
 .cdek-sandbox-point strong { font-size: 13px; font-weight: 600; white-space: nowrap; }
@@ -774,6 +773,7 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-map-pin { display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid #d4d4ce; border-radius: 50%; background: #fff; color: #111; font-size: 30px; }
 .cdek-sandbox-tariff { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #deded9; border-radius: 16px; background: #fff; color: #111; text-align: left; }
 .cdek-sandbox-tariff.is-selected { border: 2px solid #bc1c28; padding: 13px 15px; background: #fff; }
+.cdek-sandbox-tariff:disabled { color: #666; background: #f7f7f5; cursor: not-allowed; }
 .cdek-sandbox-tariff-copy, .cdek-sandbox-tariff-meta { display: grid; min-width: 0; gap: 4px; }
 .cdek-sandbox-tariff-copy strong { font-size: 15px; font-weight: 500; }
 .cdek-sandbox-tariff-copy small, .cdek-sandbox-tariff-meta small { color: #666; font-size: 13px; line-height: 1.35; }

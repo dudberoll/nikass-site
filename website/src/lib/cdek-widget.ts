@@ -10,7 +10,7 @@ export type CdekWidgetInstance = {
 declare global {
   interface Window {
     CDEKWidget?: new (config: {
-      from: string;
+      from: string | null;
       root: string;
       apiKey: string;
       servicePath: string;
