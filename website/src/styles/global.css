@@ -677,8 +677,6 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .checkout-steps .is-active { color: #111; font-weight: 600; }
 .checkout-steps .is-active span, .checkout-steps .is-complete span { border-color: #111; background: #111; color: #fff; }
 .checkout-form legend, .checkout-result h2 { margin: 0 0 6px; font-size: 24px; font-weight: 500; letter-spacing: -.03em; }
-.checkout-optional-fields { display: grid; gap: 12px; padding-top: 12px; border-top: 1px solid #deded9; }
-.checkout-optional-fields summary { color: #111; font-size: 14px; font-weight: 500; cursor: pointer; }
 .checkout-form fieldset:has(#checkout-step-1-title) legend { margin-bottom: 11px; }
 .checkout-form fieldset:has(#checkout-step-2-title) legend { margin: 8px 0 12px; }
 .checkout-form legend:focus { outline: 0; }
