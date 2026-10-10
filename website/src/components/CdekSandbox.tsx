@@ -534,7 +534,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
         {error && <p className="checkout-error" role="alert">{error}</p>}
       </form>
 
-      {deliveryMode === "office" ? <div className="cdek-sandbox-address-grid">
+      {deliveryMode === "office" ? <div className={`cdek-sandbox-address-grid${resultsAddress && offices.length > 0 ? " is-expanded" : ""}`}>
         <section className="cdek-sandbox-map-panel" aria-labelledby="cdek-map-title">
           <div className="cdek-sandbox-map-frame">
             <div className="cdek-sandbox-map" id="cdek-sandbox-map-widget" aria-label="Интерактивная карта пунктов выдачи СДЭК" />
