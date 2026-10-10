@@ -778,6 +778,7 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-map-placeholder strong { max-width: 360px; color: #222; font-size: 15px; font-weight: 500; }
 .cdek-sandbox-map-placeholder span:last-child { max-width: 390px; font-size: 13px; line-height: 1.45; }
 .cdek-sandbox-map-pin { display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid #d4d4ce; border-radius: 50%; background: #fff; color: #111; font-size: 30px; }
+.cdek-sandbox-courier-address { display: grid; gap: 8px; }
 .cdek-sandbox-courier-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .cdek-sandbox-tariff { display: grid; width: 100%; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #deded9; border-radius: 16px; background: #fff; color: #111; text-align: left; }
 .cdek-sandbox-tariff.is-selected { border: 2px solid #bc1c28; padding: 13px 15px; background: #fff; }
@@ -787,7 +788,7 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-tariff-meta { justify-items: end; white-space: nowrap; }
 .cdek-sandbox-tariff-meta strong { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cdek-sandbox-tariff-note { margin: 12px 0 0; color: #666; font-size: 13px; line-height: 1.4; }
-@media (max-width: 1400px) { .cdek-sandbox-address-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1270px) { .cdek-sandbox-address-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) { .cdek-sandbox-delivery-options, .cdek-sandbox-courier-form { grid-template-columns: minmax(0, 1fr); } .cdek-sandbox-delivery-option { min-height: 84px; } .cdek-sandbox-panel { padding: 16px; } .cdek-sandbox-map-frame { min-height: min(44svh, 340px); } .cdek-sandbox-map { height: min(44svh, 340px); } .cdek-sandbox-tariff { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; } .cdek-sandbox-tariff .cdek-sandbox-selected-mark { grid-column: 2; grid-row: 1; } .cdek-sandbox-tariff-meta { grid-column: 1; grid-row: 2; justify-items: start; } }
 .checkout-result > p:not(.store-eyebrow):not(.checkout-error) { max-width: 620px; color: #555; line-height: 1.5; }
 .checkout-total-list { display: grid; gap: 0; margin: 18px 0 20px; padding: 0; list-style: none; }

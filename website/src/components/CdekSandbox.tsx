@@ -5,7 +5,7 @@ import { loadCdekWidget, type CdekWidgetInstance, type CdekTariff } from "../lib
 import { readCart, subscribeToCart, type CartLine } from "../lib/cart";
 import { formatYandexSuggestion, parseYandexAddress, yandexSuggestType, type YandexSuggestResult } from "../lib/yandex-address";
 
-type Address = { region?: string; city?: string; street?: string; house?: string };
+type Address = { region?: string; city?: string; street?: string; house?: string; apartment?: string; postcode?: string };
 type DeliveryMode = "office" | "courier";
 type CdekCity = { code?: number | string; city?: string; full_name?: string };
 type CdekPoint = {
@@ -18,6 +18,8 @@ type CdekPoint = {
   location?: { city?: string; address?: string; address_full?: string; longitude?: number; latitude?: number };
 };
 type Props = { apiBase: string; cdekYandexApiKey: string; yandexGeocoderApiKey: string; yandexSuggestApiKey: string };
+const courierAddressFields = [["house", "Дом / корпус", "text", "address-line2", 30], ["apartment", "Квартира / офис (необязательно)", "text", "address-line3", 30], ["postcode", "Почтовый индекс", "text", "postal-code", 6]] as const;
+const manualCourierAddressFields = [["region", "Регион / область", "text", "address-level1", 100], ["city", "Город", "text", "address-level2", 100], ["street", "Улица", "text", "address-line1", 150]] as const;
 
 function records<T>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -69,6 +71,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [loading, setLoading] = useState(false);
   const [offices, setOffices] = useState<CdekPoint[]>([]);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("office");
+  const [manualCourierAddress, setManualCourierAddress] = useState(!yandexSuggestApiKey);
   const [selectedCode, setSelectedCode] = useState("");
   const [error, setError] = useState("");
   const [apiMessage, setApiMessage] = useState("");
@@ -86,6 +89,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [tariffsLoading, setTariffsLoading] = useState(false);
   const [tariffsError, setTariffsError] = useState("");
   const widget = useRef<CdekWidgetInstance | null>(null);
+  const officeSearchController = useRef<AbortController | null>(null);
   const initialSearchStarted = useRef(false);
   const servicePath = `${apiBase}/api/orders/cdek-widget`;
   const rankedOffices = offices.map((point) => ({ ...point, distance: distanceToOffice(point, mapCoordinates) }))
@@ -99,6 +103,8 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     updateCart(readCart());
     return subscribeToCart(updateCart);
   }, []);
+
+  useEffect(() => () => officeSearchController.current?.abort(), []);
 
   useEffect(() => {
     let active = true;
@@ -294,6 +300,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   }, [address?.city, address?.street, address?.house, apiEnabled, deliveryMode, offices, parcels, selectedAddressText, selectedCode, servicePath]);
 
   function updateAddressQuery(value: string) {
+    cancelOfficeSearch();
     setAddressQuery(value);
     setAddress(null);
     setSelectedAddressText("");
@@ -305,6 +312,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
 
   function chooseDeliveryMode(mode: DeliveryMode) {
     if (mode === deliveryMode) return;
+    cancelOfficeSearch();
     setDeliveryMode(mode);
     setSelectedCode("");
     setError("");
@@ -332,11 +340,28 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     else setResultsAddress("");
   }
 
-  function updateCourierAddress(field: "city" | "street" | "house", value: string) {
+  function updateCourierAddress(field: keyof Address, value: string) {
     setAddress((current) => ({ ...current, [field]: value }));
-    setAddressQuery("");
-    setSelectedAddressText("");
+    if (["region", "city", "street", "house"].includes(field)) {
+      setAddressQuery("");
+      setSelectedAddressText("");
+    }
     setSuggestions([]);
+  }
+
+  function cancelOfficeSearch() {
+    officeSearchController.current?.abort();
+    officeSearchController.current = null;
+    setLoading(false);
+  }
+
+  function toggleManualCourierAddress() {
+    if (manualCourierAddress) {
+      const searchText = [address?.city, address?.street, address?.house].filter(Boolean).join(", ");
+      setAddressQuery(searchText);
+      setSelectedAddressText(searchText);
+    }
+    setManualCourierAddress(!manualCourierAddress);
   }
 
   function submitAddress(event: { preventDefault(): void }) {
@@ -354,6 +379,9 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     const cityName = searchAddress.city?.trim();
     if (!cityName) { setError("Выберите адрес с указанным городом."); return; }
     if (!apiEnabled) { setError("Проверьте настройки тестового API СДЭК в backend/.env."); return; }
+    officeSearchController.current?.abort();
+    const controller = new AbortController();
+    officeSearchController.current = controller;
     setLoading(true);
     setError("");
     setSelectedCode("");
@@ -361,7 +389,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     try {
       const cityUrl = new URL(servicePath);
       cityUrl.search = new URLSearchParams({ action: "cities", name: cityName, country_code: "RU" }).toString();
-      const cityResponse = await fetch(cityUrl);
+      const cityResponse = await fetch(cityUrl, { signal: controller.signal });
       if (!cityResponse.ok) throw new Error(`СДЭК не нашёл город (HTTP ${cityResponse.status}).`);
       const cityCandidates = records<CdekCity>(await cityResponse.json());
       const requestedCity = normalizeCityName(cityName);
@@ -374,7 +402,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       const officesUrl = new URL(servicePath);
       const params = new URLSearchParams({ action: "offices", city_code: String(cityCode), type: "PVZ", lang: "rus" });
       officesUrl.search = params.toString();
-      const officeResponse = await fetch(officesUrl);
+      const officeResponse = await fetch(officesUrl, { signal: controller.signal });
       if (!officeResponse.ok) throw new Error(`СДЭК не вернул пункты выдачи (HTTP ${officeResponse.status}).`);
       const points = records<CdekPoint>(await officeResponse.json());
       let geocodeNote = "";
@@ -384,7 +412,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
         try {
           const geocoderUrl = new URL("https://geocode-maps.yandex.ru/v1/");
           geocoderUrl.search = new URLSearchParams({ apikey: yandexGeocoderApiKey, geocode: resolvedLocation, format: "json", results: "1" }).toString();
-          const geocoderResponse = await fetch(geocoderUrl);
+          const geocoderResponse = await fetch(geocoderUrl, { signal: controller.signal });
           if (!geocoderResponse.ok) throw new Error(`HTTP ${geocoderResponse.status}`);
           const geocoderData = await geocoderResponse.json() as { response?: { GeoObjectCollection?: { featureMember?: Array<{ GeoObject?: { Point?: { pos?: string }; metaDataProperty?: { GeocoderMetaData?: { text?: string; kind?: string; precision?: string } } } }> } } };
           const geoObject = geocoderData.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
@@ -399,10 +427,12 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
           if (searchAddress.street && !searchAddress.house && metadata?.precision !== "exact") geocodeNote += " Указана улица без дома, поэтому расстояния ориентировочные.";
           if (searchAddress.house && metadata?.precision !== "exact") geocodeNote += " Дом определён приблизительно.";
         } catch (cause) {
+          if (controller.signal.aborted) return;
           const reason = cause instanceof Error && cause.message ? ` (${cause.message})` : "";
           geocodeNote = ` Не удалось определить адрес${reason}. Показаны пункты города без сортировки по расстоянию.`;
         }
       }
+      if (controller.signal.aborted) return;
       setOffices(points);
       setMapCoordinates(coordinates);
       setResultsAddress(initial ? "" : displayAddress);
@@ -411,9 +441,13 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
         : `Найдено ПВЗ: ${points.length}.${geocodeNote}`);
       setMapLocation(resolvedLocation);
     } catch (cause) {
+      if (controller.signal.aborted) return;
       setError(cause instanceof Error ? cause.message : "Не удалось получить пункты выдачи СДЭК.");
     } finally {
-      setLoading(false);
+      if (officeSearchController.current === controller) {
+        officeSearchController.current = null;
+        setLoading(false);
+      }
     }
   }
 
@@ -465,17 +499,18 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       <h2 id="cdek-address-title">2. Адрес</h2>
       <p className="cdek-sandbox-step-description">{deliveryMode === "office" ? "Выберите пункт выдачи на карте или найдите ближайшие по адресу." : "Введите адрес, куда привезёт курьер."}</p>
       <form className="cdek-sandbox-form" onSubmit={submitAddress}>
-        <div className="checkout-address-suggest">
+        {(deliveryMode === "office" || !manualCourierAddress) && <div className="checkout-address-suggest">
           <label className="cdek-sandbox-field cdek-sandbox-address-field" htmlFor="cdek-address-search">
             <span>{deliveryMode === "office" ? "Адрес или улица" : "Поиск адреса"}</span>
             <input id="cdek-address-search" type="text" autoComplete="street-address" disabled={loading || apiEnabled === null} value={addressQuery} placeholder={deliveryMode === "office" ? "Например, Азовская улица, Москва" : "Москва, улица и дом"} aria-describedby="cdek-address-help" onChange={(event) => updateAddressQuery(event.currentTarget.value)} onBlur={() => window.setTimeout(() => setSuggestions([]), 120)} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} />
           </label>
           {suggestions.length > 0 && <ul className="checkout-address-suggest-list" id="cdek-address-suggestions">{suggestions.map((suggestion, index) => <li key={`${formatYandexSuggestion(suggestion)}-${index}`}><button className="checkout-address-suggest-option" type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => selectAddress(suggestion)}><strong>{suggestion.title?.text || formatYandexSuggestion(suggestion)}</strong>{suggestion.subtitle?.text && <span>{suggestion.subtitle.text}</span>}</button></li>)}</ul>}
-        </div>
-        <p className="checkout-hint" id="cdek-address-help">{deliveryMode === "office" ? "Выберите подсказку — карта и ближайшие пункты обновятся." : "Выберите подсказку или заполните город, улицу и дом ниже."}</p>
+        </div>}
+        <p className="checkout-hint" id="cdek-address-help">{deliveryMode === "office" ? "Выберите подсказку — карта и ближайшие пункты обновятся." : manualCourierAddress ? "Заполните город, улицу и дом для расчёта доставки." : "Выберите подсказку, проверьте дом и при необходимости добавьте квартиру и индекс."}</p>
         {suggestionsLoading && <p className="checkout-hint" role="status">Ищем адрес…</p>}
         {suggestionError && <p className="checkout-error" role="alert">{suggestionError}</p>}
-        {!yandexSuggestApiKey && <p className="checkout-error" role="alert">Не настроен ключ Яндекс Геосаджеста для подсказок адреса.</p>}
+        {!yandexSuggestApiKey && deliveryMode === "office" && <p className="checkout-error" role="alert">Не настроен ключ Яндекс Геосаджеста для подсказок адреса.</p>}
+        {!yandexSuggestApiKey && deliveryMode === "courier" && !manualCourierAddress && <p className="checkout-hint" role="status">Подсказки выключены — введите адрес вручную.</p>}
         {loading && <p className="checkout-hint" role="status">Ищем ближайшие пункты выдачи…</p>}
         {apiMessage && deliveryMode === "office" && <p className="checkout-hint" role="status">{apiMessage}</p>}
         {error && <p className="checkout-error" role="alert">{error}</p>}
@@ -509,11 +544,20 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
           </> : resultsAddress ? <p>Для выбранного адреса пункты выдачи не найдены.</p> : <p className="checkout-hint">Введите улицу выше — покажем ближайшие пункты.</p>}
           {selectedCode && <p className="checkout-hint">Выбран пункт выдачи: {selectedCode}.</p>}
         </aside>
-      </div> : <div className="cdek-sandbox-courier-form" aria-label="Адрес доставки курьером">
-        {(["city", "street", "house"] as const).map((field) => <label className="cdek-sandbox-field" key={field} htmlFor={`cdek-address-${field}`}>
-          <span>{{ city: "Город", street: "Улица", house: "Дом" }[field]}</span>
-          <input id={`cdek-address-${field}`} type="text" autoComplete={{ city: "address-level2", street: "address-line1", house: "address-line2" }[field]} required value={address?.[field] ?? ""} placeholder={{ city: "Москва", street: "Например, Азовская", house: "24" }[field]} onChange={(event) => updateCourierAddress(field, event.currentTarget.value)} />
-        </label>)}
+      </div> : <div className="cdek-sandbox-courier-address" aria-label="Адрес доставки курьером">
+        <div className="cdek-sandbox-courier-form">
+          {courierAddressFields.map(([field, label, type, autoComplete, maxLength]) => <label className="cdek-sandbox-field" key={field} htmlFor={`cdek-address-${field}`}>
+            <span>{label}</span>
+            <input id={`cdek-address-${field}`} type={type} inputMode={field === "postcode" ? "numeric" : undefined} autoComplete={autoComplete} maxLength={maxLength} required={field === "house"} value={address?.[field] ?? ""} placeholder={label} onChange={(event) => updateCourierAddress(field, event.currentTarget.value)} />
+          </label>)}
+        </div>
+        <button className="checkout-text-button" type="button" aria-expanded={manualCourierAddress} aria-controls="cdek-manual-address-fields" onClick={toggleManualCourierAddress}>{manualCourierAddress ? "Скрыть ручной ввод" : "Ввести адрес вручную"}</button>
+        <div className="cdek-sandbox-courier-form" id="cdek-manual-address-fields" hidden={!manualCourierAddress}>
+          {manualCourierAddressFields.map(([field, label, type, autoComplete, maxLength]) => <label className="cdek-sandbox-field" key={field} htmlFor={`cdek-address-${field}`}>
+            <span>{label}</span>
+            <input id={`cdek-address-${field}`} type={type} autoComplete={autoComplete} maxLength={maxLength} required={manualCourierAddress} value={address?.[field] ?? ""} placeholder={label} onChange={(event) => updateCourierAddress(field, event.currentTarget.value)} />
+          </label>)}
+        </div>
       </div>}
     </section>
 
