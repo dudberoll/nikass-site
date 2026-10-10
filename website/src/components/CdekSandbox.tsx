@@ -70,7 +70,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [loading, setLoading] = useState(false);
   const [offices, setOffices] = useState<CdekPoint[]>([]);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("office");
-  const [manualCourierAddress, setManualCourierAddress] = useState(!yandexSuggestApiKey);
+  const [manualCourierAddress, setManualCourierAddress] = useState(false);
   const [selectedCode, setSelectedCode] = useState("");
   const [error, setError] = useState("");
   const [apiMessage, setApiMessage] = useState("");
@@ -495,13 +495,31 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       <p className="cdek-sandbox-step-description">{deliveryMode === "office" ? "Выберите пункт выдачи на карте или найдите ближайшие по адресу." : "Введите адрес, куда привезёт курьер."}</p>
       <form className="cdek-sandbox-form" onSubmit={submitAddress}>
         {(deliveryMode === "office" || !manualCourierAddress) && <div className="checkout-address-suggest">
-          <label className="cdek-sandbox-field cdek-sandbox-address-field" htmlFor="cdek-address-search">
-            <span>{deliveryMode === "office" ? "Адрес или улица" : "Поиск адреса"}</span>
-            <input id="cdek-address-search" type="text" autoComplete="street-address" disabled={loading || apiEnabled === null} value={addressQuery} placeholder={deliveryMode === "office" ? "Например, Азовская улица, Москва" : "Москва, улица и дом"} aria-describedby="cdek-address-help" onChange={(event) => updateAddressQuery(event.currentTarget.value)} onBlur={() => window.setTimeout(() => setSuggestions([]), 120)} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} />
-          </label>
+          <div className="checkout-field-control">
+            <input className="cdek-sandbox-address-input" id="cdek-address-search" type="text" autoComplete="shipping street-address" aria-label="Адрес" disabled={loading || apiEnabled === null} value={addressQuery} placeholder={deliveryMode === "office" ? "Например, Азовская улица, Москва" : "Москва, Лесная улица, 3"} aria-describedby={deliveryMode === "office" ? "cdek-address-help" : undefined} onChange={(event) => updateAddressQuery(event.currentTarget.value)} onBlur={() => window.setTimeout(() => setSuggestions([]), 120)} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} />
+          </div>
           {suggestions.length > 0 && <ul className="checkout-address-suggest-list" id="cdek-address-suggestions">{suggestions.map((suggestion, index) => <li key={`${formatYandexSuggestion(suggestion)}-${index}`}><button className="checkout-address-suggest-option" type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => selectAddress(suggestion)}><strong>{suggestion.title?.text || formatYandexSuggestion(suggestion)}</strong>{suggestion.subtitle?.text && <span>{suggestion.subtitle.text}</span>}</button></li>)}</ul>}
         </div>}
-        <p className="checkout-hint" id="cdek-address-help">{deliveryMode === "office" ? "Выберите подсказку — карта и ближайшие пункты обновятся." : manualCourierAddress ? "Заполните город, улицу и дом для расчёта доставки." : "Выберите подсказку, проверьте дом и при необходимости добавьте квартиру и индекс."}</p>
+        {deliveryMode === "office" && <p className="checkout-hint" id="cdek-address-help">Выберите подсказку — карта и ближайшие пункты обновятся.</p>}
+        {deliveryMode === "courier" && <div className="checkout-fields checkout-fields-address">
+          {courierAddressFields.map(([field, label, type, autoComplete, maxLength]) => <div className="checkout-field" key={field}>
+            <label className="sr-only" htmlFor={`cdek-address-${field}`}>{label}</label>
+            <div className="checkout-field-control">
+              <input className="cdek-sandbox-address-input" id={`cdek-address-${field}`} name={field} type={type} inputMode={field === "postcode" ? "numeric" : undefined} autoComplete={`shipping ${autoComplete}`} maxLength={maxLength} required={field === "house"} value={address?.[field] ?? ""} placeholder={label} onChange={(event) => updateCourierAddress(field, event.currentTarget.value)} />
+            </div>
+          </div>)}
+        </div>}
+        {deliveryMode === "courier" && <>
+          <button className="checkout-text-button" type="button" aria-expanded={manualCourierAddress} aria-controls="cdek-manual-address-fields" onClick={toggleManualCourierAddress}>{manualCourierAddress ? "Скрыть ручной ввод" : "Ввести адрес вручную"}</button>
+          <div className="checkout-fields checkout-manual-address" id="cdek-manual-address-fields" hidden={!manualCourierAddress}>
+            {manualCourierAddressFields.map(([field, label, type, autoComplete, maxLength]) => <div className="checkout-field" key={field}>
+              <label className="sr-only" htmlFor={`cdek-address-${field}`}>{label}</label>
+              <div className="checkout-field-control">
+                <input className="cdek-sandbox-address-input" id={`cdek-address-${field}`} name={field} type={type} autoComplete={`shipping ${autoComplete}`} maxLength={maxLength} required={manualCourierAddress} value={address?.[field] ?? ""} placeholder={label} onChange={(event) => updateCourierAddress(field, event.currentTarget.value)} />
+              </div>
+            </div>)}
+          </div>
+        </>}
         {suggestionsLoading && <p className="checkout-hint" role="status">Ищем адрес…</p>}
         {suggestionError && <p className="checkout-error" role="alert">{suggestionError}</p>}
         {!yandexSuggestApiKey && deliveryMode === "office" && <p className="checkout-error" role="alert">Не настроен ключ Яндекс Геосаджеста для подсказок адреса.</p>}
@@ -536,21 +554,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
             </li>)}</ul>
           </> : resultsAddress ? <p>Для выбранного адреса пункты выдачи не найдены.</p> : <p className="checkout-hint">Введите улицу выше — покажем ближайшие пункты.</p>}
         </aside>
-      </div> : <div className="cdek-sandbox-courier-address" aria-label="Адрес доставки курьером">
-        <div className="cdek-sandbox-courier-form">
-          {courierAddressFields.map(([field, label, type, autoComplete, maxLength]) => <label className="cdek-sandbox-field" key={field} htmlFor={`cdek-address-${field}`}>
-            <span>{label}</span>
-            <input id={`cdek-address-${field}`} type={type} inputMode={field === "postcode" ? "numeric" : undefined} autoComplete={autoComplete} maxLength={maxLength} required={field === "house"} value={address?.[field] ?? ""} placeholder={label} onChange={(event) => updateCourierAddress(field, event.currentTarget.value)} />
-          </label>)}
-        </div>
-        <button className="checkout-text-button" type="button" aria-expanded={manualCourierAddress} aria-controls="cdek-manual-address-fields" onClick={toggleManualCourierAddress}>{manualCourierAddress ? "Скрыть ручной ввод" : "Ввести адрес вручную"}</button>
-        <div className="cdek-sandbox-courier-form" id="cdek-manual-address-fields" hidden={!manualCourierAddress}>
-          {manualCourierAddressFields.map(([field, label, type, autoComplete, maxLength]) => <label className="cdek-sandbox-field" key={field} htmlFor={`cdek-address-${field}`}>
-            <span>{label}</span>
-            <input id={`cdek-address-${field}`} type={type} autoComplete={autoComplete} maxLength={maxLength} required={manualCourierAddress} value={address?.[field] ?? ""} placeholder={label} onChange={(event) => updateCourierAddress(field, event.currentTarget.value)} />
-          </label>)}
-        </div>
-      </div>}
+      </div> : null}
     </section>
 
     <section className="cdek-sandbox-panel" aria-labelledby="cdek-tariff-title">
