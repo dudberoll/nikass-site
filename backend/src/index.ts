@@ -12,6 +12,7 @@ const app = createApp({
 })
 
 const server = Bun.serve({
+  hostname: runtime.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1',
   port: runtime.env.PORT,
   fetch: app.fetch,
 })
