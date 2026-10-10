@@ -3,7 +3,7 @@ import { expect, test } from 'bun:test'
 import { createChatCompletionsProvider } from './chat-completions-provider'
 
 test('sends the system prompt and conversation to a chat-completions endpoint', async () => {
-  let request: { model: string; messages: unknown[] } | undefined
+  let request: { model: string; max_tokens: number; messages: unknown[] } | undefined
   const provider = createChatCompletionsProvider({
     apiKey: 'test-key',
     apiUrl: 'https://ai.example.test/v1/chat/completions',
