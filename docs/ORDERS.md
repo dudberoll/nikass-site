@@ -108,7 +108,10 @@ The checkout loads the official CDEK 3.11.1 widget and sends its requests throug
 the backend proxy, which keeps the CDEK account and password off the browser.
 The local `/cdek` playground can be opened directly from the site header to enter
 an address and query test CDEK cities and pickup points without starting checkout.
-Its map area remains visible as a placeholder when the Yandex Maps key is absent.
+It uses the current browser cart to load product parcel sizes from WooCommerce;
+after choosing a pickup point and tariff, the estimated delivery cost and period
+are shown on the page. Its map area remains visible as a placeholder when the
+Yandex Maps key is absent, but a tariff cannot be selected without the map.
 Set `CDEK_ACCOUNT` and `CDEK_PASSWORD` in `backend/.env`. The playground reads
 separate `PUBLIC_CDEK_SANDBOX_YANDEX_API_KEY` (JavaScript API) and
 `PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY` (HTTP Geocoder) values from `website/.env`;
@@ -118,7 +121,9 @@ requires an active network connection and working CDEK/Yandex access.
 
 `POST /api/orders/cdek-parcels` reads each selected WooCommerce product's weight
 and dimensions and the shop's configured units, converting them to grams and
-centimeters. It returns no parcels for calculation unless every cart line has
+centimeters for the CDEK widget. With WooCommerce configured for kilograms and
+centimeters, weight is multiplied by 1,000 and dimensions stay unchanged. It
+returns no parcels for calculation unless every cart line has
 positive measurements; quantities are represented as separate parcels and more
 than 100 parcels are not quoted. The checkout does not guess missing product
 measurements. It still permits PVZ selection, while the manager confirms delivery

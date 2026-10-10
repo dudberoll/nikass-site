@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
-import { loadCdekWidget, type CdekWidgetInstance } from "../lib/cdek-widget";
+import { cdekParcelsResponseSchema, cartReviewRequestSchema } from "@web-app-demo/contracts";
+import { loadCdekWidget, type CdekWidgetInstance, type CdekTariff } from "../lib/cdek-widget";
+import { readCart, subscribeToCart, type CartLine } from "../lib/cart";
 import { formatYandexSuggestion, parseYandexAddress, yandexSuggestType, type YandexSuggestResult } from "../lib/yandex-address";
 
 type Address = { city: string; street?: string; house?: string };
@@ -13,6 +15,7 @@ type CdekPoint = {
   city?: string;
   location?: { city?: string; address?: string; address_full?: string; longitude?: number; latitude?: number };
 };
+type ShippingEstimate = { tariff: CdekTariff; amountMinor: number };
 type Props = { apiBase: string; cdekYandexApiKey: string; yandexGeocoderApiKey: string; yandexSuggestApiKey: string };
 
 function records<T>(value: unknown): T[] {
@@ -38,6 +41,8 @@ function distanceToOffice(point: CdekPoint, origin: [number, number] | null): nu
   return 6_371_000 * 2 * Math.asin(Math.sqrt(Math.min(1, a)));
 }
 
+const money = (minor: number) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB" }).format(minor / 100);
+
 export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderApiKey, yandexSuggestApiKey }: Props) {
   const [addressQuery, setAddressQuery] = useState("");
   const [address, setAddress] = useState<Address | null>(null);
@@ -56,6 +61,12 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [mapCoordinates, setMapCoordinates] = useState<[number, number] | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState("");
+  const [cartLines, setCartLines] = useState<CartLine[]>([]);
+  const [cartReadFailed, setCartReadFailed] = useState(false);
+  const [parcels, setParcels] = useState<ReturnType<typeof cdekParcelsResponseSchema.parse> | null>(null);
+  const [parcelsLoading, setParcelsLoading] = useState(false);
+  const [parcelsError, setParcelsError] = useState("");
+  const [shippingEstimate, setShippingEstimate] = useState<ShippingEstimate | null>(null);
   const widget = useRef<CdekWidgetInstance | null>(null);
   const mapSection = useRef<HTMLElement | null>(null);
   const addressSection = useRef<HTMLElement | null>(null);
@@ -63,6 +74,15 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const servicePath = `${apiBase}/api/orders/cdek-widget`;
   const rankedOffices = offices.map((point) => ({ ...point, distance: distanceToOffice(point, mapCoordinates) }))
     .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+
+  useEffect(() => {
+    const updateCart = (state: ReturnType<typeof readCart>) => {
+      setCartLines(state.items);
+      setCartReadFailed(Boolean(state.error));
+    };
+    updateCart(readCart());
+    return subscribeToCart(updateCart);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -73,6 +93,45 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     }).catch(() => { if (active) setApiEnabled(false); });
     return () => { active = false; };
   }, [servicePath]);
+
+  useEffect(() => {
+    setShippingEstimate(null);
+    if (!apiEnabled || cartReadFailed || cartLines.length === 0) {
+      setParcels(null);
+      setParcelsLoading(false);
+      setParcelsError("");
+      return;
+    }
+
+    const cart = cartReviewRequestSchema.safeParse({ version: 1, items: cartLines.map(({ productSlug, variantSku, quantity }) => ({ slug: productSlug, sku: variantSku, quantity })) });
+    if (!cart.success) {
+      setParcels(null);
+      setParcelsLoading(false);
+      setParcelsError("Не удалось прочитать корзину для расчёта доставки.");
+      return;
+    }
+
+    let active = true;
+    setParcels(null);
+    setParcelsLoading(true);
+    setParcelsError("");
+    void fetch(`${apiBase}/api/orders/cdek-parcels`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cart: cart.data }),
+    }).then(async (response) => {
+      const value: unknown = await response.json();
+      if (!response.ok) throw new Error();
+      return cdekParcelsResponseSchema.parse(value);
+    }).then((value) => {
+      if (active) setParcels(value);
+    }).catch(() => {
+      if (active) setParcelsError("Не удалось получить вес и габариты товаров из WooCommerce.");
+    }).finally(() => {
+      if (active) setParcelsLoading(false);
+    });
+    return () => { active = false; };
+  }, [apiBase, apiEnabled, cartLines, cartReadFailed]);
 
   useEffect(() => {
     if (!apiEnabled || initialSearchStarted.current) return;
@@ -137,8 +196,8 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       if (!active || !window.CDEKWidget) return;
       widget.current = new window.CDEKWidget({
         from: "Москва", root: "cdek-sandbox-map-widget", apiKey: cdekYandexApiKey,
-        servicePath, canChoose: false, popup: false,
-        hideDeliveryOptions: { office: false, door: true }, goods: [], officesRaw: offices,
+        servicePath, canChoose: true, popup: false,
+        hideDeliveryOptions: { office: false, door: true }, goods: parcels?.canCalculate ? parcels.parcels : [], officesRaw: offices,
         defaultLocation: center, lang: "rus", currency: "RUB",
         onReady: () => {
           if (!active) return;
@@ -149,14 +208,18 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
           }
         },
         onChoose: (type, _tariff, target) => {
-          if (type === "office" && "city_code" in target) setSelectedCode(target.code);
+          if (type !== "office" || !("city_code" in target)) return;
+          setSelectedCode(target.code);
+          setShippingEstimate(_tariff && Number.isFinite(_tariff.delivery_sum) && _tariff.delivery_sum >= 0
+            ? { tariff: _tariff, amountMinor: Math.round(_tariff.delivery_sum * 100) }
+            : null);
         },
       });
     }).catch((cause: unknown) => {
       if (active) setMapError(cause instanceof Error ? cause.message : "Карта СДЭК не загрузилась.");
     });
     return () => { active = false; widget.current?.destroy(); widget.current = null; };
-  }, [apiEnabled, cdekYandexApiKey, mapCoordinates, mapLocation, offices, servicePath, yandexGeocoderApiKey]);
+  }, [apiEnabled, cdekYandexApiKey, mapCoordinates, mapLocation, offices, parcels, servicePath, yandexGeocoderApiKey]);
 
   useEffect(() => {
     if (mapReady && selectedCode) widget.current?.selectOffice(selectedCode);
@@ -168,6 +231,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setSelectedAddressText("");
     setResultsAddress("");
     setSelectedCode("");
+    setShippingEstimate(null);
     setError("");
     setApiMessage("");
   }
@@ -187,6 +251,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setSuggestionError("");
     setResultsAddress("");
     setSelectedCode("");
+    setShippingEstimate(null);
     setError("");
     setApiMessage("");
     void findOffices(nextAddress, displayAddress);
@@ -273,6 +338,21 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       <p className={`cdek-sandbox-status${apiEnabled ? " is-ready" : apiEnabled === false ? " is-error" : ""}`} role="status">
         {apiEnabled === null ? "Проверяем подключение к тестовому API…" : apiEnabled ? "Тестовые реквизиты СДЭК настроены" : "Тестовый API СДЭК не настроен"}
       </p>
+    </section>
+
+    <section className="cdek-sandbox-panel" aria-labelledby="cdek-shipping-title" aria-live="polite">
+      <h2 id="cdek-shipping-title">Стоимость доставки</h2>
+      {cartReadFailed ? <p className="checkout-error" role="alert">Не удалось прочитать корзину в этом браузере.</p>
+        : cartLines.length === 0 ? <p className="checkout-hint">Добавьте товар в <a href="/cart">корзину</a>, чтобы рассчитать доставку по его весу и габаритам.</p>
+          : parcelsLoading ? <p className="checkout-hint" role="status">Получаем вес и габариты товаров…</p>
+            : parcelsError ? <p className="checkout-error" role="alert">{parcelsError}</p>
+              : parcels?.canCalculate ? <p className="checkout-hint">Для расчёта используются {parcels.parcels.length} мест из текущей корзины. Выберите пункт на карте и нажмите «Выбрать» — тариф появится здесь.</p>
+                : parcels ? <p className="checkout-hint" role="status">Не хватает веса или габаритов у {parcels.missingItems} позиций, поэтому тариф не рассчитан.</p>
+                  : <p className="checkout-hint">Для расчёта добавьте товар в корзину.</p>}
+      {shippingEstimate && <div className="checkout-cdek-selected" role="status">
+        <strong>{shippingEstimate.tariff.tariff_name}: {money(shippingEstimate.amountMinor)}</strong>
+        <span>Пункт {selectedCode}. Ориентировочный срок: {shippingEstimate.tariff.period_min}–{shippingEstimate.tariff.period_max} дн.</span>
+      </div>}
     </section>
 
     <div className="cdek-sandbox-layout">
