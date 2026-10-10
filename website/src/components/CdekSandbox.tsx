@@ -566,8 +566,10 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       <h2 id="cdek-tariff-title">3. Тариф</h2>
       <p className="cdek-sandbox-step-description">Выберите удобный вариант доставки. Стоимость рассчитывается по корзине.</p>
       {renderTariffState()}
-      {selectedTariff && <p className="cdek-sandbox-tariff-note" role="status">Выбрано: {selectedOption.label} · {money(Math.round(selectedTariff.delivery_sum * 100))}. Доставка оплачивается отдельно.</p>}
-      <div className="checkout-actions cdek-sandbox-actions"><a className="store-primary-button" href="/checkout">Перейти к оплате</a></div>
+      <div className="checkout-actions cdek-sandbox-actions">
+        {selectedTariff && <p className="cdek-sandbox-total"><span>Стоимость доставки</span><strong>{money(Math.round(selectedTariff.delivery_sum * 100))}</strong></p>}
+        <a className="store-primary-button" href="/checkout">Перейти к оплате</a>
+      </div>
     </section>
   </div>;
 }

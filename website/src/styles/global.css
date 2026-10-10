@@ -747,7 +747,10 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-panel { min-width: 0; padding: 22px; border: 1px solid #deded9; border-radius: 24px; background: #fff; }
 .cdek-sandbox-panel h2 { margin: 0 0 6px; font-size: 21px; font-weight: 500; letter-spacing: -.03em; }
 .cdek-sandbox-step-description { margin: 0 0 18px; color: #666; font-size: 14px; line-height: 1.4; }
-.cdek-sandbox-actions { justify-content: flex-end; }
+.cdek-sandbox-actions { justify-content: space-between; }
+.cdek-sandbox-total { display: flex; align-items: baseline; gap: 10px; margin: 0 auto 0 0; }
+.cdek-sandbox-total span { color: #666; font-size: 14px; }
+.cdek-sandbox-total strong { color: #111; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cdek-sandbox-selected-mark { margin-inline-start: auto; color: #bc1c28; font-size: 22px; font-weight: 600; line-height: 1; }
 .cdek-sandbox-form { display: grid; gap: 12px; margin: 0; }
 .cdek-sandbox-address-input { width: 100%; min-width: 0; min-height: 46px; padding: 11px 15px; border: 1px solid #d4d4ce; border-radius: 40px; background: #fff; color: #111; font: inherit; font-size: 14px; }
@@ -779,7 +782,6 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-tariff-copy small, .cdek-sandbox-tariff-meta small { color: #666; font-size: 13px; line-height: 1.35; }
 .cdek-sandbox-tariff-meta { justify-items: end; white-space: nowrap; }
 .cdek-sandbox-tariff-meta strong { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.cdek-sandbox-tariff-note { margin: 12px 0 0; color: #666; font-size: 13px; line-height: 1.4; }
 @media (min-width: 1101px) {
   .cdek-sandbox-address-grid.is-expanded { grid-template-columns: minmax(0, 1.6fr) minmax(420px, 1fr); }
   .cdek-sandbox-address-grid.is-expanded .cdek-sandbox-map-panel { display: flex; min-height: 0; }
