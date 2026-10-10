@@ -70,28 +70,23 @@
 только `calculate_energy_budget`, аргументы разбираются как JSON и проходят
 валидацию в чистом TypeScript-калькуляторе.
 
-## Cloud.ru Foundation Models
+## Beget AI Gateway
 
-Интеграция использует OpenAI-совместимый `POST /v1/chat/completions`.
-Официальная спецификация Cloud.ru перечисляет `tools`, `tool_choice` и
-`parallel_tool_calls`, а также сообщения с `tool_calls` и `tool_call_id`:
-[спецификация API Foundation Models](https://cloud.ru/docs/foundation-models/ug/topics/api-ref__specs).
+Чат использует OpenAI-совместимый endpoint
+`https://api-llm.beget.com/v1/chat/completions`; локально выбраны `gpt-6-luna`
+и серверный `AI_API_KEY`. В [руководстве Beget](https://beget.com/ru/kb/manual/ai-gateway)
+описаны этот endpoint, совместимость с OpenAI и смена подключения через адрес,
+ключ и имя модели. Каталог моделей меняется; актуальный список доступен через
+`GET /v1/models`.
 
-В таблице доступных моделей Cloud.ru отмечает `Function Calling` и отдельно
-`Reasoning`. `openai/gpt-4.1` и `openai/gpt-4o-mini` отмечены как Function
-Calling/Structure Output, но не как Reasoning; модели вроде
-`openai/gpt-oss-120b`, `qwen/qwen3-max-thinking` и `deepseek-ai/DeepSeek-V4-Pro`
-отмечены также как Reasoning:
-[обзор доступных AI-моделей](https://cloud.ru/docs/foundation-models/ug/topics/overview__available__models).
+Beget рекомендует задавать `max_tokens`, чтобы шлюз мог оценить стоимость
+запроса до отправки. Backend ограничивает ответы 512 токенами.
 
-В опубликованной схеме Cloud.ru нет универсального параметра `thinking` или
-`reasoning_effort`. Поэтому для текущего GPT-4-подобного провайдера не
-передаётся неподтверждённое поле: сложность контролируется выбором модели,
-а детерминированная арифметика — инструментом. Если позже выбрать модель,
-помеченную Cloud.ru как Reasoning, её можно назначить через `AI_MODEL` после
-проверки модели в `GET /v1/models`; контракт сообщений и tool loop уже
-совместим с API.
+Текущая обработка калькулятора использует OpenAI tool-call формат
+(`tools`, `tool_choice`, `tool_calls`, `tool_call_id`). В публичном руководстве
+Beget не описана поддержка tool calling, поэтому работу калькулятора с выбранной
+моделью нужно подтвердить отдельным живым запросом.
 
-Для обычного диалога Cloud.ru рекомендует передавать историю сообщений и
-системную инструкцию через тот же chat-completions endpoint:
-[диалоговые запросы (режим чата)](https://cloud.ru/docs/foundation-models/ug/topics/guides__llm-chat-request).
+Голосовой ввод пока распознаётся отдельно через Cloud.ru Whisper endpoint.
+Для сохранения этой функции заданы отдельные `AI_TRANSCRIPTION_URL` и
+`AI_TRANSCRIPTION_API_KEY`; ключ чата Beget туда не отправляется.

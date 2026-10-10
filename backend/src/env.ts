@@ -72,8 +72,9 @@ const envSchema = z.object({
   AI_PROVIDER: z.enum(['disabled', 'chat-completions']).default('disabled'),
   AI_API_URL: optionalUrlSchema,
   AI_TRANSCRIPTION_URL: optionalUrlSchema,
+  AI_TRANSCRIPTION_API_KEY: optionalStringSchema,
   AI_API_KEY: optionalStringSchema,
-  AI_MODEL: stringWithDefault('gpt-4o-mini'),
+  AI_MODEL: stringWithDefault('gpt-6-luna'),
   AI_SYSTEM_PROMPT: stringWithDefault('Ты консультант магазина NIKASS. Отвечай по-русски, кратко и по делу. Не выдумывай цены, наличие и характеристики товаров; если данных недостаточно, честно скажи об этом и предложи открыть каталог или связаться с менеджером.'),
   AI_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().max(60_000).default(30_000),
   CHAT_BODY_LIMIT_BYTES: z.coerce.number().int().positive().max(512 * 1024).default(512 * 1024),
@@ -501,7 +502,7 @@ function validateCatalogEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx
 
 function validateAiEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx) {
   if (env.AI_PROVIDER === 'disabled') {
-    for (const key of ['AI_API_URL', 'AI_TRANSCRIPTION_URL', 'AI_API_KEY'] as const) {
+    for (const key of ['AI_API_URL', 'AI_TRANSCRIPTION_URL', 'AI_TRANSCRIPTION_API_KEY', 'AI_API_KEY'] as const) {
       if (env[key] !== undefined) {
         ctx.addIssue({
           code: 'custom',

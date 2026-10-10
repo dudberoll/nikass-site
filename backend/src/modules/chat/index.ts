@@ -26,6 +26,7 @@ function providerFromEnv(env: AppEnv): ChatProvider {
     requestTimeoutMs: env.AI_REQUEST_TIMEOUT_MS,
     systemPrompt: buildChatSystemPrompt(env.AI_SYSTEM_PROMPT),
     transcriptionUrl: env.AI_TRANSCRIPTION_URL,
+    transcriptionApiKey: env.AI_TRANSCRIPTION_API_KEY,
   })
 }
 

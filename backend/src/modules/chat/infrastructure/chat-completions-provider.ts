@@ -12,6 +12,7 @@ type ChatCompletionsProviderOptions = {
   requestTimeoutMs: number
   systemPrompt: string
   transcriptionUrl?: string
+  transcriptionApiKey?: string
   fetchImpl?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 }
 
@@ -22,6 +23,7 @@ export function createChatCompletionsProvider({
   requestTimeoutMs,
   systemPrompt,
   transcriptionUrl = deriveTranscriptionUrl(apiUrl),
+  transcriptionApiKey = apiKey,
   fetchImpl = fetch,
 }: ChatCompletionsProviderOptions) {
   return {
@@ -37,7 +39,7 @@ export function createChatCompletionsProvider({
         form.append('language', 'ru')
         const response = await fetchImpl(transcriptionUrl, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${apiKey}` },
+          headers: { Authorization: `Bearer ${transcriptionApiKey}` },
           body: form,
           signal: requestController.signal,
         })
@@ -102,6 +104,7 @@ export function createChatCompletionsProvider({
             },
             body: JSON.stringify({
               model,
+              max_tokens: 512,
               messages: messagesToSend,
               ...(offerEnergyTool ? {
                 tools: [energyCalculatorTool],

@@ -19,6 +19,7 @@ test('sends the system prompt and conversation to a chat-completions endpoint', 
   await expect(provider.respond([{ role: 'user', content: 'Нужна станция для дома.' }])).resolves.toBe('Подберу решение.')
   expect(request).toEqual({
     model: 'test-model',
+    max_tokens: 512,
     messages: [
       { role: 'system', content: 'Ты консультант NIKASS.' },
       { role: 'user', content: 'Нужна станция для дома.' },
