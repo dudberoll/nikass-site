@@ -32,6 +32,15 @@ function renderBoldMarkdown(text: string): ReactElement[] {
   );
 }
 
+function renderAssistantMarkdown(text: string): ReactElement[] {
+  const lines = text.split(/\r?\n/);
+  return lines.map((line, index) => {
+    const heading = line.match(/^\s{0,3}(#{1,6})[ \t]+(.+?)\s*#*\s*$/);
+    if (heading) return <h2 key={index}>{renderBoldMarkdown(heading[2])}</h2>;
+    return <span key={index}>{renderBoldMarkdown(line)}{index < lines.length - 1 && <br />}</span>;
+  });
+}
+
 const catalogPathPattern = /(?:https?:\/\/[^)\s/]+)?\/catalog\/([a-z0-9-]+)\/?/gi;
 const catalogLinkLinePattern = /^\s*(?:[-*+•]\s*)?(?:\[[^\]\n]+\]\()?(?:https?:\/\/[^)\s/]+)?\/catalog\/[a-z0-9-]+\/?\)?\s*$/i;
 const markdownLinkPattern = /\[([^\]\n]+)\]\([^\)\n]*(?:\)|$)/g;
@@ -260,7 +269,7 @@ export function AssistantCard({ apiBase, products, persistSession = false }: { a
         return <article key={message.id} className={`ai-chat-message is-${message.role}`}>
           <div className="ai-chat-message-avatar" aria-hidden="true">{message.role === "assistant" ? "N" : "Вы"}</div>
           <div className="ai-chat-message-content">
-            {(visibleText || !text) && <div className="ai-chat-bubble">{visibleText ? renderBoldMarkdown(visibleText) : "Печатает…"}</div>}
+            {(visibleText || !text) && <div className="ai-chat-bubble">{visibleText ? renderAssistantMarkdown(visibleText) : "Печатает…"}</div>}
             {message.role === "assistant" && <ProductRecommendations text={text} products={products} />}
           </div>
         </article>;
