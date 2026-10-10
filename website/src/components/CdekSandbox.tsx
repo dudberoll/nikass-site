@@ -6,6 +6,7 @@ import { readCart, subscribeToCart, type CartLine } from "../lib/cart";
 import { formatYandexSuggestion, parseYandexAddress, yandexSuggestType, type YandexSuggestResult } from "../lib/yandex-address";
 
 type Address = { city: string; street?: string; house?: string };
+type DeliveryMode = "office" | "courier";
 type CdekCity = { code?: number | string; city?: string; full_name?: string };
 type CdekPoint = {
   code: string;
@@ -41,7 +42,7 @@ function distanceToOffice(point: CdekPoint, origin: [number, number] | null): nu
   return 6_371_000 * 2 * Math.asin(Math.sqrt(Math.min(1, a)));
 }
 
-const money = (minor: number) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB" }).format(minor / 100);
+const money = (minor: number) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", minimumFractionDigits: 0 }).format(minor / 100);
 
 export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderApiKey, yandexSuggestApiKey }: Props) {
   const [addressQuery, setAddressQuery] = useState("");
@@ -54,7 +55,9 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [apiEnabled, setApiEnabled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [offices, setOffices] = useState<CdekPoint[]>([]);
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("office");
   const [selectedCode, setSelectedCode] = useState("");
+  const [selectedCourierAddress, setSelectedCourierAddress] = useState("");
   const [error, setError] = useState("");
   const [apiMessage, setApiMessage] = useState("");
   const [mapLocation, setMapLocation] = useState("");
@@ -197,7 +200,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       widget.current = new window.CDEKWidget({
         from: "Москва", root: "cdek-sandbox-map-widget", apiKey: cdekYandexApiKey,
         servicePath, canChoose: true, popup: false,
-        hideDeliveryOptions: { office: false, door: true }, goods: parcels?.canCalculate ? parcels.parcels : [], officesRaw: offices,
+        hideDeliveryOptions: { office: deliveryMode !== "office", door: deliveryMode !== "courier" }, goods: parcels?.canCalculate ? parcels.parcels : [], officesRaw: offices,
         defaultLocation: center, lang: "rus", currency: "RUB",
         onReady: () => {
           if (!active) return;
@@ -208,8 +211,15 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
           }
         },
         onChoose: (type, _tariff, target) => {
-          if (type !== "office" || !("city_code" in target)) return;
-          setSelectedCode(target.code);
+          if (type === "office" && "city_code" in target) {
+            setDeliveryMode("office");
+            setSelectedCode(target.code);
+            setSelectedCourierAddress("");
+          } else if (type === "door" && !("city_code" in target)) {
+            setDeliveryMode("courier");
+            setSelectedCode("");
+            setSelectedCourierAddress(target.address || target.formatted || target.name || "Адрес доставки");
+          } else return;
           setShippingEstimate(_tariff && Number.isFinite(_tariff.delivery_sum) && _tariff.delivery_sum >= 0
             ? { tariff: _tariff, amountMinor: Math.round(_tariff.delivery_sum * 100) }
             : null);
@@ -219,7 +229,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       if (active) setMapError(cause instanceof Error ? cause.message : "Карта СДЭК не загрузилась.");
     });
     return () => { active = false; widget.current?.destroy(); widget.current = null; };
-  }, [apiEnabled, cdekYandexApiKey, mapCoordinates, mapLocation, offices, parcels, servicePath, yandexGeocoderApiKey]);
+  }, [apiEnabled, cdekYandexApiKey, deliveryMode, mapCoordinates, mapLocation, offices, parcels, servicePath, yandexGeocoderApiKey]);
 
   useEffect(() => {
     if (mapReady && selectedCode) widget.current?.selectOffice(selectedCode);
@@ -234,6 +244,14 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setShippingEstimate(null);
     setError("");
     setApiMessage("");
+  }
+
+  function chooseDeliveryMode(mode: DeliveryMode) {
+    if (mode === deliveryMode) return;
+    setDeliveryMode(mode);
+    setSelectedCode("");
+    setSelectedCourierAddress("");
+    setShippingEstimate(null);
   }
 
   function selectAddress(suggestion: YandexSuggestResult) {
@@ -333,47 +351,55 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const visibleOffices = rankedOffices.slice(0, 5);
 
   return <div className="cdek-sandbox">
-    <section className="cdek-sandbox-intro">
-      <h1>СДЭК</h1>
-      <p className={`cdek-sandbox-status${apiEnabled ? " is-ready" : apiEnabled === false ? " is-error" : ""}`} role="status">
-        {apiEnabled === null ? "Проверяем подключение к тестовому API…" : apiEnabled ? "Тестовые реквизиты СДЭК настроены" : "Тестовый API СДЭК не настроен"}
-      </p>
+    <h1 className="sr-only">Доставка</h1>
+    <section className="cdek-sandbox-delivery" aria-label="Способ получения и стоимость доставки">
+      <div className="cdek-sandbox-delivery-options" role="group" aria-label="Способ получения">
+        <button className={`cdek-sandbox-delivery-option${deliveryMode === "office" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMode === "office"} onClick={() => chooseDeliveryMode("office")}>
+          <span className="cdek-sandbox-delivery-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
+          <span className="cdek-sandbox-delivery-copy"><strong>ПВЗ</strong><small>Получить в пункте выдачи</small></span>
+          {deliveryMode === "office" && <span className="cdek-sandbox-selected-mark" aria-hidden="true">✓</span>}
+        </button>
+        <button className={`cdek-sandbox-delivery-option${deliveryMode === "courier" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMode === "courier"} onClick={() => chooseDeliveryMode("courier")}>
+          <span className="cdek-sandbox-delivery-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg></span>
+          <span className="cdek-sandbox-delivery-copy"><strong>Курьер</strong><small>Доставка по адресу</small></span>
+          {deliveryMode === "courier" && <span className="cdek-sandbox-selected-mark" aria-hidden="true">✓</span>}
+        </button>
+      </div>
+      <div className="cdek-sandbox-delivery-total" aria-live="polite">
+        <span className="cdek-sandbox-delivery-label">Итог доставки</span>
+        <strong>{shippingEstimate ? money(shippingEstimate.amountMinor) : "—"}</strong>
+        <span>{shippingEstimate
+          ? `${deliveryMode === "office" ? `ПВЗ ${selectedCode}` : selectedCourierAddress} · ${shippingEstimate.tariff.period_min}–${shippingEstimate.tariff.period_max} дн.`
+          : deliveryMode === "office" ? "Выберите пункт выдачи" : "Укажите адрес доставки"}</span>
+      </div>
     </section>
-
-    <section className="cdek-sandbox-panel" aria-labelledby="cdek-shipping-title" aria-live="polite">
-      <h2 id="cdek-shipping-title">Стоимость доставки</h2>
-      {cartReadFailed ? <p className="checkout-error" role="alert">Не удалось прочитать корзину в этом браузере.</p>
-        : cartLines.length === 0 ? <p className="checkout-hint">Добавьте товар в <a href="/cart">корзину</a>, чтобы рассчитать доставку по его весу и габаритам.</p>
-          : parcelsLoading ? <p className="checkout-hint" role="status">Получаем вес и габариты товаров…</p>
-            : parcelsError ? <p className="checkout-error" role="alert">{parcelsError}</p>
-              : parcels?.canCalculate ? <p className="checkout-hint">Для расчёта используются {parcels.parcels.length} мест из текущей корзины. Выберите пункт на карте и нажмите «Выбрать» — тариф появится здесь.</p>
-                : parcels ? <p className="checkout-hint" role="status">Не хватает веса или габаритов у {parcels.missingItems} позиций, поэтому тариф не рассчитан.</p>
-                  : <p className="checkout-hint">Для расчёта добавьте товар в корзину.</p>}
-      {shippingEstimate && <div className="checkout-cdek-selected" role="status">
-        <strong>{shippingEstimate.tariff.tariff_name}: {money(shippingEstimate.amountMinor)}</strong>
-        <span>Пункт {selectedCode}. Ориентировочный срок: {shippingEstimate.tariff.period_min}–{shippingEstimate.tariff.period_max} дн.</span>
-      </div>}
-    </section>
+    {cartReadFailed ? <p className="checkout-error" role="alert">Не удалось прочитать корзину в этом браузере.</p>
+      : cartLines.length === 0 ? <p className="checkout-hint cdek-sandbox-delivery-note">Добавьте товар в <a href="/cart">корзину</a>, чтобы рассчитать доставку по его весу и габаритам.</p>
+        : parcelsLoading ? <p className="checkout-hint cdek-sandbox-delivery-note" role="status">Получаем вес и габариты товаров…</p>
+          : parcelsError ? <p className="checkout-error" role="alert">{parcelsError}</p>
+            : parcels?.canCalculate ? <p className="checkout-hint cdek-sandbox-delivery-note">Для расчёта используются {parcels.parcels.length} мест из текущей корзины. Выберите вариант на карте — тариф появится здесь.</p>
+              : parcels ? <p className="checkout-hint cdek-sandbox-delivery-note" role="status">Не хватает веса или габаритов у {parcels.missingItems} позиций, поэтому тариф не рассчитан.</p>
+                : <p className="checkout-hint cdek-sandbox-delivery-note">Для расчёта добавьте товар в корзину.</p>}
+    {error && <p className="checkout-error" role="alert">{error}</p>}
 
     <div className="cdek-sandbox-layout">
       <section ref={mapSection} className="cdek-sandbox-panel" aria-labelledby="cdek-map-title">
         <div className="cdek-sandbox-map-heading">
-          <h2 id="cdek-map-title">Пункты на карте</h2>
+          <h2 id="cdek-map-title">{deliveryMode === "office" ? "Пункты на карте" : "Адрес доставки"}</h2>
           {mapLocation && <span>{mapLocation}</span>}
         </div>
         <div className="cdek-sandbox-map-frame">
-          <div className="cdek-sandbox-map" id="cdek-sandbox-map-widget" aria-label="Интерактивная карта пунктов выдачи СДЭК" />
+          <div className="cdek-sandbox-map" id="cdek-sandbox-map-widget" aria-label="Интерактивная карта СДЭК для выбора доставки" />
           {!mapReady && <div className="cdek-sandbox-map-placeholder">
             <span className="cdek-sandbox-map-pin" aria-hidden="true">⌖</span>
-            <strong>{mapError || (cdekYandexApiKey ? "Загружаем карту пунктов выдачи…" : "Область карты СДЭК")}</strong>
-            <span>{cdekYandexApiKey ? "Карта появится после загрузки списка ПВЗ." : "Карта пока без Яндекс-ключа. Список ПВЗ можно проверить через API слева."}</span>
+            <strong>{mapError || (cdekYandexApiKey ? "Загружаем карту СДЭК…" : "Область карты СДЭК")}</strong>
+            <span>{cdekYandexApiKey ? "Карта появится после загрузки списка пунктов." : "Для выбора доставки на карте настройте ключ Яндекс JavaScript API."}</span>
           </div>}
         </div>
         {selectedCode && <p className="checkout-hint">Выбран пункт {selectedCode}.</p>}
-        {!cdekYandexApiKey && <p className="checkout-hint">Для интерактивной карты можно позже настроить ключ Яндекс JavaScript API. Для проверки списка ПВЗ этот ключ не нужен.</p>}
       </section>
 
-      <section ref={addressSection} className="cdek-sandbox-panel" aria-labelledby="cdek-address-title">
+      {deliveryMode === "office" && <section ref={addressSection} className="cdek-sandbox-panel" aria-labelledby="cdek-address-title">
         <h2 id="cdek-address-title">Адрес или улица</h2>
         <form className="cdek-sandbox-form" onSubmit={submitAddress}>
           <div className="checkout-address-suggest">
@@ -387,7 +413,6 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
           {suggestionsLoading && <p className="checkout-hint" role="status">Ищем адрес…</p>}
           {suggestionError && <p className="checkout-error" role="alert">{suggestionError}</p>}
           {!yandexSuggestApiKey && <p className="checkout-error" role="alert">Не настроен ключ Яндекс Геосаджеста для подсказок адреса.</p>}
-          {error && <p className="checkout-error" role="alert">{error}</p>}
           {loading && <p className="checkout-hint" role="status">Ищем ближайшие пункты выдачи…</p>}
           {apiMessage && <p className="checkout-hint" role="status">{apiMessage}</p>}
         </form>
@@ -411,7 +436,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
           {resultsAddress && offices.length === 0 && <p>Для выбранного адреса пункты выдачи не найдены.</p>}
           {selectedCode && <p className="checkout-hint">Пункт выдачи выбран: {selectedCode}.</p>}
         </div>
-      </section>
+      </section>}
     </div>
   </div>;
 }

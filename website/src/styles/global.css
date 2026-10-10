@@ -743,13 +743,23 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .checkout-cdek-selected span, .checkout-cdek-summary > p:not(.checkout-details-label) { color: #555; font-size: 13px; line-height: 1.45; }
 .checkout-cdek-summary { margin-top: 18px; }
 @media (max-width: 600px) { .checkout-cdek { padding: 14px; } .checkout-cdek-map { height: min(70svh, 600px); min-height: 520px; } }
-.cdek-sandbox { display: grid; gap: 30px; }
-.cdek-sandbox-intro { max-width: 760px; }
-.cdek-sandbox-intro h1 { margin: 0 0 12px; font-size: clamp(40px, 6vw, 68px); font-weight: 500; line-height: .98; letter-spacing: -.06em; }
-.cdek-sandbox-intro > p:not(.store-eyebrow):not(.cdek-sandbox-status) { max-width: 620px; margin: 0; color: #555; line-height: 1.5; }
-.cdek-sandbox-status { margin: 16px 0 0; color: #666; font-size: 13px; }
-.cdek-sandbox-status.is-ready { color: #167044; }
-.cdek-sandbox-status.is-error { color: #b42318; }
+.cdek-sandbox { display: grid; gap: 16px; }
+.cdek-sandbox-delivery { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1.15fr); align-items: stretch; gap: 12px; }
+.cdek-sandbox-delivery-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.cdek-sandbox-delivery-option { display: flex; min-width: 0; min-height: 98px; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #deded9; border-radius: 20px; background: #fff; color: #111; text-align: left; transition: background-color .15s ease, border-color .15s ease; }
+.cdek-sandbox-delivery-option.is-selected { border-color: #168344; background: #f0f8f2; }
+.cdek-sandbox-delivery-icon { display: grid; flex: 0 0 52px; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #f3f3f1; color: #111; }
+.cdek-sandbox-delivery-option.is-selected .cdek-sandbox-delivery-icon { background: #e2f2e7; color: #168344; }
+.cdek-sandbox-delivery-icon svg { width: 25px; height: 25px; stroke-width: 1.8; }
+.cdek-sandbox-delivery-copy { display: grid; min-width: 0; gap: 4px; }
+.cdek-sandbox-delivery-copy strong { font-size: 20px; font-weight: 500; line-height: 1.2; }
+.cdek-sandbox-delivery-copy small { color: #666; font-size: 14px; line-height: 1.35; }
+.cdek-sandbox-selected-mark { margin-inline-start: auto; color: #168344; font-size: 22px; font-weight: 600; line-height: 1; }
+.cdek-sandbox-delivery-total { display: grid; min-width: 0; min-height: 98px; align-content: center; justify-items: start; gap: 4px; padding: 14px 20px; border: 1px solid #deded9; border-radius: 20px; background: #fff; }
+.cdek-sandbox-delivery-label { color: #666; font-size: 14px; }
+.cdek-sandbox-delivery-total > strong { font-size: 32px; font-weight: 500; line-height: 1.05; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.cdek-sandbox-delivery-total > span:last-child { color: #666; font-size: 14px; line-height: 1.35; }
+.cdek-sandbox-delivery-note { margin: 0; }
 .cdek-sandbox-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 20px; }
 .cdek-sandbox-panel { min-width: 0; padding: 22px; border: 1px solid #deded9; border-radius: 24px; background: #fff; }
 .cdek-sandbox-layout > section[aria-labelledby="cdek-map-title"] { scroll-margin-top: 84px; }
@@ -777,7 +787,8 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-map-placeholder strong { max-width: 360px; color: #222; font-size: 15px; font-weight: 500; }
 .cdek-sandbox-map-placeholder span:last-child { max-width: 390px; font-size: 13px; line-height: 1.45; }
 .cdek-sandbox-map-pin { display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid #d4d4ce; border-radius: 50%; background: #fff; color: #111; font-size: 30px; }
-@media (max-width: 600px) { .cdek-sandbox-panel { padding: 16px; } .cdek-sandbox-map-frame { min-height: min(44svh, 340px); } .cdek-sandbox-map { height: min(44svh, 340px); } }
+@media (max-width: 760px) { .cdek-sandbox-delivery { grid-template-columns: minmax(0, 1fr); } .cdek-sandbox-delivery-total { min-height: 92px; } }
+@media (max-width: 600px) { .cdek-sandbox-delivery-options { grid-template-columns: minmax(0, 1fr); } .cdek-sandbox-delivery-option { min-height: 84px; } .cdek-sandbox-panel { padding: 16px; } .cdek-sandbox-map-frame { min-height: min(44svh, 340px); } .cdek-sandbox-map { height: min(44svh, 340px); } }
 .checkout-result > p:not(.store-eyebrow):not(.checkout-error) { max-width: 620px; color: #555; line-height: 1.5; }
 .checkout-total-list { display: grid; gap: 0; margin: 18px 0 20px; padding: 0; list-style: none; }
 .checkout-total-list li, .checkout-summary-line { display: flex; justify-content: space-between; gap: 20px; padding: 13px 0; border-top: 1px solid #deded9; color: #555; }

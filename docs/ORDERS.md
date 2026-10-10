@@ -109,9 +109,12 @@ the backend proxy, which keeps the CDEK account and password off the browser.
 The local `/cdek` playground can be opened directly from the site header to enter
 an address and query test CDEK cities and pickup points without starting checkout.
 It uses the current browser cart to load product parcel sizes from WooCommerce;
-after choosing a pickup point and tariff, the estimated delivery cost and period
-are shown on the page. Its map area remains visible as a placeholder when the
-Yandex Maps key is absent, but a tariff cannot be selected without the map.
+the first row switches between delivery to a pickup point and courier delivery
+to an address. The map widget shows only the active delivery mode, and its top
+summary displays the estimated delivery cost and period after a tariff is chosen.
+For pickup points, the separate address search finds nearby offices. The map area
+remains visible as a placeholder when the Yandex Maps key is absent, but a tariff
+cannot be selected without the map.
 Set `CDEK_ACCOUNT` and `CDEK_PASSWORD` in `backend/.env`. The playground reads
 separate `PUBLIC_CDEK_SANDBOX_YANDEX_API_KEY` (JavaScript API) and
 `PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY` (HTTP Geocoder) values from `website/.env`;
