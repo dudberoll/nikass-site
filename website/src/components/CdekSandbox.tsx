@@ -10,12 +10,11 @@ type DeliveryMode = "office" | "courier";
 type CdekCity = { code?: number | string; city?: string; full_name?: string };
 type CdekPoint = {
   code: string;
-  city_code?: number;
   name?: string;
   work_time?: string;
   address?: string;
   city?: string;
-  location?: { city?: string; address?: string; address_full?: string; longitude?: number; latitude?: number };
+  location?: { city_code?: number; city?: string; address?: string; address_full?: string; longitude?: number; latitude?: number };
 };
 type Props = { apiBase: string; cdekYandexApiKey: string; yandexGeocoderApiKey: string; yandexSuggestApiKey: string };
 const courierAddressFields = [["house", "Дом / корпус", "text", "address-line2", 30], ["apartment", "Квартира / офис (необязательно)", "text", "address-line3", 30], ["postcode", "Почтовый индекс", "text", "postal-code", 6]] as const;
@@ -253,7 +252,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     const selectedOffice = offices.find((point) => point.code === selectedCode);
     const deliveryAddress = selectedAddressText || [address?.city, address?.street, address?.house].filter(Boolean).join(", ");
     const destination = deliveryMode === "office"
-      ? selectedOffice?.city_code ? { code: selectedOffice.city_code } : null
+      ? selectedOffice?.location?.city_code ? { code: selectedOffice.location.city_code } : null
       : address?.city?.trim() && address.street?.trim() && address.house?.trim()
         ? { address: deliveryAddress, country_code: "RU" }
         : null;
