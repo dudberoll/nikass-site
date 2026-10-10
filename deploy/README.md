@@ -102,6 +102,14 @@ WooCommerce Store API должен быть доступен извне, име�
 
 AI-чат включается в `runtime.env` только при наличии ключа провайдера (`AI_PROVIDER=chat-completions`, `AI_API_URL`, `AI_API_KEY`, `AI_MODEL`). Подсказки адресов включаются публичным `PUBLIC_YANDEX_SUGGEST_API_KEY` при запуске сборки; без него адрес можно ввести вручную. Отправка email в этом тестовом профиле отключена.
 
+Для Beget AI Gateway задайте `AI_API_URL=https://api-llm.beget.com/v1/chat/completions`
+и `AI_MODEL=gpt-6-luna`, а ключ Beget храните только в серверном `AI_API_KEY`.
+Голосовое распознавание остаётся на Cloud.ru: сохраните его адрес в
+`AI_TRANSCRIPTION_URL` и прежний ключ Cloud.ru в `AI_TRANSCRIPTION_API_KEY`.
+Сначала публикуйте код, поддерживающий отдельный ключ распознавания, затем меняйте
+runtime-конфигурацию и пересоздавайте API и scheduler командой ниже. При неудачном
+переключении восстановите защищённую копию `runtime.env` и пересоздайте оба сервиса.
+
 Telegram-уведомления о заказах и заявках на поступление отправляются только в чат
 из `ORDER_TELEGRAM_CHAT_ID`. Для общей группы добавьте туда `@nikass_orders_bot`,
 затем задайте **оба** значения `ORDER_TELEGRAM_BOT_TOKEN` и `ORDER_TELEGRAM_CHAT_ID`

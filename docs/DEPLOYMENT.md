@@ -331,6 +331,9 @@ return and notification URLs use the domain. The owner performs the real-purchas
 `NODE_ENV=staging` remains because private filesystem storage is mounted on the VPS;
 secure cookies and the separate runtime database role remain enabled. Switching to
 `production` requires prepared S3 storage, not bypassing the storage guard.
+The API listens on `0.0.0.0` inside its container in `staging` and `production`;
+Compose exposes it only on the VPS loopback address `127.0.0.1:8080` for Nginx.
+Local development continues to listen on `127.0.0.1`.
 
 ## Local validation
 
