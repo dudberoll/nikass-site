@@ -747,14 +747,7 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-panel { min-width: 0; padding: 22px; border: 1px solid #deded9; border-radius: 24px; background: #fff; }
 .cdek-sandbox-panel h2 { margin: 0 0 6px; font-size: 21px; font-weight: 500; letter-spacing: -.03em; }
 .cdek-sandbox-step-description { margin: 0 0 18px; color: #666; font-size: 14px; line-height: 1.4; }
-.cdek-sandbox-delivery-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.cdek-sandbox-delivery-option { display: flex; min-width: 0; min-height: 98px; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #deded9; border-radius: 20px; background: #fff; color: #111; text-align: left; transition: border-color .15s ease; }
-.cdek-sandbox-delivery-option.is-selected { border: 2px solid #bc1c28; padding: 13px 15px; background: #fff; }
-.cdek-sandbox-delivery-icon { display: grid; flex: 0 0 52px; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #f3f3f1; color: #111; }
-.cdek-sandbox-delivery-icon svg { width: 25px; height: 25px; stroke-width: 1.8; }
-.cdek-sandbox-delivery-copy { display: grid; min-width: 0; gap: 4px; }
-.cdek-sandbox-delivery-copy strong { font-size: 18px; font-weight: 500; line-height: 1.2; }
-.cdek-sandbox-delivery-copy small { color: #666; font-size: 14px; line-height: 1.35; }
+.cdek-sandbox-actions { justify-content: flex-end; }
 .cdek-sandbox-selected-mark { margin-inline-start: auto; color: #bc1c28; font-size: 22px; font-weight: 600; line-height: 1; }
 .cdek-sandbox-form { display: grid; gap: 10px; margin-bottom: 18px; }
 .cdek-sandbox-field { display: grid; min-width: 0; gap: 7px; color: #555; font-size: 13px; }
@@ -762,16 +755,17 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-field input:focus-visible { border-color: #111; outline: 2px solid #111; outline-offset: 2px; }
 .cdek-sandbox-address-field { padding: 0 2px; }
 .cdek-sandbox-form .checkout-hint, .cdek-sandbox-form .checkout-error { margin: 0; }
-.cdek-sandbox-address-grid { display: grid; grid-template-columns: minmax(800px, 2fr) minmax(280px, 1fr); align-items: stretch; gap: 14px; }
+.cdek-sandbox-address-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(420px, 1fr); align-items: stretch; gap: 14px; }
 .cdek-sandbox-map-panel { min-width: 0; }
 .cdek-sandbox-results { min-width: 0; padding: 16px; border-radius: 18px; background: #f7f7f5; }
 .cdek-sandbox-results h3 { margin: 0 0 10px; font-size: 16px; font-weight: 500; }
 .cdek-sandbox-results .checkout-hint { margin: 0 0 12px; }
-.cdek-sandbox-results ul, .cdek-sandbox-tariffs { display: grid; gap: 8px; max-height: 480px; margin: 0; padding: 0; overflow: auto; list-style: none; }
-.cdek-sandbox-point { display: grid; width: 100%; gap: 5px; padding: 12px; border: 1px solid #deded9; border-radius: 14px; background: #fff; color: #111; text-align: left; cursor: pointer; }
+.cdek-sandbox-results ul, .cdek-sandbox-tariffs { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.cdek-sandbox-tariffs { max-height: 480px; overflow: auto; }
+.cdek-sandbox-point { display: grid; width: 100%; gap: 3px; padding: 8px 10px; border: 1px solid #deded9; border-radius: 14px; background: #fff; color: #111; text-align: left; cursor: pointer; }
 .cdek-sandbox-point:hover, .cdek-sandbox-point.is-selected { border-color: #bc1c28; }
-.cdek-sandbox-point strong { font-size: 14px; font-weight: 600; }
-.cdek-sandbox-point span, .cdek-sandbox-point small { color: #666; font-size: 12px; line-height: 1.4; }
+.cdek-sandbox-point strong { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.cdek-sandbox-point span, .cdek-sandbox-point small { color: #666; font-size: 12px; line-height: 1.3; }
 .cdek-sandbox-map-frame { position: relative; min-height: 350px; overflow: hidden; border: 1px solid #deded9; border-radius: 18px; background: #e9e9e3; }
 .cdek-sandbox-map { width: 100%; height: 350px; }
 .cdek-sandbox-map-placeholder { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 10px; padding: 28px; background-color: #e9e9e3; background-image: linear-gradient(32deg, transparent 47%, rgb(255 255 255 / 68%) 48% 51%, transparent 52%), linear-gradient(148deg, transparent 45%, rgb(255 255 255 / 48%) 46% 49%, transparent 50%); color: #555; text-align: center; pointer-events: none; }
@@ -788,8 +782,8 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .cdek-sandbox-tariff-meta { justify-items: end; white-space: nowrap; }
 .cdek-sandbox-tariff-meta strong { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cdek-sandbox-tariff-note { margin: 12px 0 0; color: #666; font-size: 13px; line-height: 1.4; }
-@media (max-width: 1270px) { .cdek-sandbox-address-grid { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 600px) { .cdek-sandbox-delivery-options, .cdek-sandbox-courier-form { grid-template-columns: minmax(0, 1fr); } .cdek-sandbox-delivery-option { min-height: 84px; } .cdek-sandbox-panel { padding: 16px; } .cdek-sandbox-map-frame { min-height: min(44svh, 340px); } .cdek-sandbox-map { height: min(44svh, 340px); } .cdek-sandbox-tariff { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; } .cdek-sandbox-tariff .cdek-sandbox-selected-mark { grid-column: 2; grid-row: 1; } .cdek-sandbox-tariff-meta { grid-column: 1; grid-row: 2; justify-items: start; } }
+@media (max-width: 1100px) { .cdek-sandbox-address-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .cdek-sandbox-courier-form { grid-template-columns: minmax(0, 1fr); } .cdek-sandbox-panel { padding: 16px; } .cdek-sandbox-map-frame { min-height: min(44svh, 340px); } .cdek-sandbox-map { height: min(44svh, 340px); } .cdek-sandbox-tariff { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; } .cdek-sandbox-tariff .cdek-sandbox-selected-mark { grid-column: 2; grid-row: 1; } .cdek-sandbox-tariff-meta { grid-column: 1; grid-row: 2; justify-items: start; } }
 .checkout-result > p:not(.store-eyebrow):not(.checkout-error) { max-width: 620px; color: #555; line-height: 1.5; }
 .checkout-total-list { display: grid; gap: 0; margin: 18px 0 20px; padding: 0; list-style: none; }
 .checkout-total-list li, .checkout-summary-line { display: flex; justify-content: space-between; gap: 20px; padding: 13px 0; border-top: 1px solid #deded9; color: #555; }

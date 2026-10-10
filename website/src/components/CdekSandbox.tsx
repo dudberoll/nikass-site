@@ -31,7 +31,7 @@ function normalizeCityName(value: string | undefined) {
 }
 
 function officeAddress(point: CdekPoint) {
-  return point.location?.address_full || point.location?.address || point.address || "Адрес не указан";
+  return point.location?.address || point.address || point.location?.address_full || "Адрес не указан";
 }
 
 function distanceToOffice(point: CdekPoint, origin: [number, number] | null): number | null {
@@ -480,16 +480,12 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     <section className="cdek-sandbox-panel" aria-labelledby="cdek-delivery-title">
       <h2 id="cdek-delivery-title">1. Способ доставки</h2>
       <p className="cdek-sandbox-step-description">Выберите, как хотите получить заказ.</p>
-      <div className="cdek-sandbox-delivery-options" role="group" aria-label="Способ получения">
-        <button className={`cdek-sandbox-delivery-option${deliveryMode === "office" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMode === "office"} onClick={() => chooseDeliveryMode("office")}>
-          <span className="cdek-sandbox-delivery-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
-          <span className="cdek-sandbox-delivery-copy"><strong>Пункт выдачи (ПВЗ)</strong><small>Заберите заказ в удобном пункте СДЭК</small></span>
-          {deliveryMode === "office" && <span className="cdek-sandbox-selected-mark" aria-hidden="true">✓</span>}
+      <div className="checkout-delivery-options" role="group" aria-label="Способ получения">
+        <button className={`checkout-delivery-option${deliveryMode === "office" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMode === "office"} onClick={() => chooseDeliveryMode("office")}>
+          <strong>Пункт выдачи (ПВЗ)</strong><span>СДЭК</span><small>Заберите заказ в удобном пункте</small>
         </button>
-        <button className={`cdek-sandbox-delivery-option${deliveryMode === "courier" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMode === "courier"} onClick={() => chooseDeliveryMode("courier")}>
-          <span className="cdek-sandbox-delivery-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></svg></span>
-          <span className="cdek-sandbox-delivery-copy"><strong>Курьер</strong><small>Доставка по адресу</small></span>
-          {deliveryMode === "courier" && <span className="cdek-sandbox-selected-mark" aria-hidden="true">✓</span>}
+        <button className={`checkout-delivery-option${deliveryMode === "courier" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMode === "courier"} onClick={() => chooseDeliveryMode("courier")}>
+          <strong>Курьер</strong><span>СДЭК</span><small>Доставка по адресу</small>
         </button>
       </div>
     </section>
@@ -525,7 +521,6 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
               <span>{cdekYandexApiKey ? "Карта появится после загрузки списка пунктов." : "Для отображения карты настройте ключ Яндекс JavaScript API."}</span>
             </div>}
           </div>
-          {selectedCode && <p className="checkout-hint">Выбран пункт {selectedCode}.</p>}
         </section>
 
         <aside className="cdek-sandbox-results" aria-live="polite" aria-label="Ближайшие пункты выдачи">
@@ -534,14 +529,12 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
             <p className="checkout-hint">{mapCoordinates ? `Показаны ${visibleOffices.length} ближайших из ${offices.length}; расстояние по прямой.` : "Не удалось определить расстояние; показаны пункты города."}</p>
             <ul>{visibleOffices.map((point) => <li key={point.code}>
               <button className={`cdek-sandbox-point${selectedCode === point.code ? " is-selected" : ""}`} type="button" aria-pressed={selectedCode === point.code} onClick={() => setSelectedCode(point.code)}>
-                <strong>{point.name || point.code}</strong>
-                <span>{point.city || point.location?.city || address?.city || "Москва"}, {officeAddress(point)}</span>
-                <small>{point.code}{point.work_time ? ` · ${point.work_time}` : ""}</small>
-                {point.distance !== null && <small>{point.distance < 1000 ? `${Math.round(point.distance)} м` : `${(point.distance / 1000).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} км`} от указанного адреса</small>}
+                <strong>{point.location?.city || point.city || address?.city || "Москва"}, {officeAddress(point)}</strong>
+                <small>{point.code}{point.distance !== null ? ` · ${point.distance < 1000 ? `${Math.round(point.distance)} м` : `${(point.distance / 1000).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} км`} от адреса` : ""}</small>
+                {point.work_time && <small>{point.work_time}</small>}
               </button>
             </li>)}</ul>
           </> : resultsAddress ? <p>Для выбранного адреса пункты выдачи не найдены.</p> : <p className="checkout-hint">Введите улицу выше — покажем ближайшие пункты.</p>}
-          {selectedCode && <p className="checkout-hint">Выбран пункт выдачи: {selectedCode}.</p>}
         </aside>
       </div> : <div className="cdek-sandbox-courier-address" aria-label="Адрес доставки курьером">
         <div className="cdek-sandbox-courier-form">
@@ -565,6 +558,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       <p className="cdek-sandbox-step-description">Выберите удобный вариант доставки. Стоимость рассчитывается по корзине.</p>
       {renderTariffState()}
       {selectedTariff && <p className="cdek-sandbox-tariff-note" role="status">Выбрано: {selectedTariff.tariff_name} · {money(Math.round(selectedTariff.delivery_sum * 100))}. Доставка оплачивается отдельно.</p>}
+      <div className="checkout-actions cdek-sandbox-actions"><a className="store-primary-button" href="/checkout">Перейти к оплате</a></div>
     </section>
   </div>;
 }
