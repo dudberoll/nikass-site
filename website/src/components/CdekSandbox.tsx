@@ -441,7 +441,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       setMapCoordinates(coordinates);
       setResultsAddress(initial ? "" : displayAddress);
       setApiMessage(initial
-        ? `На карте ${city?.city || city?.full_name || cityName} — ${points.length} ПВЗ. Введите улицу или адрес, чтобы найти ближайшие.`
+        ? ""
         : `Найдено ПВЗ: ${points.length}.${geocodeNote}`);
       setMapLocation(resolvedLocation);
     } catch (cause) {
@@ -501,11 +501,10 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       <form className="cdek-sandbox-form" onSubmit={submitAddress}>
         {(deliveryMode === "office" || !manualCourierAddress) && <div className="checkout-address-suggest">
           <div className="checkout-field-control">
-            <input className="cdek-sandbox-address-input" id="cdek-address-search" type="text" autoComplete="shipping street-address" aria-label="Адрес" disabled={loading || apiEnabled === null} value={addressQuery} placeholder={deliveryMode === "office" ? "Например, Азовская улица, Москва" : "Москва, Лесная улица, 3"} aria-describedby={deliveryMode === "office" ? "cdek-address-help" : undefined} onChange={(event) => updateAddressQuery(event.currentTarget.value)} onBlur={() => window.setTimeout(() => setSuggestions([]), 120)} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} />
+            <input className="cdek-sandbox-address-input" id="cdek-address-search" type="text" autoComplete="shipping street-address" aria-label="Адрес" disabled={loading || apiEnabled === null} value={addressQuery} placeholder={deliveryMode === "office" ? "Например, Азовская улица, Москва" : "Москва, Лесная улица, 3"} onChange={(event) => updateAddressQuery(event.currentTarget.value)} onBlur={() => window.setTimeout(() => setSuggestions([]), 120)} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} />
           </div>
           {suggestions.length > 0 && <ul className="checkout-address-suggest-list" id="cdek-address-suggestions">{suggestions.map((suggestion, index) => <li key={`${formatYandexSuggestion(suggestion)}-${index}`}><button className="checkout-address-suggest-option" type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => selectAddress(suggestion)}><strong>{suggestion.title?.text || formatYandexSuggestion(suggestion)}</strong>{suggestion.subtitle?.text && <span>{suggestion.subtitle.text}</span>}</button></li>)}</ul>}
         </div>}
-        {deliveryMode === "office" && <p className="checkout-hint" id="cdek-address-help">Выберите подсказку — карта и ближайшие пункты обновятся.</p>}
         {deliveryMode === "courier" && <div className="checkout-fields checkout-fields-address">
           {courierAddressFields.map(([field, label, type, autoComplete, maxLength]) => <div className="checkout-field" key={field}>
             <label className="sr-only" htmlFor={`cdek-address-${field}`}>{label}</label>
@@ -546,8 +545,8 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
           </div>
         </section>
 
-        <aside className="cdek-sandbox-results" aria-live="polite" aria-label="Ближайшие пункты выдачи">
-          {resultsAddress && offices.length > 0 ? <>
+        {resultsAddress && <aside className="cdek-sandbox-results" aria-live="polite" aria-label="Ближайшие пункты выдачи">
+          {offices.length > 0 ? <>
             <h3>{mapCoordinates ? "Ближайшие пункты выдачи" : "Пункты выдачи"}</h3>
             <p className="checkout-hint">{mapCoordinates ? `Показаны ${visibleOffices.length} ближайших из ${offices.length}; расстояние по прямой.` : "Не удалось определить расстояние; показаны пункты города."}</p>
             <ul>{visibleOffices.map((point) => <li key={point.code}>
@@ -557,8 +556,8 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
                 {point.work_time && <small>{point.work_time}</small>}
               </button>
             </li>)}</ul>
-          </> : resultsAddress ? <p>Для выбранного адреса пункты выдачи не найдены.</p> : <p className="checkout-hint">Введите улицу выше — покажем ближайшие пункты.</p>}
-        </aside>
+          </> : <p>Для выбранного адреса пункты выдачи не найдены.</p>}
+        </aside>}
       </div> : null}
     </section>
 
