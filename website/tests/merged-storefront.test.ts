@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { detailRows, HERO_CATEGORIES, mapCatalogProduct, relatedProducts, selectCatalogProducts } from '../src/data/catalog'
 
 const homepage = readFileSync(fileURLToPath(new URL('../src/pages/index.astro', import.meta.url)), 'utf8')
+const chatWidget = readFileSync(fileURLToPath(new URL('../src/components/StoreChat.astro', import.meta.url)), 'utf8')
 const homepageStyles = readFileSync(fileURLToPath(new URL('../src/styles/global.css', import.meta.url)), 'utf8')
 
 const products = [
@@ -86,8 +87,9 @@ test('characteristics become name-value rows', () => {
 test('homepage CTA contracts use the system builder and chat widget', () => {
   assert.match(homepage, /<a[^>]+href="#custom"[^>]*>Подобрать решение<\/a>/)
   assert.match(homepage, /data-chat-open/)
-  assert.match(homepage, /class="orbea-chat-widget is-minimized"[^>]*data-chat-widget/)
-  assert.match(homepage, /aria-label="Открыть чат" data-chat-restore/)
+  assert.match(homepage, /<StoreChat \/>/)
+  assert.match(chatWidget, /class="orbea-chat-widget is-minimized"[^>]*data-chat-widget/)
+  assert.match(chatWidget, /aria-label="Открыть чат" data-chat-restore/)
 })
 
 test('homepage bestsellers use the first four Drive model series', () => {

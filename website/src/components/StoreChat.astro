@@ -1,0 +1,138 @@
+---
+import { AssistantCard } from "./AiComponentsDemo";
+import { getProductPrice, loadCatalogProducts } from "../data/catalog";
+
+const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const products = await loadCatalogProducts();
+const chatProducts = products.map((product) => ({
+  slug: product.slug,
+  name: product.name,
+  category: product.category,
+  image: product.image,
+  priceLabel: getProductPrice(product).label,
+  oldPriceLabel: getProductPrice(product).oldPriceLabel,
+}));
+---
+<aside id="nikass-chat-widget" class="orbea-chat-widget is-minimized" data-chat-widget role="dialog" aria-modal="false" aria-label="Консультант NIKASS">
+  <div class="orbea-chat-widget-panel">
+    <header class="orbea-chat-widget-header">
+      <div class="orbea-chat-widget-actions">
+        <button class="orbea-chat-widget-action" type="button" aria-label="Начать новый чат" data-chat-reset>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-4M4 5v4h4M4 13a8 8 0 0 0 14.9 4M20 19v-4h-4" /></svg>
+        </button>
+        <button class="orbea-chat-widget-action" type="button" aria-label="Свернуть чат" data-chat-minimize>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+        </button>
+        <button class="orbea-chat-widget-action" type="button" aria-label="Закрыть консультанта" data-chat-close>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+    </header>
+    <button class="orbea-chat-widget-restore" type="button" aria-label="Открыть чат" data-chat-restore>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14" /></svg>
+      <span>Открыть чат</span>
+    </button>
+    <AssistantCard apiBase={apiBase} products={chatProducts} persistSession client:load />
+  </div>
+</aside>
+
+<script>
+  const widget = document.querySelector<HTMLElement>("[data-chat-widget]");
+  if (widget) {
+    const close = widget.querySelector<HTMLButtonElement>("[data-chat-close]");
+    const reset = widget.querySelector<HTMLButtonElement>("[data-chat-reset]");
+    const minimize = widget.querySelector<HTMLButtonElement>("[data-chat-minimize]");
+    const restore = widget.querySelector<HTMLButtonElement>("[data-chat-restore]");
+    const mobileMedia = matchMedia("(max-width: 767px)");
+    let viewportFrame: number | undefined;
+    let lastTrigger: HTMLElement | null = null;
+    let previousOverflow = "";
+    const background = new Map<HTMLElement, boolean>();
+    const isOpen = () => !widget.classList.contains("is-minimized");
+
+    const syncViewport = () => {
+      if (viewportFrame !== undefined) cancelAnimationFrame(viewportFrame);
+      if (!isOpen() || !mobileMedia.matches) {
+        widget.style.removeProperty("--chat-visual-height");
+        widget.style.removeProperty("--chat-visual-top");
+        return;
+      }
+      viewportFrame = requestAnimationFrame(() => {
+        const viewport = window.visualViewport;
+        widget.style.setProperty("--chat-visual-height", `${Math.max(1, viewport?.height ?? innerHeight)}px`);
+        widget.style.setProperty("--chat-visual-top", `${Math.max(0, viewport?.offsetTop ?? 0)}px`);
+        viewportFrame = undefined;
+      });
+    };
+
+    const setOpen = (open: boolean) => {
+      if (isOpen() === open) return;
+      if (open) {
+        lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        previousOverflow = document.body.style.overflow;
+        for (const element of document.body.children) {
+          if (element instanceof HTMLElement && !element.contains(widget)) {
+            background.set(element, element.inert);
+            element.inert = true;
+          }
+        }
+        document.body.style.overflow = "hidden";
+      } else {
+        background.forEach((inert, element) => { element.inert = inert; });
+        background.clear();
+        document.body.style.overflow = previousOverflow;
+      }
+      widget.classList.toggle("is-minimized", !open);
+      widget.setAttribute("aria-modal", String(open));
+      if (restore) restore.hidden = open;
+      document.querySelectorAll("[data-chat-open]").forEach((button) => button.setAttribute("aria-expanded", String(open)));
+      syncViewport();
+      requestAnimationFrame(() => (open ? close : lastTrigger?.isConnected ? lastTrigger : restore)?.focus());
+    };
+
+    document.addEventListener("click", (event) => {
+      if (event.target instanceof Element && event.target.closest("[data-chat-open]")) {
+        event.preventDefault();
+        setOpen(true);
+      }
+    });
+    close?.addEventListener("click", () => {
+      setOpen(false);
+      document.dispatchEvent(new CustomEvent("nikass:chat-close"));
+    });
+    minimize?.addEventListener("click", () => setOpen(false));
+    restore?.addEventListener("click", () => setOpen(true));
+    reset?.addEventListener("click", () => document.dispatchEvent(new CustomEvent("nikass:chat-reset")));
+    document.addEventListener("keydown", (event) => {
+      if (!isOpen()) return;
+      if (event.key === "Escape") {
+        setOpen(false);
+        document.dispatchEvent(new CustomEvent("nikass:chat-close"));
+      }
+      if (event.key !== "Tab") return;
+      const focusable = [...widget.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled])')].filter((element) => element.offsetParent !== null);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (first && last) {
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    });
+    mobileMedia.addEventListener("change", syncViewport);
+    window.addEventListener("resize", syncViewport);
+    window.visualViewport?.addEventListener("resize", syncViewport);
+    window.visualViewport?.addEventListener("scroll", syncViewport);
+    document.addEventListener("focusin", (event) => {
+      if (event.target instanceof HTMLTextAreaElement && isOpen()) {
+        syncViewport();
+        window.setTimeout(syncViewport, 250);
+      }
+    });
+    const url = new URL(location.href);
+    if (url.searchParams.get("chat") === "open") {
+      url.searchParams.delete("chat");
+      history.replaceState(history.state, "", url);
+      setOpen(true);
+    }
+  }
+</script>

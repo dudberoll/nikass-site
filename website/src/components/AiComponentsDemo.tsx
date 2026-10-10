@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactElement } from "react";
 import { chatResponseSchema, chatTranscriptionResponseSchema } from "@web-app-demo/contracts";
 
 import { convertAudioToWav } from "../lib/audio";
+import { readChatSession, saveChatSession, type ChatMessage } from "../lib/chat-session";
 import PromptInput from "./PromptInput";
 
 type IconName = "analytics" | "edit" | "image" | "idea" | "sparkles";
@@ -22,8 +23,6 @@ const actions: Array<{ icon: IconName; label: string; prompt: string }> = [
   { icon: "analytics", label: "Промышленное оборудование", prompt: "Подбери мне оборудование для резервного питания промышленной техники. Сначала уточни список устройств, их рабочую и пусковую мощность, нужное время автономной работы и условия использования, а затем предложи подходящее решение из каталога." },
   { icon: "edit", label: "Доставка и возврат", prompt: "Расскажи подробно об условиях доставки, сроках, стоимости и возврате товаров NIKASS." },
 ];
-
-type ChatMessage = { id: string; role: "user" | "assistant"; text: string };
 
 function renderBoldMarkdown(text: string): ReactElement[] {
   return text.split(/(\*\*[^*\n]+\*\*)/g).map((part, index) =>
@@ -82,17 +81,47 @@ function Icon({ name }: { name: IconName }) {
   return <svg aria-hidden="true" className="ai-components-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
 
-export function AssistantCard({ apiBase, products }: { apiBase: string; products: readonly ChatProduct[] }) {
+export function AssistantCard({ apiBase, products, persistSession = false }: { apiBase: string; products: readonly ChatProduct[]; persistSession?: boolean }) {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState("");
+  const [sessionReady, setSessionReady] = useState(!persistSession);
+  const [storageError, setStorageError] = useState(false);
+  const [visibleReplyLength, setVisibleReplyLength] = useState(0);
   const nextMessageId = useRef(0);
   const streamTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const requestController = useRef<AbortController | null>(null);
   const activeAssistantId = useRef<string | null>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!persistSession) return;
+    const restoreSession = () => {
+      if (streamTimer.current) clearInterval(streamTimer.current);
+      streamTimer.current = null;
+      requestController.current?.abort();
+      requestController.current = null;
+      activeAssistantId.current = null;
+      setStreaming(false);
+      setTranscribing(false);
+      const session = readChatSession();
+      setMessages(session.messages);
+      setDraft(session.draft);
+      nextMessageId.current = session.messages.length;
+      setStorageError(Boolean(session.error));
+      setSessionReady(true);
+    };
+    restoreSession();
+    const handlePageShow = (event: PageTransitionEvent) => { if (event.persisted) restoreSession(); };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [persistSession]);
+
+  useEffect(() => {
+    if (persistSession && sessionReady) setStorageError(!saveChatSession({ messages, draft }));
+  }, [persistSession, sessionReady, messages, draft]);
 
   useEffect(() => () => {
     if (streamTimer.current) clearInterval(streamTimer.current);
@@ -107,7 +136,7 @@ export function AssistantCard({ apiBase, products }: { apiBase: string; products
       requestController.current = null;
       if (activeAssistantId.current) {
         const assistantId = activeAssistantId.current;
-        setMessages((current) => current.filter((message) => message.id !== assistantId));
+        setMessages((current) => current.filter((message) => message.id !== assistantId || message.text));
         activeAssistantId.current = null;
       }
       setStreaming(false);
@@ -130,11 +159,12 @@ export function AssistantCard({ apiBase, products }: { apiBase: string; products
 
   useEffect(() => {
     conversationRef.current?.scrollTo({ top: conversationRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [messages, visibleReplyLength]);
 
   async function sendPrompt(value: string) {
     const text = value.trim();
-    if (!text || streaming) return;
+    if (!text || streaming || !sessionReady) return;
+    if (messages.length >= 200) { setError("Достигнут лимит переписки. Начните новый чат."); return; }
 
     setError("");
     setDraft("");
@@ -143,6 +173,7 @@ export function AssistantCard({ apiBase, products }: { apiBase: string; products
     const userMessage = { id: `user-${sequence}`, role: "user" as const, text };
     const assistantId = `assistant-${sequence}`;
     activeAssistantId.current = assistantId;
+    setVisibleReplyLength(0);
     const history = [...messages, userMessage];
     setMessages([...history, { id: assistantId, role: "assistant", text: "" }]);
 
@@ -159,10 +190,12 @@ export function AssistantCard({ apiBase, products }: { apiBase: string; products
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error?.message ?? "Сервис консультанта временно недоступен.");
       const reply = chatResponseSchema.parse(data).reply;
+      if (controller.signal.aborted) return;
+      setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, text: reply } : message));
       let visibleLength = 0;
       streamTimer.current = setInterval(() => {
         visibleLength = Math.min(visibleLength + 4, reply.length);
-        setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, text: reply.slice(0, visibleLength) } : message));
+        setVisibleReplyLength(visibleLength);
         if (visibleLength === reply.length && streamTimer.current) {
           clearInterval(streamTimer.current);
           streamTimer.current = null;
@@ -171,12 +204,7 @@ export function AssistantCard({ apiBase, products }: { apiBase: string; products
         }
       }, 45);
     } catch (cause) {
-      if (cause instanceof DOMException && cause.name === "AbortError") {
-        setMessages((current) => current.filter((message) => message.id !== assistantId));
-        activeAssistantId.current = null;
-        setStreaming(false);
-        return;
-      }
+      if (controller.signal.aborted) return;
       setMessages((current) => current.filter((message) => message.id !== assistantId));
       activeAssistantId.current = null;
       setError(cause instanceof Error ? cause.message : "Сервис консультанта временно недоступен.");
@@ -194,48 +222,54 @@ export function AssistantCard({ apiBase, products }: { apiBase: string; products
 
     try {
       const wav = await convertAudioToWav(audio);
+      if (controller.signal.aborted) return;
       const form = new FormData();
       form.append("file", wav, `voice-${Date.now()}.wav`);
       const response = await fetch(`${apiBase}/api/chat/transcribe`, { method: "POST", body: form, signal: controller.signal });
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error?.message ?? "Не удалось распознать голос.");
       const text = chatTranscriptionResponseSchema.parse(data).text;
+      if (controller.signal.aborted) return;
       setTranscribing(false);
       if (requestController.current === controller) requestController.current = null;
       await sendPrompt(text);
     } catch (cause) {
-      if (cause instanceof DOMException && cause.name === "AbortError") return;
+      if (controller.signal.aborted) return;
       setError(cause instanceof Error ? cause.message : "Не удалось распознать голос.");
     } finally {
-      if (requestController.current === controller) requestController.current = null;
-      setTranscribing(false);
+      if (requestController.current === controller) {
+        requestController.current = null;
+        setTranscribing(false);
+      }
     }
   }
 
-  return <section className="ai-assistant-card" aria-labelledby="ai-assistant-card-title">
+  return <section className="ai-assistant-card" aria-label="Диалог с консультантом NIKASS" data-chat-hydrated={sessionReady}>
     {messages.length === 0 ? <div className="ai-assistant-card-content">
       <div className="ai-assistant-card-mark"><img className="ai-assistant-card-logo" src="/assets/images/nikass-smart-selection-logo.png" alt="NIKASS smart selection" /></div>
       <p className="ai-assistant-card-greeting">Здравствуйте! Я консультант NIKASS</p>
       <h1 id="ai-assistant-card-title">Помогу подобрать оборудование под Вашу задачу</h1>
       <p className="ai-assistant-card-description">Расскажите, что нужно запитать: дом, технику или автомобиль. Отвечу на вопросы по оборудованию, доставке и возврату.</p>
       <div className="ai-assistant-card-actions">
-        {actions.map((action) => <button key={action.label} type="button" onClick={() => void sendPrompt(action.prompt)}><Icon name={action.icon} />{action.label}</button>)}
+        {actions.map((action) => <button key={action.label} type="button" disabled={!sessionReady || streaming || transcribing} onClick={() => void sendPrompt(action.prompt)}><Icon name={action.icon} />{action.label}</button>)}
       </div>
     </div> : <div ref={conversationRef} className="ai-assistant-card-conversation" aria-live="polite" aria-busy={streaming || transcribing}>
       {messages.map((message) => {
-        const visibleText = message.role === "assistant" ? removeCatalogProductLinkLines(message.text) : message.text;
+        const text = message.id === activeAssistantId.current ? message.text.slice(0, visibleReplyLength) : message.text;
+        const visibleText = message.role === "assistant" ? removeCatalogProductLinkLines(text) : text;
         return <article key={message.id} className={`ai-chat-message is-${message.role}`}>
           <div className="ai-chat-message-avatar" aria-hidden="true">{message.role === "assistant" ? "N" : "Вы"}</div>
           <div className="ai-chat-message-content">
-            {(visibleText || !message.text) && <div className="ai-chat-bubble">{visibleText ? renderBoldMarkdown(visibleText) : "Печатает…"}</div>}
-            {message.role === "assistant" && <ProductRecommendations text={message.text} products={products} />}
+            {(visibleText || !text) && <div className="ai-chat-bubble">{visibleText ? renderBoldMarkdown(visibleText) : "Печатает…"}</div>}
+            {message.role === "assistant" && <ProductRecommendations text={text} products={products} />}
           </div>
         </article>;
       })}
     </div>}
     {error && <p className="ai-chat-error" role="alert">{error}</p>}
+    {storageError && <p className="ai-chat-error" role="status">Не удалось сохранить переписку в браузере. При переходе на другую страницу она может потеряться.</p>}
     <div className="ai-assistant-card-composer ai-assistant-card-prompt">
-      <PromptInput variant="embedded" value={draft} onChange={setDraft} onSubmit={(value) => void sendPrompt(value)} onVoiceInput={transcribeAudio} disabled={streaming || transcribing} placeholder={messages.length === 0 ? "Что нужно запитать?" : ""} />
+      <PromptInput variant="embedded" value={draft} onChange={setDraft} onSubmit={(value) => void sendPrompt(value)} onVoiceInput={transcribeAudio} disabled={!sessionReady || streaming || transcribing} placeholder={messages.length === 0 ? "Что нужно запитать?" : ""} />
     </div>
   </section>;
 }

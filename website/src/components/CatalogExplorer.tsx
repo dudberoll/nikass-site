@@ -115,7 +115,7 @@ export default function CatalogExplorer({ products, categories, discounted = fal
           <div><h3>{title}</h3><p>{text}</p></div>
         </li>)}
       </ol>
-      <a className="orbea-button orbea-button-dark catalog-guide-cta" href="/?chat=open#custom">Подобрать решение за 1 минуту</a>
+      <button className="orbea-button orbea-button-dark catalog-guide-cta" type="button" data-chat-open aria-controls="nikass-chat-widget" aria-expanded="false">Подобрать решение за 1 минуту</button>
     </section>}
   </div>;
 }

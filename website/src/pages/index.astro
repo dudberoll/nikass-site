@@ -5,11 +5,10 @@ import AboutSection from "../components/AboutSection.astro";
 import ReviewsSection from "../components/ReviewsSection.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import CookieNotice from "../components/CookieNotice.astro";
-import { AssistantCard } from "../components/AiComponentsDemo";
-import { HERO_CATEGORIES, getProductPrice, loadCatalogProducts } from "../data/catalog";
+import StoreChat from "../components/StoreChat.astro";
+import { HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
 import { storyEntries } from "../data/blog";
 
-const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const products = await loadCatalogProducts();
 
 const bikes = [
@@ -34,14 +33,6 @@ const bestSellerSlugs = [
   "portativnaya-elektrostantsiya-168000-mah-600w",
 ];
 const bestSellers = bestSellerSlugs.flatMap((slug) => products.filter((product) => product.slug === slug));
-const chatProducts = products.map((product) => ({
-  slug: product.slug,
-  name: product.name,
-  category: product.category,
-  image: product.image,
-  priceLabel: getProductPrice(product).label,
-  oldPriceLabel: getProductPrice(product).oldPriceLabel,
-}));
 const heroCategories = HERO_CATEGORIES;
 const formatHeroTitle = (title: string) => title.replace("LiFePO4", "LiFePO₄");
 const heroInitialIndex = 0;
@@ -229,127 +220,9 @@ const heroPosition = (index: number) => {
 
     <CookieNotice />
 
-    <aside id="nikass-chat-widget" class="orbea-chat-widget is-minimized" data-chat-widget role="dialog" aria-modal="false" aria-label="Консультант NIKASS">
-      <div class="orbea-chat-widget-panel">
-        <header class="orbea-chat-widget-header">
-          <div class="orbea-chat-widget-actions">
-            <button class="orbea-chat-widget-action" type="button" aria-label="Начать новый чат" data-chat-reset>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-4M4 5v4h4M4 13a8 8 0 0 0 14.9 4M20 19v-4h-4" /></svg>
-            </button>
-            <button class="orbea-chat-widget-action" type="button" aria-label="Свернуть чат" data-chat-minimize>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
-            </button>
-            <button class="orbea-chat-widget-action" type="button" aria-label="Закрыть консультанта" data-chat-close>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
-            </button>
-          </div>
-        </header>
-        <button class="orbea-chat-widget-restore" type="button" aria-label="Открыть чат" data-chat-restore>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14" /></svg>
-          <span>Открыть чат</span>
-        </button>
-        <AssistantCard apiBase={apiBase} products={chatProducts} client:load />
-      </div>
-    </aside>
+    <StoreChat />
 
     <script is:inline>
-      const page = document.querySelector(".orbea-page");
-      const chatWidget = document.querySelector("[data-chat-widget]");
-      const chatClose = chatWidget?.querySelector("[data-chat-close]");
-      const chatReset = chatWidget?.querySelector("[data-chat-reset]");
-      const chatMinimize = chatWidget?.querySelector("[data-chat-minimize]");
-      const chatRestore = chatWidget?.querySelector("[data-chat-restore]");
-      const chatOpenButtons = [...document.querySelectorAll("[data-chat-open]")];
-      const chatMobileMedia = matchMedia("(max-width: 767px)");
-      let chatViewportFrame;
-      let lastChatTrigger;
-
-      const syncChatViewport = () => {
-        if (!chatWidget || chatWidget.hidden || chatWidget.classList.contains("is-minimized") || !chatMobileMedia.matches) {
-          chatWidget?.style.removeProperty("--chat-visual-height");
-          chatWidget?.style.removeProperty("--chat-visual-top");
-          return;
-        }
-        if (chatViewportFrame !== undefined) cancelAnimationFrame(chatViewportFrame);
-        chatViewportFrame = requestAnimationFrame(() => {
-          const viewport = window.visualViewport;
-          const height = viewport?.height ?? window.innerHeight;
-          const offsetTop = Math.max(0, viewport?.offsetTop ?? 0);
-          chatWidget.style.setProperty("--chat-visual-height", `${Math.max(1, height)}px`);
-          chatWidget.style.setProperty("--chat-visual-top", `${offsetTop}px`);
-          chatViewportFrame = undefined;
-        });
-      };
-
-      const setChatOpen = (open) => {
-        if (!chatWidget) return;
-        chatWidget.hidden = false;
-        chatWidget.classList.toggle("is-minimized", !open);
-        chatWidget.setAttribute("aria-modal", String(open));
-        if (chatRestore) chatRestore.hidden = open;
-        page.inert = open;
-        chatOpenButtons.forEach((button) => button.setAttribute("aria-expanded", String(open)));
-        syncChatOverflow();
-        syncChatViewport();
-        if (open) {
-          lastChatTrigger = document.activeElement;
-          requestAnimationFrame(() => chatClose?.focus());
-        } else {
-          document.dispatchEvent(new CustomEvent("nikass:chat-close"));
-          if (lastChatTrigger instanceof HTMLElement) lastChatTrigger.focus();
-        }
-      };
-      const setChatMinimized = (minimized) => {
-        if (!chatWidget || chatWidget.hidden) return;
-        chatWidget.classList.toggle("is-minimized", minimized);
-        chatWidget.setAttribute("aria-modal", String(!minimized));
-        if (chatRestore) chatRestore.hidden = !minimized;
-        page.inert = !minimized;
-        syncChatOverflow();
-        syncChatViewport();
-        requestAnimationFrame(() => (minimized ? chatRestore : chatMinimize)?.focus());
-      };
-      chatOpenButtons.forEach((button) => button.addEventListener("click", () => setChatOpen(true)));
-      chatClose?.addEventListener("click", () => setChatOpen(false));
-      chatReset?.addEventListener("click", () => {
-        document.dispatchEvent(new CustomEvent("nikass:chat-reset"));
-        chatReset.focus();
-      });
-      chatMinimize?.addEventListener("click", () => setChatMinimized(true));
-      chatRestore?.addEventListener("click", () => setChatMinimized(false));
-      const syncChatOverflow = () => {
-        const chatIsModal = Boolean(chatWidget && !chatWidget.hidden && !chatWidget.classList.contains("is-minimized"));
-        document.body.style.overflow = chatIsModal ? "hidden" : "";
-      };
-      chatMobileMedia.addEventListener("change", syncChatViewport);
-      window.addEventListener("resize", syncChatViewport);
-      window.visualViewport?.addEventListener("resize", syncChatViewport);
-      window.visualViewport?.addEventListener("scroll", syncChatViewport);
-      document.addEventListener("focusin", (event) => {
-        if (!(event.target instanceof HTMLTextAreaElement) || !chatWidget || chatWidget.classList.contains("is-minimized")) return;
-        syncChatViewport();
-        window.setTimeout(syncChatViewport, 250);
-      });
-      syncChatViewport();
-      const trapChatFocus = (event, container) => {
-        const focusable = [...container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled])')].filter((element) => element.offsetParent !== null);
-        const first = focusable[0];
-        const last = focusable.at(-1);
-        if (!first || !last) return;
-        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-      };
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Tab" && !chatWidget?.hidden) trapChatFocus(event, chatWidget);
-        if (event.key === "Escape") setChatOpen(false);
-      });
-      const chatUrl = new URL(location.href);
-      if (chatUrl.searchParams.get("chat") === "open") {
-        chatUrl.searchParams.delete("chat");
-        history.replaceState(history.state, "", chatUrl);
-        setChatOpen(true);
-      }
-
       const heroCarousel = document.querySelector("[data-hero-carousel]");
       if (heroCarousel) {
         const heroItems = [...heroCarousel.querySelectorAll("[data-hero-product]")];

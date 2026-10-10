@@ -1,5 +1,7 @@
 ---
 import CookieNotice from "./CookieNotice.astro";
+import StoreChat from "./StoreChat.astro";
+const hideChat = ["/cart", "/checkout"].includes(Astro.url.pathname.replace(/\/$/, ""));
 ---
 <footer class="store-footer" id="footer">
   <div>
@@ -28,3 +30,4 @@ import CookieNotice from "./CookieNotice.astro";
   <small>© 2026 NIKASS. Все права защищены.</small>
 </footer>
 <CookieNotice />
+{!hideChat && <StoreChat />}
