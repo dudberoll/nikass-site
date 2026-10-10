@@ -690,7 +690,7 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .checkout-delivery-option.is-selected { background: #f0f0ed; }
 .checkout-delivery-option strong { font-size: 18px; font-weight: 500; }
 .checkout-delivery-option span { color: #111; font-size: 14px; }
-.checkout-delivery-option small { color: #666; font-size: 13px; line-height: 1.35; }
+.checkout-delivery-option small { color: #666; font-size: 14px; line-height: 1.35; }
 .checkout-pickup-details { padding: 0; }
 .checkout-pickup-details .store-eyebrow { margin: 0 0 12px; font-size: 13px; }
 .checkout-pickup-details h3 { margin: 0 0 10px; font-size: 22px; font-weight: 500; letter-spacing: -.03em; }
