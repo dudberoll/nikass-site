@@ -19,7 +19,7 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .orbea-header-light { color: #111; }
 .orbea-header.is-scrolled { background: #fff; color: #111; box-shadow: 0 1px 0 rgba(0,0,0,.12); }
 .orbea-page .orbea-header { height: 76px; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.12); }
-.orbea-header-inner { display: grid; flex: 1; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px; max-width: 1600px; height: 20px; margin: 0 auto; }
+.orbea-header-inner { display: grid; flex: 1; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px; max-width: 1600px; margin: 0 auto; }
 .orbea-desktop-nav { display: flex; align-items: center; gap: 28px; }
 .orbea-catalog-menu { position: relative; }
 .orbea-catalog-menu > button { display: inline-flex; align-items: center; gap: 8px; }
@@ -42,7 +42,6 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .orbea-actions { display: flex; justify-content: flex-end; align-items: center; gap: 20px; }
 .orbea-icon-button, .orbea-mobile-menu-button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 10px; background: transparent; color: inherit; transition: opacity .15s ease, transform .15s ease; }
 .orbea-mobile-menu-button { display: none; }
-@media (min-width: 1024px) { .orbea-header-inner { transform: translateY(-4px); } }
 .orbea-search-panel { position: fixed; inset: 68px 0 auto; padding: 24px 64px 32px; background: rgba(255,255,255,.98); color: #111; box-shadow: 0 12px 25px rgba(0,0,0,.08); }
 .orbea-search-panel label { display: block; margin-bottom: 10px; font-size: 13px; color: #666; }
 .orbea-search-panel form { display: flex; align-items: center; gap: 10px; max-width: 680px; border-bottom: 1px solid #111; }
@@ -240,7 +239,7 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 @media (max-width: 1023px) {
   .orbea-header { height: calc(48px + env(safe-area-inset-top)); padding: 0 20px; }
   .orbea-page .orbea-header { height: calc(56px + env(safe-area-inset-top)); }
-  .orbea-header-inner { height: 28px; grid-template-columns: auto 1fr auto; }
+  .orbea-header-inner { grid-template-columns: auto 1fr auto; }
   .orbea-desktop-nav { display: none; }
   .orbea-mobile-menu-button { display: inline-flex; }
   .orbea-actions { gap: 15px; }
