@@ -5,6 +5,7 @@ import { PaymentsService } from './application/payments-service'
 import { OrderFailure, PaymentFailure, type OrderProvider, type PaymentProvider } from './application/ports'
 import { createOrderStore } from './infrastructure/orders-store'
 import { createWooCommerceOrders } from './infrastructure/woocommerce-orders'
+import { createCdekWidgetService } from './infrastructure/cdek-widget'
 import { createYooKassaPayments } from './infrastructure/yookassa-payments'
 import { createOrderRoutes } from './transport/routes'
 
@@ -18,7 +19,10 @@ export function createOrdersModule({ env, db, provider }: { env: AppEnv; db: DbC
   const paymentProvider: PaymentProvider = env.YOO_KASSA_ENABLED && env.YOO_KASSA_SHOP_ID && env.YOO_KASSA_SECRET_KEY
     ? createYooKassaPayments({ apiUrl: env.YOO_KASSA_API_URL, shopId: env.YOO_KASSA_SHOP_ID, secretKey: env.YOO_KASSA_SECRET_KEY, timeoutMs: env.CATALOG_REQUEST_TIMEOUT_MS, testMode: env.YOO_KASSA_TEST_MODE, receiptVatCode: env.YOO_KASSA_RECEIPT_VAT_CODE })
     : { create: async (): Promise<never> => { throw new PaymentFailure('unavailable', 'Онлайн-оплата пока не подключена.') }, get: async (): Promise<never> => { throw new PaymentFailure('unavailable', 'Онлайн-оплата пока не подключена.') } }
-  return { routes: createOrderRoutes(new OrdersService(store, source, !env.YOO_KASSA_TEST_MODE), new PaymentsService(store, paymentProvider, env.YOO_KASSA_RETURN_URL ?? '', env.YOO_KASSA_TEST_MODE, source)) }
+  const cdekWidget = env.CDEK_ACCOUNT && env.CDEK_PASSWORD
+    ? createCdekWidgetService({ account: env.CDEK_ACCOUNT, password: env.CDEK_PASSWORD, environment: env.CDEK_API_ENVIRONMENT, timeoutMs: env.CATALOG_REQUEST_TIMEOUT_MS })
+    : undefined
+  return { routes: createOrderRoutes(new OrdersService(store, source, !env.YOO_KASSA_TEST_MODE), new PaymentsService(store, paymentProvider, env.YOO_KASSA_RETURN_URL ?? '', env.YOO_KASSA_TEST_MODE, source), cdekWidget) }
 }
 export type { OrderProvider } from './application/ports'
 export { deliverOrderNotification } from './infrastructure/notifications'

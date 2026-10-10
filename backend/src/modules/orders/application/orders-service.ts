@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { orderQuoteRequestSchema, orderTotalsSchema, type OrderQuoteRequest } from '@web-app-demo/contracts'
+import { cartReviewRequestSchema, orderQuoteRequestSchema, orderTotalsSchema, type CartReviewRequest, type OrderQuoteRequest } from '@web-app-demo/contracts'
 import { OrderFailure, type OrderProvider, type OrderStore, type CheckoutAttempt } from './ports'
 
 const hash = (token: string) => createHash('sha256').update(token).digest('hex')
@@ -15,7 +15,13 @@ export class OrdersService {
     const checkoutToken = randomBytes(32).toString('hex')
     const expiresAt = new Date(Date.now() + 15 * 60_000)
     await this.store.create(hash(checkoutToken), cartToken, input, checkedTotals, expiresAt)
-    return { checkoutToken, expiresAt: expiresAt.toISOString(), totals: checkedTotals }
+    return { checkoutToken, expiresAt: expiresAt.toISOString(), totals: checkedTotals, ...(input.customer.cdekPoint ? { deliveryPoint: input.customer.cdekPoint } : {}) }
+  }
+
+  async shippingParcels(value: CartReviewRequest) {
+    const cart = cartReviewRequestSchema.parse(value)
+    if (!this.provider.shippingParcels) throw new OrderFailure('unavailable', 'Расчёт доставки временно недоступен.')
+    return this.provider.shippingParcels(cart)
   }
 
   async status(token: string) { return result(await this.find(token)) }

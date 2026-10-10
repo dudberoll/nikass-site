@@ -1,8 +1,9 @@
-import { cartReviewRequestSchema, orderCustomerSchema, orderQuoteRequestSchema, orderQuoteResponseSchema, paymentStartResponseSchema, paymentStatusResponseSchema, type CartReviewRequest } from "@web-app-demo/contracts";
-import { useEffect, useState, type MouseEvent, type SyntheticEvent } from "react";
+import { cartReviewRequestSchema, cdekParcelsResponseSchema, orderCustomerSchema, orderQuoteRequestSchema, orderQuoteResponseSchema, paymentStartResponseSchema, paymentStatusResponseSchema, type CartReviewRequest, type CdekDeliveryPoint } from "@web-app-demo/contracts";
+import { useEffect, useRef, useState, type MouseEvent, type SyntheticEvent } from "react";
 
 import { clearCartIfUnchanged, readCart } from "../lib/cart";
 import { clearCheckoutSnapshot, readCheckoutSnapshot, readSavedPayments, requestCheckout, saveCheckoutSnapshot } from "../lib/checkout-session";
+import { loadCdekWidget, type CdekWidgetInstance } from "../lib/cdek-widget";
 import { formatYandexSuggestion, parseYandexAddress, type YandexSuggestResult, yandexSuggestType } from "../lib/yandex-address";
 
 const contactFields = [["name", "Имя и фамилия", "text", "name", 100], ["phone", "Телефон", "tel", "tel", 30], ["email", "Email", "email", "email", 254]] as const;
@@ -16,7 +17,7 @@ type Quote = ReturnType<typeof orderQuoteResponseSchema.parse>;
 type Payment = ReturnType<typeof paymentStatusResponseSchema.parse>;
 type CustomerSnapshot = ReturnType<typeof customerSnapshotSchema.parse>;
 type Initial = { cart: CartReviewRequest | null; cartRevision?: string; quote: Quote | null; paymentId: string | null; attemptId?: string; error: string };
-type CheckoutProps = { apiBase: string; privacyUrl: string; termsUrl: string; yandexSuggestApiKey: string };
+type CheckoutProps = { apiBase: string; privacyUrl: string; termsUrl: string; yandexSuggestApiKey: string; cdekYandexApiKey: string };
 const money = (minor: number) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB" }).format(minor / 100);
 
 function PaymentDetails({ quote, customer }: { quote: Quote; customer: CustomerSnapshot | null }) {
@@ -30,8 +31,19 @@ function PaymentDetails({ quote, customer }: { quote: Quote; customer: CustomerS
     </dl>}
     <p className="checkout-details-label">Состав заказа</p>
     <ul className="checkout-total-list">{quote.totals.items.map((item) => <li key={item.sku}><span>{item.name} · {item.quantity} шт.</span><strong>{money(item.totalMinor)}</strong></li>)}</ul>
-    <div className="checkout-summary-line checkout-summary-total"><span>Итого</span><strong>{money(quote.totals.totalMinor)}</strong></div>
+    <CdekDeliveryDetails point={quote.deliveryPoint} />
+    <div className="checkout-summary-line checkout-summary-total"><span>К оплате онлайн</span><strong>{money(quote.totals.totalMinor)}</strong></div>
   </>;
+}
+
+function CdekDeliveryDetails({ point }: { point: CdekDeliveryPoint | undefined }) {
+  if (!point) return null;
+  return <section className="checkout-cdek-summary" aria-label="Отдельная оплата доставки СДЭК">
+    <p className="checkout-details-label">Доставка оплачивается отдельно</p>
+    <p><strong>{point.name}</strong><br />{point.city}, {point.address} · {point.code}</p>
+    <div className="checkout-summary-line"><span>Ориентир СДЭК</span><strong>{point.shippingMinor === null ? "Подтвердит менеджер" : money(point.shippingMinor)}</strong></div>
+    <p className="checkout-hint">Эта сумма не входит в онлайн-оплату товаров.</p>
+  </section>;
 }
 
 export function paymentResultMessage(payment: Payment) {
@@ -65,7 +77,7 @@ function readCheckout(): Initial {
   } catch { return { cart: null, quote: null, paymentId: null, error: "Корзина недоступна или пуста. Вернитесь в каталог." }; }
 }
 
-function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey }: CheckoutProps) {
+function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, cdekYandexApiKey }: CheckoutProps) {
   const [initial] = useState(readCheckout);
   const [cart] = useState(initial.cart);
   const [quote, setQuote] = useState(initial.quote);
@@ -84,6 +96,68 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey }: 
   const [selectedAddress, setSelectedAddress] = useState("");
   const [suggestions, setSuggestions] = useState<YandexSuggestResult[]>([]);
   const [suggestionError, setSuggestionError] = useState("");
+  const [cdekEnabled, setCdekEnabled] = useState(Boolean(cdekYandexApiKey));
+  const [cdekPackages, setCdekPackages] = useState<ReturnType<typeof cdekParcelsResponseSchema.parse> | null>(null);
+  const [cdekError, setCdekError] = useState("");
+  const [cdekLoading, setCdekLoading] = useState(false);
+  const [cdekMapLocation, setCdekMapLocation] = useState("");
+  const [cdekPoint, setCdekPoint] = useState<CdekDeliveryPoint | null>(null);
+  const cdekWidget = useRef<CdekWidgetInstance | null>(null);
+  const cdekServicePath = `${apiBase}/api/orders/cdek-widget`;
+
+  useEffect(() => {
+    if (!cdekYandexApiKey) return;
+    let active = true;
+    void (async () => {
+      try {
+        const response = await fetch(`${apiBase}/api/orders/cdek-widget/config`);
+        const config = await response.json() as { enabled?: unknown };
+        if (!response.ok || typeof config.enabled !== "boolean") throw new Error();
+        if (!active) return;
+        setCdekEnabled(config.enabled);
+        if (!config.enabled) { setCdekError("Карта СДЭК пока не настроена; стоимость доставки уточнит менеджер."); return; }
+        try {
+          const packages = await requestCheckout(apiBase, "/api/orders/cdek-parcels", { cart }, cdekParcelsResponseSchema);
+          if (active) setCdekPackages(packages);
+        } catch {
+          if (active) { setCdekPackages({ canCalculate: false, parcels: [], missingItems: 0 }); setCdekError("Не удалось проверить вес и габариты; стоимость доставки уточнит менеджер."); }
+        }
+      } catch {
+        if (active) { setCdekEnabled(false); setCdekError("Карта СДЭК временно недоступна; стоимость доставки уточнит менеджер."); }
+      }
+    })();
+    return () => { active = false; };
+  }, [apiBase, cart, cdekYandexApiKey]);
+
+  useEffect(() => {
+    if (!cdekEnabled || !cdekYandexApiKey || !cdekMapLocation || !cdekPackages) return;
+    let active = true;
+    setCdekLoading(true);
+    setCdekError("");
+    void loadCdekWidget().then(() => {
+      if (!active || !window.CDEKWidget) return;
+      cdekWidget.current = new window.CDEKWidget({
+        from: "Москва", root: "cdek-map", apiKey: cdekYandexApiKey, servicePath: cdekServicePath,
+        canChoose: true, popup: false, hideDeliveryOptions: { office: false, door: true },
+        goods: cdekPackages.canCalculate ? cdekPackages.parcels : [], defaultLocation: cdekMapLocation,
+        lang: "rus", currency: "RUB",
+        onReady: () => { if (active) setCdekLoading(false); },
+        onChoose: (type, tariff, target) => {
+          if (type !== "office" || !("city_code" in target)) return;
+          setCdekPoint({
+            code: target.code, cityCode: target.city_code, city: target.city, name: target.name,
+            address: target.address, type: target.type, postalCode: target.postal_code ?? "",
+            tariffCode: tariff?.tariff_code ?? null, tariffName: tariff?.tariff_name ?? null,
+            periodMin: tariff?.period_min ?? null, periodMax: tariff?.period_max ?? null,
+            shippingMinor: cdekPackages.canCalculate && tariff && Number.isFinite(tariff.delivery_sum) ? Math.round(tariff.delivery_sum * 100) : null,
+          });
+        },
+      });
+    }).catch((cause: unknown) => {
+      if (active) { setCdekLoading(false); setCdekError(cause instanceof Error ? cause.message : "Карта СДЭК временно недоступна."); }
+    });
+    return () => { active = false; cdekWidget.current?.destroy(); cdekWidget.current = null; };
+  }, [cdekEnabled, cdekYandexApiKey, cdekMapLocation, cdekPackages, cdekServicePath]);
 
   useEffect(() => {
     const query = addressQuery.trim();
@@ -173,10 +247,17 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey }: 
     const customer = { ...Object.fromEntries(data), deliveryMethod: data.get("deliveryMethod") ?? deliveryMethod, consent: data.get("consent") === "on" } as Record<string, unknown>;
     delete customer.promoCode;
     delete customer.termsAccepted;
+    if (cdekPoint) customer.cdekPoint = cdekPoint;
     if (!termsAccepted) {
       setErrors({ termsAccepted: "Подтвердите принятие условий покупки." });
       setError("Подтвердите принятие условий покупки.");
       window.setTimeout(() => document.getElementById("termsAccepted")?.focus(), 0);
+      return;
+    }
+    if (cdekEnabled && deliveryMethod === "delivery" && !cdekPoint) {
+      setError("Выберите пункт выдачи СДЭК на карте.");
+      setStep(3);
+      window.setTimeout(() => document.getElementById("cdek-map-search")?.focus(), 0);
       return;
     }
     const parsed = orderQuoteRequestSchema.safeParse({ cart, customer, promoCode: data.get("promoCode") ?? "" });
@@ -228,11 +309,29 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey }: 
       const input = document.getElementById(name);
       if (input instanceof HTMLInputElement && value) input.value = value;
     }
-    const searchValue = [address.city ?? address.region, address.street].filter(Boolean).join(", ") || formatYandexSuggestion(suggestion);
+    const searchValue = [address.city ?? address.region, address.street, address.house].filter(Boolean).join(", ") || formatYandexSuggestion(suggestion);
     setSelectedAddress(searchValue);
     setAddressQuery(searchValue);
     setSuggestions([]);
     setSuggestionError("");
+    setCdekPoint(null);
+    setCdekMapLocation("");
+  }
+  function findCdekPoints() {
+    const city = (document.getElementById("city") as HTMLInputElement | null)?.value.trim();
+    const street = (document.getElementById("street") as HTMLInputElement | null)?.value.trim();
+    if (!city || !street) { setCdekError("Сначала укажите город и улицу."); return; }
+    const location = [...new Set(["region", "city", "street", "house"].map((name) => (document.getElementById(name) as HTMLInputElement | null)?.value.trim()).filter(Boolean))].join(", ") || selectedAddress;
+    if (location === cdekMapLocation) {
+      setCdekPoint(null);
+      setCdekError("");
+      setCdekMapLocation("");
+      window.requestAnimationFrame(() => setCdekMapLocation(location));
+      return;
+    }
+    setCdekPoint(null);
+    setCdekError("");
+    setCdekMapLocation(location);
   }
 
   if (!cart) return <div className="cart-empty"><h2>Оформление недоступно</h2><p>{error}</p><a className="store-primary-button" href="/cart">Вернуться в корзину</a></div>;
@@ -241,12 +340,12 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey }: 
     {payment?.paymentState === "succeeded" ? <section className="checkout-result" aria-live="polite"><p className="store-eyebrow">ОПЛАТА ПРОШЛА</p><h2>Успешная оплата</h2>{payment.fulfillmentState !== "skipped" && <p>Менеджер свяжется с вами в течение часа в рабочее время, чтобы подтвердить все данные и заказ</p>}<PaymentDetails quote={quote!} customer={customer} /><p>{paymentResultMessage(payment)}</p><button className="store-primary-button" type="button" onClick={newCart}>Перейти к новой корзине</button></section>
       : payment?.paymentState === "canceled" ? <section className="checkout-result" aria-live="polite"><h2>Оплата отменена</h2><p>Заказ не оформлен. Вы можете вернуться к данным и повторить попытку.</p><button className="store-primary-button" type="button" onClick={edit}>Вернуться к заказу</button></section>
       : paymentId ? <section className="checkout-result" aria-live="polite"><h2>Ожидает оплаты</h2><p>Платёж ещё не подтверждён. Мы ожидаем оплату через {payment?.paymentState === "pending" && confirmationUrl ? <a href={confirmationUrl} rel="noreferrer">YooKassa</a> : "YooKassa"}.</p><PaymentDetails quote={quote!} customer={customer} /><button className="store-primary-button" type="button" disabled={busy} onClick={() => refreshPayment()}>{busy ? "Проверяем…" : "Обновить статус"}</button></section>
-      : quote ? <section className="checkout-result"><h2>Проверьте итоговую сумму</h2><ul className="checkout-total-list">{quote.totals.items.map((item) => <li key={item.sku}><span>{item.name} · {item.quantity} шт.</span><strong>{money(item.totalMinor)}</strong></li>)}</ul><div className="checkout-summary-line"><span>Скидка</span><strong>{money(quote.totals.discountMinor)}</strong></div><div className="checkout-summary-line checkout-summary-total"><span>Итого</span><strong>{money(quote.totals.totalMinor)}</strong></div><p>Расчёт действителен 15 минут. Далее откроется защищённая страница YooKassa.</p><div className="checkout-actions"><button className="store-primary-button" type="button" disabled={busy} onClick={startPayment}>{busy ? "Открываем оплату…" : "Перейти к оплате"}</button><button className="checkout-secondary-button" type="button" disabled={busy} onClick={edit}>Изменить данные</button></div></section>
-      : <form className="checkout-form" onSubmit={review} noValidate>
+      : quote ? <section className="checkout-result"><h2>Проверьте итоговую сумму</h2><ul className="checkout-total-list">{quote.totals.items.map((item) => <li key={item.sku}><span>{item.name} · {item.quantity} шт.</span><strong>{money(item.totalMinor)}</strong></li>)}</ul><div className="checkout-summary-line"><span>Скидка</span><strong>{money(quote.totals.discountMinor)}</strong></div><CdekDeliveryDetails point={quote.deliveryPoint} /><div className="checkout-summary-line checkout-summary-total"><span>К оплате онлайн</span><strong>{money(quote.totals.totalMinor)}</strong></div><p>Расчёт действителен 15 минут. Далее откроется защищённая страница YooKassa.</p><div className="checkout-actions"><button className="store-primary-button" type="button" disabled={busy} onClick={startPayment}>{busy ? "Открываем оплату…" : "Перейти к оплате"}</button><button className="checkout-secondary-button" type="button" disabled={busy} onClick={edit}>Изменить данные</button></div></section>
+      : <form className="checkout-form" onSubmit={review} onChange={(event) => { const target = event.target; if (target instanceof HTMLInputElement && ["region", "city", "street", "house"].includes(target.name)) { setCdekPoint(null); setCdekMapLocation(""); } }} noValidate>
         <ol className="checkout-steps" aria-label="Шаги оформления"><li className={step === 1 ? "is-active" : "is-complete"} aria-current={step === 1 ? "step" : undefined}><span>1</span>Личные данные</li><li className={step === 2 ? "is-active" : step === 3 ? "is-complete" : ""} aria-current={step === 2 ? "step" : undefined}><span>2</span>Способ доставки</li><li className={step === 3 ? "is-active" : ""} aria-current={step === 3 ? "step" : undefined}><span>3</span>Адрес</li></ol>
         <fieldset disabled={busy} hidden={step !== 1}><legend id="checkout-step-1-title" tabIndex={-1}>Личные данные</legend><div className="checkout-fields checkout-fields-personal">{contactFields.map(([name, label, type, autoComplete, maxLength]) => <div className={`checkout-field${name === "name" ? " checkout-field-wide" : ""}`} key={name}><label className="sr-only" htmlFor={name}>{label}</label><div className={`checkout-field-control${errors[name] ? " has-error" : ""}`}><input id={name} name={name} type={type} autoComplete={autoComplete} maxLength={maxLength} defaultValue={draft[name] ?? ""} placeholder={label} required aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <p className="checkout-error" id={`${name}-error`}>{errors[name]}</p>}</div></div>)}</div><div className="checkout-actions"><button className="store-primary-button" type="button" onClick={next}>Перейти к способу доставки</button></div></fieldset>
-        <fieldset disabled={busy} hidden={step !== 2}><legend id="checkout-step-2-title" tabIndex={-1}>Способ доставки</legend><div className="checkout-delivery-options" role="group" aria-label="Способ доставки"><button className={`checkout-delivery-option${deliveryMethod === "delivery" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMethod === "delivery"} onClick={() => setDeliveryMethod("delivery")}><strong>Доставка</strong><span>СДЭК</span><small>2–5 рабочих дней</small></button><button className={`checkout-delivery-option${deliveryMethod === "pickup" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMethod === "pickup"} onClick={() => setDeliveryMethod("pickup")}><strong>Самовывоз</strong><span>Бесплатно</span><small>Москва, Электролитный проезд, 3, стр. 2</small></button></div><div className="checkout-actions"><button className="checkout-secondary-button" type="button" onClick={() => { setStep(1); window.setTimeout(() => document.getElementById("checkout-step-1-title")?.focus(), 0); }}>Назад</button><button className="store-primary-button" type="button" onClick={nextDelivery}>Перейти к адресу</button></div></fieldset>
-        <fieldset disabled={busy} hidden={step !== 3}><legend id="checkout-step-3-title" className={deliveryMethod === "pickup" ? "sr-only" : undefined} tabIndex={-1}>Адрес</legend><input type="hidden" name="deliveryMethod" value={deliveryMethod} />{deliveryMethod === "delivery" ? <><div className="checkout-address-suggest"><div className="checkout-field-control"><input id="addressSearch" type="text" autoComplete="shipping street-address" value={addressQuery} placeholder="Москва, Лесная улица, 3" aria-label="Адрес" onChange={(event) => { if (selectedAddress) for (const name of ["region", "city", "street", "house"]) { const input = document.getElementById(name); if (input instanceof HTMLInputElement) input.value = ""; } setSelectedAddress(""); setAddressQuery(event.currentTarget.value); }} onBlur={() => window.setTimeout(() => setSuggestions([]), 120)} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} />{suggestions.length > 0 && <ul className="checkout-address-suggest-list" id="address-suggestions">{suggestions.map((suggestion, index) => <li key={`${formatYandexSuggestion(suggestion)}-${index}`}><button className="checkout-address-suggest-option" type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => selectSuggestion(suggestion)}><strong>{suggestion.title?.text || formatYandexSuggestion(suggestion)}</strong>{suggestion.subtitle?.text && <span>{suggestion.subtitle.text}</span>}</button></li>)}</ul>}</div>{(suggestionError || suggestions.length > 0) && <p className="checkout-hint" role="status">{suggestionError || `Найдено подсказок: ${suggestions.length}. Выберите подходящую.`}</p>}</div><div className="checkout-fields checkout-fields-address">{addressFields.map(([name, label, type, autoComplete, maxLength]) => <div className="checkout-field" key={name}><label className="sr-only" htmlFor={name}>{label}</label><div className={`checkout-field-control${errors[name] ? " has-error" : ""}`}><input id={name} name={name} type={type} inputMode={name === "postcode" ? "numeric" : undefined} autoComplete={`shipping ${autoComplete}`} maxLength={maxLength} defaultValue={draft[name] ?? ""} placeholder={label} required={name === "house"} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <p className="checkout-error" id={`${name}-error`}>{errors[name]}</p>}</div></div>)}</div><button className="checkout-text-button" type="button" aria-expanded={manualAddress} aria-controls="manual-address-fields" onClick={() => setManualAddress((value) => !value)}>{manualAddress ? "Скрыть ручной ввод" : "Ввести адрес вручную"}</button><div className="checkout-fields checkout-manual-address" id="manual-address-fields" hidden={!manualAddress}>{manualAddressFields.map(([name, label, type, autoComplete, maxLength]) => <div className="checkout-field" key={name}><label className="sr-only" htmlFor={name}>{label}</label><div className={`checkout-field-control${errors[name] ? " has-error" : ""}`}><input id={name} name={name} type={type} autoComplete={`shipping ${autoComplete}`} maxLength={maxLength} defaultValue={draft[name] ?? ""} placeholder={label} required aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <p className="checkout-error" id={`${name}-error`}>{errors[name]}</p>}</div></div>)}</div></> : <><section className="checkout-pickup-details" aria-label="Информация о самовывозе"><p className="store-eyebrow">САМОВЫВОЗ</p><h3>Москва, Электролитный проезд, 3, стр. 2</h3><p><strong>Бесплатно</strong> · Пн–Пт, 09:00–18:00</p><p>Заберите заказ после подтверждения менеджером.</p></section>{Object.entries(pickupDetails).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}</>}<label htmlFor="comment">Комментарий к заказу</label><div className={`checkout-field-control checkout-field-control-textarea${errors.comment ? " has-error" : ""}`}><textarea id="comment" name="comment" maxLength={1000} defaultValue={draft.comment ?? ""} aria-invalid={Boolean(errors.comment)} aria-describedby={errors.comment ? "comment-error" : undefined} />{errors.comment && <p className="checkout-error" id="comment-error">{errors.comment}</p>}</div><label htmlFor="promoCode">Промокод (если есть)</label><input id="promoCode" name="promoCode" maxLength={100} defaultValue={draft.promoCode ?? ""} /><label className="checkout-consent" htmlFor="termsAccepted"><input id="termsAccepted" type="checkbox" name="termsAccepted" required defaultChecked={draft.termsAccepted === "on"} aria-invalid={Boolean(errors.termsAccepted)} aria-describedby={errors.termsAccepted ? "termsAccepted-error" : undefined} /><span className="checkout-consent-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m20 6-11 11-5-5" /></svg></span><span>Принимаю {termsUrl ? <a href={termsUrl} target="_blank" rel="noreferrer">условия покупки</a> : "условия покупки"}.</span></label>{errors.termsAccepted && <p className="checkout-error" id="termsAccepted-error">{errors.termsAccepted}</p>}<label className="checkout-consent" htmlFor="consent"><input id="consent" type="checkbox" name="consent" required defaultChecked={draft.consent === "on"} aria-invalid={Boolean(errors.consent)} aria-describedby={errors.consent ? "consent-error" : undefined} /><span className="checkout-consent-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m20 6-11 11-5-5" /></svg></span><span>Даю отдельное <a href="/personal-data-consent" target="_blank" rel="noreferrer">согласие на обработку персональных данных</a>.</span></label>{errors.consent && <p className="checkout-error" id="consent-error">{errors.consent}</p>}<div className="checkout-actions"><button className="checkout-secondary-button" type="button" onClick={() => { setStep(2); window.setTimeout(() => document.getElementById("checkout-step-2-title")?.focus(), 0); }}>Назад</button><button className="store-primary-button" type="submit">{busy ? "Переходим к оплате…" : "Перейти к оплате"}</button></div></fieldset>
+        <fieldset disabled={busy} hidden={step !== 2}><legend id="checkout-step-2-title" tabIndex={-1}>Способ доставки</legend><div className="checkout-delivery-options" role="group" aria-label="Способ доставки"><button className={`checkout-delivery-option${deliveryMethod === "delivery" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMethod === "delivery"} onClick={() => { setDeliveryMethod("delivery"); setCdekPoint(null); }}><strong>Доставка</strong><span>СДЭК</span><small>2–5 рабочих дней</small></button><button className={`checkout-delivery-option${deliveryMethod === "pickup" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMethod === "pickup"} onClick={() => { setDeliveryMethod("pickup"); setCdekPoint(null); setCdekMapLocation(""); }}><strong>Самовывоз</strong><span>Бесплатно</span><small>Москва, Электролитный проезд, 3, стр. 2</small></button></div><div className="checkout-actions"><button className="checkout-secondary-button" type="button" onClick={() => { setStep(1); window.setTimeout(() => document.getElementById("checkout-step-1-title")?.focus(), 0); }}>Назад</button><button className="store-primary-button" type="button" onClick={nextDelivery}>Перейти к адресу</button></div></fieldset>
+        <fieldset disabled={busy} hidden={step !== 3}><legend id="checkout-step-3-title" className={deliveryMethod === "pickup" ? "sr-only" : undefined} tabIndex={-1}>Адрес</legend><input type="hidden" name="deliveryMethod" value={deliveryMethod} />{deliveryMethod === "delivery" ? <><div className="checkout-address-suggest"><div className="checkout-field-control"><input id="addressSearch" type="text" autoComplete="shipping street-address" value={addressQuery} placeholder="Москва, Лесная улица, 3" aria-label="Адрес" onChange={(event) => { if (selectedAddress) for (const name of ["region", "city", "street", "house"]) { const input = document.getElementById(name); if (input instanceof HTMLInputElement) input.value = ""; } setSelectedAddress(""); setAddressQuery(event.currentTarget.value); setCdekPoint(null); setCdekMapLocation(""); }} onBlur={() => window.setTimeout(() => setSuggestions([]), 120)} onKeyDown={(event) => { if (event.key === "Escape") setSuggestions([]); }} />{suggestions.length > 0 && <ul className="checkout-address-suggest-list" id="address-suggestions">{suggestions.map((suggestion, index) => <li key={`${formatYandexSuggestion(suggestion)}-${index}`}><button className="checkout-address-suggest-option" type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => selectSuggestion(suggestion)}><strong>{suggestion.title?.text || formatYandexSuggestion(suggestion)}</strong>{suggestion.subtitle?.text && <span>{suggestion.subtitle.text}</span>}</button></li>)}</ul>}</div>{(suggestionError || suggestions.length > 0) && <p className="checkout-hint" role="status">{suggestionError || `Найдено подсказок: ${suggestions.length}. Выберите подходящую.`}</p>}</div><div className="checkout-fields checkout-fields-address">{addressFields.map(([name, label, type, autoComplete, maxLength]) => <div className="checkout-field" key={name}><label className="sr-only" htmlFor={name}>{label}</label><div className={`checkout-field-control${errors[name] ? " has-error" : ""}`}><input id={name} name={name} type={type} inputMode={name === "postcode" ? "numeric" : undefined} autoComplete={`shipping ${autoComplete}`} maxLength={maxLength} defaultValue={draft[name] ?? ""} placeholder={label} required={name === "house"} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <p className="checkout-error" id={`${name}-error`}>{errors[name]}</p>}</div></div>)}</div><button className="checkout-text-button" type="button" aria-expanded={manualAddress} aria-controls="manual-address-fields" onClick={() => setManualAddress((value) => !value)}>{manualAddress ? "Скрыть ручной ввод" : "Ввести адрес вручную"}</button><div className="checkout-fields checkout-manual-address" id="manual-address-fields" hidden={!manualAddress}>{manualAddressFields.map(([name, label, type, autoComplete, maxLength]) => <div className="checkout-field" key={name}><label className="sr-only" htmlFor={name}>{label}</label><div className={`checkout-field-control${errors[name] ? " has-error" : ""}`}><input id={name} name={name} type={type} autoComplete={`shipping ${autoComplete}`} maxLength={maxLength} defaultValue={draft[name] ?? ""} placeholder={label} required aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `${name}-error` : undefined} />{errors[name] && <p className="checkout-error" id={`${name}-error`}>{errors[name]}</p>}</div></div>)}</div>{cdekYandexApiKey && <section className="checkout-cdek" aria-label="Пункт выдачи СДЭК"><p className="checkout-details-label">Пункт выдачи СДЭК</p><p className="checkout-hint">Выберите точку на карте рядом с указанным адресом. Оценка доставки, если доступна, оплачивается отдельно.</p><button className="checkout-secondary-button" id="cdek-map-search" type="button" disabled={!cdekEnabled || !cdekPackages} onClick={findCdekPoints}>{cdekMapLocation ? "Обновить пункты рядом с адресом" : "Найти пункт выдачи на карте"}</button>{cdekPackages?.missingItems ? <p className="checkout-hint" role="status">У {cdekPackages.missingItems} позиций не заполнены вес или габариты. Цена СДЭК для этой корзины не рассчитывается.</p> : cdekPackages && !cdekPackages.canCalculate && <p className="checkout-hint" role="status">Для такого состава заказа автоматический тариф недоступен; цену подтвердит менеджер.</p>}{cdekError && <p className="checkout-hint" role="status">{cdekError}</p>}{cdekLoading && <p className="checkout-hint" role="status">Загружаем карту СДЭК…</p>}{cdekMapLocation && <div className="checkout-cdek-map" id="cdek-map" aria-label="Карта пунктов выдачи СДЭК" />}{cdekPoint && <div className="checkout-cdek-selected" role="status"><strong>{cdekPoint.name}</strong><span>{cdekPoint.city}, {cdekPoint.address} · {cdekPoint.code}</span><span>{cdekPoint.shippingMinor === null ? "Стоимость уточнит менеджер." : `Ориентир ${money(cdekPoint.shippingMinor)} · оплачивается отдельно.`}</span></div>}</section>}</> : <><section className="checkout-pickup-details" aria-label="Информация о самовывозе"><p className="store-eyebrow">САМОВЫВОЗ</p><h3>Москва, Электролитный проезд, 3, стр. 2</h3><p><strong>Бесплатно</strong> · Пн–Пт, 09:00–18:00</p><p>Заберите заказ после подтверждения менеджером.</p></section>{Object.entries(pickupDetails).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}</>}<label htmlFor="comment">Комментарий к заказу</label><div className={`checkout-field-control checkout-field-control-textarea${errors.comment ? " has-error" : ""}`}><textarea id="comment" name="comment" maxLength={1000} defaultValue={draft.comment ?? ""} aria-invalid={Boolean(errors.comment)} aria-describedby={errors.comment ? "comment-error" : undefined} />{errors.comment && <p className="checkout-error" id="comment-error">{errors.comment}</p>}</div><label htmlFor="promoCode">Промокод (если есть)</label><input id="promoCode" name="promoCode" maxLength={100} defaultValue={draft.promoCode ?? ""} /><label className="checkout-consent" htmlFor="termsAccepted"><input id="termsAccepted" type="checkbox" name="termsAccepted" required defaultChecked={draft.termsAccepted === "on"} aria-invalid={Boolean(errors.termsAccepted)} aria-describedby={errors.termsAccepted ? "termsAccepted-error" : undefined} /><span className="checkout-consent-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m20 6-11 11-5-5" /></svg></span><span>Принимаю {termsUrl ? <a href={termsUrl} target="_blank" rel="noreferrer">условия покупки</a> : "условия покупки"}.</span></label>{errors.termsAccepted && <p className="checkout-error" id="termsAccepted-error">{errors.termsAccepted}</p>}<label className="checkout-consent" htmlFor="consent"><input id="consent" type="checkbox" name="consent" required defaultChecked={draft.consent === "on"} aria-invalid={Boolean(errors.consent)} aria-describedby={errors.consent ? "consent-error" : undefined} /><span className="checkout-consent-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m20 6-11 11-5-5" /></svg></span><span>Даю отдельное <a href="/personal-data-consent" target="_blank" rel="noreferrer">согласие на обработку персональных данных</a>.</span></label>{errors.consent && <p className="checkout-error" id="consent-error">{errors.consent}</p>}<div className="checkout-actions"><button className="checkout-secondary-button" type="button" onClick={() => { setStep(2); window.setTimeout(() => document.getElementById("checkout-step-2-title")?.focus(), 0); }}>Назад</button><button className="store-primary-button" type="submit">{busy ? "Переходим к оплате…" : "Перейти к оплате"}</button></div></fieldset>
       </form>}
   </div>;
 }

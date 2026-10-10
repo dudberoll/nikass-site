@@ -23,7 +23,11 @@ export async function deliverOrderNotification(payload: unknown, runtime: Backen
     `Покупатель: ${customer.name}`,
     `Телефон: ${customer.phone}`,
     `Email: ${customer.email}`,
-    `Получение: ${customer.deliveryMethod === 'pickup' ? 'Самовывоз' : 'Доставка СДЭК, бесплатно'}`,
+    `Получение: ${customer.deliveryMethod === 'pickup' ? 'Самовывоз' : 'Доставка СДЭК'}`,
+    ...(customer.cdekPoint ? [
+      `Пункт СДЭК: ${customer.cdekPoint.name} (${customer.cdekPoint.code}), ${customer.cdekPoint.city}, ${customer.cdekPoint.address}`,
+      `Стоимость СДЭК отдельно: ${customer.cdekPoint.shippingMinor === null ? 'подтвердить менеджеру' : `${(customer.cdekPoint.shippingMinor / 100).toFixed(2)} ₽ (ориентир)`}`,
+    ] : []),
     `Адрес: ${customer.postcode}, ${customer.region}, ${customer.city}, ${customer.street}, д. ${customer.house}${customer.apartment ? `, кв. ${customer.apartment}` : ''}`,
     `Комментарий: ${customer.comment || 'нет'}`,
   ].join('\n')

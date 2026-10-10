@@ -15,10 +15,14 @@ the current tab; PostgreSQL stores its hash. Never log request bodies or tokens.
   private WooCommerce cart, resolves the exact SKU, sets the Russian address,
   selects free shipping and applies the coupon. The response contains totals
   in kopecks and a private `checkoutToken`, valid for submission for 15 minutes.
+  A selected CDEK pickup point is retained in the quote; its informational tariff
+  is not part of the WooCommerce or YooKassa total.
 - `POST /api/orders`: `{ checkoutToken }`, after the shopper confirms the quote.
   Fresh cart checks and Store API `expected_total` reject price changes. Native
   WooCommerce validates stock and coupon rules during checkout. Clients cannot
-  submit a price, discount, delivery cost, payment status or order status.
+  submit a product price, discount, amount to charge, payment status or order
+  status. The optional CDEK estimate travels with the selected point only as an
+  informational value for the shopper and manager.
 - `POST /api/orders/status`: same token, returns only state/order number. This legacy/manual-order
   endpoint remains available for the non-payment path.
 - `POST /api/orders/payment`: same token, creates one hosted YooKassa payment from the stored server
@@ -39,7 +43,9 @@ state transition allows only one remote submission per quote, including across
 API processes. Verified payment and successful WooCommerce fulfillment commit
 with a Telegram `orders:notify` task and, when configured, a separate email task.
 Telegram includes product names/SKUs, quantities, line totals, total and discount,
-customer name, phone, email, delivery method, address and comment. The recipient is
+customer name, phone, email, delivery method, address and comment. For CDEK orders
+it also includes the selected pickup point and separate tariff estimate, if available.
+The recipient is
 only the server-configured `ORDER_TELEGRAM_CHAT_ID`; the task payload contains
 only the checkout attempt ID and channel. The delivery handler checks payment,
 fulfillment and order number again before reading/sending customer details.
@@ -56,8 +62,9 @@ No real notification or actual order was sent during implementation.
 Customer contacts and address remain in form memory and server-side storage,
 never checkout `localStorage` or `sessionStorage`. Opening checkout rewrites
 legacy saved snapshots without customer data, including after payment returns.
-Browser recovery keeps only cart identifiers and a cart revision, quote totals, the opaque checkout
-capability, payment ID and public attempt marker; public status responses never include contacts.
+Browser recovery keeps only cart identifiers and a cart revision, quote totals and optional selected
+CDEK pickup point/estimate, the opaque checkout capability, payment ID and public attempt marker;
+public status responses never include contacts.
 After a redirect, contact details are intentionally omitted from the receipt UI.
 Checkout API URLs require HTTPS except for local loopback development. Telegram,
 WooCommerce and payment credentials remain backend-only. Raw card details are
@@ -94,6 +101,36 @@ backend explicitly sets `YOO_KASSA_FULFILLMENT_MODE=woocommerce` and
 `YOO_KASSA_TEST_FULFILLMENT_ENABLED=true`. Production rejects the test-only flag.
 The WooCommerce order itself has no test label and looks like a normal paid order;
 the internal Telegram notification still says `Тестовая оплата`.
+
+## CDEK pickup map and estimate (local development)
+
+The checkout loads the official CDEK 3.11.1 widget and sends its requests through
+the backend proxy, which keeps the CDEK account and password off the browser.
+The local `/cdek` playground can be opened directly from the site header to enter
+an address and query test CDEK cities and pickup points without starting checkout.
+Its map area remains visible as a placeholder when the Yandex Maps key is absent.
+Set `CDEK_ACCOUNT` and `CDEK_PASSWORD` in `backend/.env`. The playground reads
+separate `PUBLIC_CDEK_SANDBOX_YANDEX_API_KEY` (JavaScript API) and
+`PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY` (HTTP Geocoder) values from `website/.env`;
+these do not enable the checkout map. Restrict both public keys to
+`http://127.0.0.1:4322`; never put CDEK credentials in the website env. The widget
+requires an active network connection and working CDEK/Yandex access.
+
+`POST /api/orders/cdek-parcels` reads each selected WooCommerce product's weight
+and dimensions and the shop's configured units, converting them to grams and
+centimeters. It returns no parcels for calculation unless every cart line has
+positive measurements; quantities are represented as separate parcels and more
+than 100 parcels are not quoted. The checkout does not guess missing product
+measurements. It still permits PVZ selection, while the manager confirms delivery
+cost when the CDEK calculator cannot return an estimate.
+
+The displayed CDEK amount is informational and paid separately. WooCommerce
+shipping and the YooKassa amount remain zero and product-only respectively.
+The selected PVZ and estimate are kept with the order and sent to the manager;
+creating a CDEK shipment and tracking it remain manual. Run this branch locally
+only. Local credentials can still connect to external CDEK and WooCommerce
+accounts, so use the intended development credentials and do not submit a real
+checkout unless that is intended.
 
 ## Activation
 

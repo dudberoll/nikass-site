@@ -16,6 +16,7 @@ const apiBase = publicUrl(import.meta.env.PUBLIC_API_URL ?? "http://localhost:30
 const privacyUrl = publicUrl(import.meta.env.PUBLIC_PRIVACY_URL ?? "", { httpsOnly: true });
 const termsUrl = "/payment-and-delivery";
 const yandexSuggestApiKey = import.meta.env.PUBLIC_YANDEX_SUGGEST_API_KEY ?? "";
+const cdekYandexApiKey = import.meta.env.PUBLIC_CDEK_YANDEX_API_KEY ?? "";
 ---
 <!doctype html>
 <html lang="ru">
@@ -33,8 +34,8 @@ const yandexSuggestApiKey = import.meta.env.PUBLIC_YANDEX_SUGGEST_API_KEY ?? "";
       <p class="store-eyebrow">NIKASS / ОФОРМЛЕНИЕ</p>
       <h1>Ваш заказ</h1>
       <p class="checkout-lead">После оплаты результат подтвердится на этой странице. Менеджер свяжется с вами в течение 1 часа в рабочее время и уточнит способ получения заказа.</p>
-      <p class="checkout-lead">При выборе доставки её стоимость рассчитывается менеджером при подтверждении заказа. Доставка оплачивается отдельно.</p>
-      <Checkout {apiBase} {privacyUrl} {termsUrl} {yandexSuggestApiKey} client:load />
+      <p class="checkout-lead">Стоимость доставки СДЭК показывается отдельно и оплачивается отдельно; онлайн-оплата включает только товары. Если карта не настроена или у товара не заполнены вес и габариты, стоимость подтвердит менеджер.</p>
+      <Checkout {apiBase} {privacyUrl} {termsUrl} {yandexSuggestApiKey} {cdekYandexApiKey} client:load />
     </main>
     <StoreFooter />
   </body>

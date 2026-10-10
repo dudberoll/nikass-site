@@ -1,11 +1,11 @@
-import { cartReviewRequestSchema, orderQuoteResponseSchema, paymentStartResponseSchema, paymentStatusResponseSchema, type CartReviewRequest } from "@web-app-demo/contracts";
+import { cartReviewRequestSchema, cdekParcelsResponseSchema, orderQuoteResponseSchema, paymentStartResponseSchema, paymentStatusResponseSchema, type CartReviewRequest } from "@web-app-demo/contracts";
 
 export const CHECKOUT_STORAGE_KEY = "nikass-checkout";
 const PAYMENTS_STORAGE_KEY = "nikass-checkout-payments";
 export type CheckoutSnapshot = { cart: CartReviewRequest; cartRevision?: string; quote?: ReturnType<typeof orderQuoteResponseSchema.parse>; paymentId?: string; attemptId?: string };
 export type SavedPayment = CheckoutSnapshot & { quote: NonNullable<CheckoutSnapshot["quote"]>; paymentId: string };
 
-export async function requestCheckout<T extends typeof orderQuoteResponseSchema | typeof paymentStartResponseSchema | typeof paymentStatusResponseSchema>(apiBase: string, path: string, body: unknown, schema: T, signal?: AbortSignal): Promise<ReturnType<T["parse"]>> {
+export async function requestCheckout<T extends typeof orderQuoteResponseSchema | typeof paymentStartResponseSchema | typeof paymentStatusResponseSchema | typeof cdekParcelsResponseSchema>(apiBase: string, path: string, body: unknown, schema: T, signal?: AbortSignal): Promise<ReturnType<T["parse"]>> {
   const response = await fetch(`${apiBase}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", body: JSON.stringify(body), signal });
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(data?.error?.message ?? "Сервис оформления временно недоступен.");

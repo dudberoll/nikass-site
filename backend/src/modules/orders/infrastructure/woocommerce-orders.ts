@@ -1,16 +1,20 @@
 import { z } from 'zod'
-import type { OrderQuoteRequest, OrderTotals } from '@web-app-demo/contracts'
+import { cdekParcelsResponseSchema, type CartReviewRequest, type OrderQuoteRequest, type OrderTotals } from '@web-app-demo/contracts'
 import { OrderFailure, type OrderProvider, type PaidOrderProvider } from '../application/ports'
 
 const minor = z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER))
 const stockStatus = z.enum(['instock', 'onbackorder', 'outofstock'])
+const measure = z.union([z.string(), z.number()]).nullish()
+const dimensionsSchema = z.object({ length: measure, width: measure, height: measure }).passthrough().nullish()
 const cartSchema = z.object({
   items: z.array(z.object({ id: z.number().int().positive(), sku: z.string().min(1), name: z.string().min(1), quantity: z.number().int().positive(), totals: z.object({ line_total: minor, line_total_tax: minor }) })),
   totals: z.object({ currency_code: z.literal('RUB'), currency_minor_unit: z.literal(2), total_price: minor, total_discount: minor, total_discount_tax: minor, total_shipping: minor, total_shipping_tax: minor }),
   shipping_rates: z.array(z.object({ package_id: z.number().int(), shipping_rates: z.array(z.object({ rate_id: z.string(), price: minor, method_id: z.string() })) })).default([]),
   errors: z.array(z.unknown()).default([]),
 })
-const productsSchema = z.array(z.object({ id: z.number().int().positive(), slug: z.string(), sku: z.string(), type: z.string().optional(), stock_status: stockStatus }))
+const productsSchema = z.array(z.object({ id: z.number().int().positive(), slug: z.string(), sku: z.string(), type: z.string().optional(), stock_status: stockStatus, weight: measure, dimensions: dimensionsSchema }))
+const variationsSchema = z.array(z.object({ id: z.number().int().positive(), sku: z.string(), stock_status: stockStatus, weight: measure, dimensions: dimensionsSchema }))
+const shippingSettingsSchema = z.array(z.object({ id: z.string(), value: z.unknown() }).passthrough())
 const orderSchema = z.object({ id: z.number().int().positive(), number: z.string().optional(), status: z.enum(['pending', 'on-hold', 'processing', 'completed']) })
 
 type Config = { productsEndpoint: string; storeEndpoint: string; consumerKey: string; consumerSecret: string; timeoutMs: number }
@@ -23,6 +27,21 @@ const preferredFreeRate = (rates: ShippingRate[], method: OrderQuoteRequest['cus
     : free.find((rate) => rate.method_id !== 'local_pickup') ?? free[0]
 }
 const displayProductName = (name: string) => /станц/i.test(name) ? name.replace(/\bSL(?=\s*[-]?\d)/gi, 'NS') : name
+const positiveMeasure = (value: unknown) => {
+  const number = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
+  return Number.isFinite(number) && number > 0 ? number : null
+}
+const dimensions = (...values: Array<z.infer<typeof dimensionsSchema>>) => {
+  for (const value of values) {
+    if (!value) continue
+    const length = positiveMeasure(value.length)
+    const width = positiveMeasure(value.width)
+    const height = positiveMeasure(value.height)
+    if (length && width && height) return { length, width, height }
+  }
+  return null
+}
+
 export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, init?: RequestInit) => Promise<Response> = fetch): OrderProvider & PaidOrderProvider {
   const request = async (url: URL, body?: unknown, session?: StoreSession, admin = false) => {
     let response: Response
@@ -76,20 +95,24 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
 
     let status = product.stock_status
     let variationId: number | undefined
+    let weight = positiveMeasure(product.weight)
+    let packageDimensions = dimensions(product.dimensions)
     if (product.type === 'variable') {
       const variantsUrl = new URL(config.productsEndpoint.replace(/\/$/, '') + `/${product.id}/variations`)
       variantsUrl.searchParams.set('sku', item.sku)
-      const variants = z.array(z.object({ id: z.number().int().positive(), sku: z.string(), stock_status: stockStatus })).parse((await request(variantsUrl, undefined, undefined, true)).data)
+      const variants = variationsSchema.parse((await request(variantsUrl, undefined, undefined, true)).data)
       const variant = variants.find((value) => value.sku === item.sku)
       if (!variant) throw new OrderFailure('invalid', 'Вариант товара больше не в наличии. Оставьте заявку о поступлении.')
       status = variant.stock_status
       variationId = variant.id
+      weight = positiveMeasure(variant.weight) ?? weight
+      packageDimensions = dimensions(variant.dimensions) ?? packageDimensions
     } else if (product.sku !== item.sku) {
       throw new OrderFailure('invalid', 'Артикул товара изменился. Обновите корзину.')
     }
 
     if (status !== 'instock') throw new OrderFailure('invalid', 'Товара сейчас нет в наличии. Удалите его из корзины и оставьте заявку о поступлении.')
-    return { productId: product.id, variationId }
+    return { productId: product.id, variationId, weight, dimensions: packageDimensions }
   }
   const productIdInStock = async (item: OrderQuoteRequest['cart']['items'][number]) => {
     const product = await productReferenceInStock(item)
@@ -119,11 +142,15 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
         total: (line.totalMinor / 100).toFixed(2),
       }
     }))
+    const cdekPoint = input.customer.cdekPoint
+    const deliveryNote = cdekPoint
+      ? `СДЭК, ПВЗ ${cdekPoint.code}: ${cdekPoint.name}, ${cdekPoint.city}, ${cdekPoint.address}${cdekPoint.shippingMinor === null ? '. Стоимость подтвердит менеджер.' : `. Ориентир доставки ${(cdekPoint.shippingMinor / 100).toFixed(2)} ₽, оплачивается отдельно.`}`
+      : ''
     const response = await request(adminUrl('orders'), {
       status: paid ? 'processing' : 'pending', set_paid: paid, billing, shipping,
       ...(paid ? { payment_method: 'yookassa', payment_method_title: 'ЮKassa', transaction_id: paidPaymentId, meta_data: [{ key: 'nikass_payment_id', value: paidPaymentId }] } : {}),
       line_items: lineItems,
-      customer_note: input.customer.comment,
+      customer_note: [input.customer.comment, deliveryNote].filter(Boolean).join('\n\n'),
       ...(selectedRates.length ? { shipping_lines: selectedRates } : {}),
     }, undefined, true)
     const order = orderSchema.safeParse(response.data)
@@ -133,6 +160,32 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
   return {
     assertInStock: async (input) => {
       for (const item of input.cart.items) await productIdInStock(item)
+    },
+    shippingParcels: async (cart: CartReviewRequest) => {
+      const settingsUrl = adminUrl('settings/products')
+      const settings = shippingSettingsSchema.parse((await request(settingsUrl, undefined, undefined, true)).data)
+      const weightUnit = settings.find(({ id }) => id === 'woocommerce_weight_unit')?.value
+      const dimensionUnit = settings.find(({ id }) => id === 'woocommerce_dimension_unit')?.value
+      const grams = ({ kg: 1000, g: 1, lbs: 453.59237, oz: 28.349523125 } as Record<string, number>)[String(weightUnit)]
+      const centimeters = ({ mm: 0.1, cm: 1, m: 100, in: 2.54, yd: 91.44 } as Record<string, number>)[String(dimensionUnit)]
+      if (!grams || !centimeters) throw new OrderFailure('unavailable', 'Не удалось определить единицы веса и размера для расчёта СДЭК.')
+
+      const parcels: Array<{ length: number; width: number; height: number; weight: number }> = []
+      let missingItems = 0
+      for (const item of cart.items) {
+        const product = await productReferenceInStock(item)
+        const size = product.dimensions
+        const weight = product.weight && Math.ceil(product.weight * grams)
+        if (!size || !weight) {
+          missingItems += 1
+          continue
+        }
+        for (let count = 0; count < item.quantity; count += 1) {
+          parcels.push({ length: Math.ceil(size.length * centimeters), width: Math.ceil(size.width * centimeters), height: Math.ceil(size.height * centimeters), weight })
+        }
+      }
+      const canCalculate = missingItems === 0 && parcels.length > 0 && parcels.length <= 100
+      return cdekParcelsResponseSchema.parse({ canCalculate, parcels: canCalculate ? parcels : [], missingItems })
     },
     quote: async (input) => {
       const session: StoreSession = {}
