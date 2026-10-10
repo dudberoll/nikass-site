@@ -72,6 +72,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("office");
   const [manualCourierAddress, setManualCourierAddress] = useState(false);
   const [selectedCode, setSelectedCode] = useState("");
+  const [selectedCityCode, setSelectedCityCode] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [apiMessage, setApiMessage] = useState("");
   const [mapLocation, setMapLocation] = useState("");
@@ -227,6 +228,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
           if (type === "office" && "city_code" in target) {
             setDeliveryMode("office");
             setSelectedCode(target.code);
+            setSelectedCityCode(target.city_code);
           }
         },
       });
@@ -249,10 +251,9 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       return;
     }
 
-    const selectedOffice = offices.find((point) => point.code === selectedCode);
     const deliveryAddress = selectedAddressText || [address?.city, address?.street, address?.house].filter(Boolean).join(", ");
     const destination = deliveryMode === "office"
-      ? selectedOffice?.location?.city_code ? { code: selectedOffice.location.city_code } : null
+      ? selectedCode && selectedCityCode ? { code: selectedCityCode } : null
       : address?.city?.trim() && address.street?.trim() && address.house?.trim()
         ? { address: deliveryAddress, country_code: "RU" }
         : null;
@@ -296,7 +297,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     }, 250);
 
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [address?.city, address?.street, address?.house, apiEnabled, deliveryMode, offices, parcels, selectedAddressText, selectedCode, servicePath]);
+  }, [address?.city, address?.street, address?.house, apiEnabled, deliveryMode, parcels, selectedAddressText, selectedCityCode, selectedCode, servicePath]);
 
   function updateAddressQuery(value: string) {
     cancelOfficeSearch();
@@ -305,6 +306,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setSelectedAddressText("");
     setResultsAddress("");
     setSelectedCode("");
+    setSelectedCityCode(null);
     setError("");
     setApiMessage("");
   }
@@ -314,6 +316,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     cancelOfficeSearch();
     setDeliveryMode(mode);
     setSelectedCode("");
+    setSelectedCityCode(null);
     setError("");
     setApiMessage("");
   }
@@ -333,6 +336,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setSuggestionError("");
     setResultsAddress("");
     setSelectedCode("");
+    setSelectedCityCode(null);
     setError("");
     setApiMessage("");
     if (deliveryMode === "office") void findOffices(nextAddress, displayAddress);
@@ -384,6 +388,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setLoading(true);
     setError("");
     setSelectedCode("");
+    setSelectedCityCode(null);
     setResultsAddress("");
     try {
       const cityUrl = new URL(servicePath);
@@ -546,7 +551,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
             <h3>{mapCoordinates ? "Ближайшие пункты выдачи" : "Пункты выдачи"}</h3>
             <p className="checkout-hint">{mapCoordinates ? `Показаны ${visibleOffices.length} ближайших из ${offices.length}; расстояние по прямой.` : "Не удалось определить расстояние; показаны пункты города."}</p>
             <ul>{visibleOffices.map((point) => <li key={point.code}>
-              <button className={`cdek-sandbox-point${selectedCode === point.code ? " is-selected" : ""}`} type="button" aria-pressed={selectedCode === point.code} onClick={() => setSelectedCode(point.code)}>
+              <button className={`cdek-sandbox-point${selectedCode === point.code ? " is-selected" : ""}`} type="button" aria-pressed={selectedCode === point.code} onClick={() => { setSelectedCode(point.code); setSelectedCityCode(point.location?.city_code ?? null); }}>
                 <strong>{point.location?.city || point.city || address?.city || "Москва"}, {officeAddress(point)}</strong>
                 <small>{point.code}{point.distance !== null ? ` · ${point.distance < 1000 ? `${Math.round(point.distance)} м` : `${(point.distance / 1000).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} км`} от адреса` : ""}</small>
                 {point.work_time && <small>{point.work_time}</small>}
