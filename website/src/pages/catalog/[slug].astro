@@ -45,6 +45,7 @@ const articleLink = article && `/blog/${article.slug}?from=${encodeURIComponent(
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
+    {(product.demo || product.slug === "test") && <meta name="robots" content="noindex,follow" />}
     <meta name="description" content={product.description || product.name} />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/favicon.png" sizes="120x120" />

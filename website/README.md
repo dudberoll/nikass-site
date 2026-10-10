@@ -4,6 +4,8 @@
 
 Маршруты: `/`, `/catalog`, `/discounted`, `/catalog/[slug]`, `/catalog-editor`, `/blog`, `/blog/[slug]`, `/cart`, `/checkout`, `/payment-and-delivery`, `/return-policy`, `/service-center`, `/message-scroller`.
 
+`/robots.txt` points to the generated `/sitemap.xml`. The sitemap is rebuilt with the storefront from its public pages, blog entries, and catalog; checkout, cart, internal demos, and test products are excluded from search indexing.
+
 Цена, изображения и описания сразу показываются из статической сборки. Наличие в каталоге,
 уценённых товарах, хитах на главной, странице товара и корзине обновляется в фоне через
 `GET /api/catalog/availability`: при открытии страницы, раз в минуту в видимой вкладке и
