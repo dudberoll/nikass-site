@@ -116,6 +116,7 @@ basket's continuation action to select their snapshot before returning. Recovery
 the original tab's session storage. On checkout return, a verified pending payment
 recovers its existing hosted URL through the checkout capability when it still passes
 the backend stock check; only then does the page show “Оплатить” beside “Обновить статус”.
+When browser history restores checkout from its back-forward cache after opening hosted payment, checkout reloads its saved snapshot and verifies payment status again.
 Unknown, succeeded, canceled, or failed checks never expose the payment action. The public
 status response does not expose payment links. Each cart write creates a new revision, which checkout captures and preserves through quotes,
 payment redirects and archived snapshots. Starting another basket from a receipt clears

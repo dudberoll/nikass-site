@@ -123,3 +123,49 @@ test('does not offer payment after checkout refresh finds the previous payment c
   expect(statusCalls).toBe(2);
   expect(paymentCalls).toBe(0);
 });
+
+test('refreshes checkout payment status after browser back restores the page from BFCache', async ({ page }) => {
+  await page.addInitScript(({ cart, quote }) => {
+    if (!sessionStorage.getItem('nikass-checkout')) sessionStorage.setItem('nikass-checkout', JSON.stringify({ cart, quote }));
+    window.addEventListener('DOMContentLoaded', () => {
+      sessionStorage.setItem('e2e-document-loads', String(Number(sessionStorage.getItem('e2e-document-loads') ?? 0) + 1));
+    });
+  }, { cart, quote });
+  let statusCalls = 0;
+  await page.route('**/api/orders/payment/status', async (route) => {
+    statusCalls += 1;
+    await route.fulfill({ json: { paymentId, paymentState: 'pending', fulfillmentState: 'not_started', orderNumber: null } });
+  });
+  await page.route('**/api/orders/payment', async (route) => {
+    await route.fulfill({ json: { paymentId, confirmationUrl: new URL('/mock-yookassa', page.url()).href, attemptId } });
+  });
+  await page.route('**/mock-yookassa', (route) => route.fulfill({ body: '<html><body>Hosted payment</body></html>', contentType: 'text/html' }));
+
+  await page.goto('/checkout');
+  await page.getByRole('button', { name: 'Перейти к оплате' }).click();
+  await expect(page).toHaveURL(/mock-yookassa/);
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Ожидает оплаты' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Обновить статус' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Оплатить' })).toBeVisible();
+  expect(statusCalls).toBe(1);
+
+  const loadedDocuments = await page.evaluate(() => Number(sessionStorage.getItem('e2e-document-loads')));
+  await page.evaluate((paymentId) => sessionStorage.setItem('nikass-checkout-payment-return', paymentId), paymentId);
+  await Promise.all([
+    page.waitForEvent('load'),
+    page.evaluate(() => window.setTimeout(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })), 0)),
+  ]);
+  await expect.poll(() => page.evaluate(() => Number(sessionStorage.getItem('e2e-document-loads')))).toBe(loadedDocuments + 1);
+  await expect(page.getByRole('heading', { name: 'Ожидает оплаты' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Обновить статус' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Оплатить' })).toBeVisible();
+  expect(statusCalls).toBe(2);
+
+  await page.getByRole('button', { name: 'Оплатить' }).click();
+  await expect(page).toHaveURL(/mock-yookassa/);
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Ожидает оплаты' })).toBeVisible();
+  await expect.poll(() => statusCalls).toBe(3);
+  await expect(page.getByRole('button', { name: 'Оплатить' })).toBeVisible();
+});
