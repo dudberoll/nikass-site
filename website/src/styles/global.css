@@ -226,7 +226,7 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .orbea-chat-widget-action:active { transform: scale(.96); }
 .orbea-chat-widget-action[data-chat-close] { margin-left: 6px; }
 .orbea-chat-widget-action[data-chat-close]:hover { background: #111; color: #fff; }
-.orbea-chat-widget-restore { position: fixed; right: 24px; bottom: 24px; z-index: 2; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 16px; border: 1px solid #deded9; border-radius: 99px; background: #fff; color: #111; font-size: 13px; box-shadow: 0 12px 28px rgb(0 0 0 / 14%); transition: background-color .15s ease, transform .15s ease; }
+.orbea-chat-widget-restore { position: fixed; top: 46svh; right: 24px; bottom: auto; z-index: 2; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 16px; border: 1px solid #deded9; border-radius: 99px; background: #fff; color: #111; font-size: 13px; box-shadow: 0 12px 28px rgb(0 0 0 / 14%); transition: background-color .15s ease, transform .15s ease; }
 .orbea-chat-widget-restore svg { width: 17px; height: 17px; }
 .orbea-chat-widget-restore:hover { background: #f0f0ed; }
 .orbea-chat-widget-restore:active { transform: scale(.96); }
