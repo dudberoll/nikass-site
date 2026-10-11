@@ -108,10 +108,9 @@ the internal Telegram notification still says `Тестовая оплата`.
 
 The checkout loads the official CDEK 3.11.1 widget and sends its requests through
 the backend proxy, which keeps the CDEK account and password off the browser.
-The local `/cdek` playground can be opened directly from the site header to enter
-an address and query test CDEK cities and pickup points without starting checkout.
-The page has three steps: choose a pickup point or courier, choose a point or enter
-the courier address, then choose from CDEK's calculated tariffs. For pickup points,
+When the customer chooses CDEK in checkout, the integrated form has three steps:
+choose a pickup point or courier, choose a point or enter the courier address, then
+choose from CDEK's calculated tariffs. For pickup points,
 the address search sits above the map and the nearby point list appears alongside
 it. Courier mode replaces the map with editable city, street and house fields.
 Both delivery modes calculate available tariffs, including express options when
@@ -121,13 +120,11 @@ and does not change the online goods total. In checkout, only the CDEK choice us
 this three-step component; the existing self-pickup form is unchanged. The map
 area remains visible as a placeholder when the Yandex Maps key is absent, but
 pickup point selection requires the map.
-Set `CDEK_ACCOUNT` and `CDEK_PASSWORD` in `backend/.env`. The playground reads
-`PUBLIC_CDEK_SANDBOX_YANDEX_API_KEY` (JavaScript API) and
-`PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY` (HTTP Geocoder) values from `website/.env`.
-The integrated checkout map uses `PUBLIC_CDEK_YANDEX_API_KEY`, and street search
-uses `PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY`; allow the map and geocoder keys for the
-store's published and local origins. Restrict the playground map key to
-`http://127.0.0.1:4322`. Never put CDEK credentials in
+Set `CDEK_ACCOUNT` and `CDEK_PASSWORD` in `backend/.env`. The checkout map uses
+`PUBLIC_CDEK_YANDEX_API_KEY` (JavaScript API), address suggestions use
+`PUBLIC_YANDEX_SUGGEST_API_KEY`, and street search uses
+`PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY` (HTTP Geocoder); allow the map and geocoder
+keys for the store's published and local origins. Never put CDEK credentials in
 the website env. The widget
 requires an active network connection and working CDEK/Yandex access.
 
