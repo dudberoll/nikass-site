@@ -93,6 +93,12 @@ export const backgroundJobs = {
       `Job uploads:pending:cleanup removed ${rows.count} abandoned uploads, and left ${abandoned.length - deletedIds.length} to retry.`,
     )
   },
+  'orders:payments:reconcile': async (runtime, now) => {
+    if (!runtime.env.YOO_KASSA_ENABLED) return
+    const { createOrdersModule } = await import('./modules/orders')
+    await createOrdersModule({ env: runtime.env, db: runtime.prisma }).reconcilePendingPayments(now)
+    console.log('Job orders:payments:reconcile completed.')
+  },
   'outbox:drain': async (runtime, now) => {
     const { drainOptionsFromEnv, drainTaskOutbox } = await import('./outbox')
     const metrics = await drainTaskOutbox(runtime, {

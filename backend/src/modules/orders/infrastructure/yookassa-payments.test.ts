@@ -28,8 +28,19 @@ test('sends an email receipt with exact discounted totals, unit prices and confi
 
 test('does not guess VAT or send a payment when fiscalization requires an unconfigured receipt', async () => {
   fetchMock = spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ test: false, status: 'enabled', fiscalization: { enabled: true, provider: 'yoo_receipt' } }))
-  await expect(createYooKassaPayments({ ...config, receiptVatCode: undefined }).create(input)).rejects.toThrow('чеков')
+  await expect(createYooKassaPayments({ ...config, receiptVatCode: undefined }).create(input)).rejects.toMatchObject({ paymentOutcome: 'not_created' })
   expect(fetchMock).toHaveBeenCalledTimes(1)
+})
+
+test('marks a provider 4xx as a definite payment rejection and a 5xx as ambiguous', async () => {
+  for (const [status, outcome] of [[400, 'not_created'], [500, 'unknown']] as const) {
+    fetchMock = spyOn(globalThis, 'fetch').mockImplementation(Object.assign(async (_url: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
+      if (!init?.body) return Response.json({ test: false, status: 'enabled', fiscalization: { enabled: false } })
+      return Response.json({ code: 'request_error' }, { status })
+    }, { preconnect: () => undefined }))
+    await expect(createYooKassaPayments({ ...config, receiptVatCode: undefined }).create(input)).rejects.toMatchObject({ paymentOutcome: outcome })
+    fetchMock.mockRestore()
+  }
 })
 
 test('keeps shops without fiscalization working without sending a receipt', async () => {

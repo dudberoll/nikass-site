@@ -12,6 +12,7 @@ export type OrderProvider = {
 export type CheckoutAttempt = {
   id: string
   cartToken: string | null
+  wooOrderId?: number | null
   input: unknown
   totals: unknown
   expiresAt: Date
@@ -19,6 +20,7 @@ export type CheckoutAttempt = {
   orderNumber: string | null
   paymentId?: string | null
   paymentState?: PaymentState
+  paymentCreateStartedAt?: Date | null
   fulfillmentState?: FulfillmentState
 }
 export type OrderStore = {
@@ -29,7 +31,7 @@ export type OrderStore = {
   fail(id: string, state: 'uncertain' | 'rejected'): Promise<void>
 }
 
-export type PaymentState = 'not_started' | 'pending' | 'succeeded' | 'canceled'
+export type PaymentState = 'not_started' | 'creating' | 'pending' | 'succeeded' | 'canceled' | 'uncertain'
 export type FulfillmentState = 'not_started' | 'queued' | 'processing' | 'confirmed' | 'uncertain' | 'skipped'
 
 export type ProviderPayment = {
@@ -43,7 +45,7 @@ export type ProviderPayment = {
 }
 
 export class PaymentFailure extends Error {
-  constructor(readonly kind: 'invalid' | 'unavailable' | 'not_found' | 'conflict', message: string) { super(message) }
+  constructor(readonly kind: 'invalid' | 'unavailable' | 'not_found' | 'conflict', message: string, readonly paymentOutcome: 'not_created' | 'unknown' = 'unknown') { super(message) }
 }
 
 export type PaymentProvider = {
@@ -54,7 +56,15 @@ export type PaymentProvider = {
 export type PaymentStore = {
   findByPaymentId(paymentId: string): Promise<CheckoutAttempt | null>
   findById(id: string): Promise<CheckoutAttempt | null>
-  attachPayment(id: string, paymentId: string, state: PaymentState): Promise<void>
+  findPending(retryBefore: Date, idempotencyBefore: Date, limit: number): Promise<CheckoutAttempt[]>
+  expireUnpaidPaymentOrders(staleBefore: Date, limit: number): Promise<number>
+  claimPaymentStart(id: string, now: Date, retryBefore: Date, idempotencyBefore: Date): Promise<boolean>
+  expirePaymentStartClaims(idempotencyBefore: Date): Promise<number>
+  claimPaymentOrder(id: string, now: Date): Promise<boolean>
+  savePaymentOrder(id: string, order: { id: number; number: string }): Promise<void>
+  fail(id: string, state: 'uncertain' | 'rejected'): Promise<void>
+  attachPayment(id: string, paymentId: string): Promise<boolean>
+  rejectPaymentStart(id: string): Promise<void>
   recordPayment(id: string, paymentId: string, state: PaymentState): Promise<void>
   claimFulfillment(id: string): Promise<boolean>
   finishFulfillment(id: string, orderNumber: string | null, skipped: boolean): Promise<void>
@@ -63,4 +73,11 @@ export type PaymentStore = {
 
 export type PaidOrderProvider = {
   submitPaid(cartToken: string, input: OrderQuoteRequest, totals: OrderTotals, paymentId: string): Promise<string>
+}
+
+export type PaymentOrderProvider = {
+  createPaymentOrder(cartToken: string, input: OrderQuoteRequest, totals: OrderTotals): Promise<{ id: number; number: string }>
+  getPaymentOrder(orderId: number): Promise<{ id: number; number: string; status: 'pending' | 'on-hold' | 'processing' | 'completed' | 'cancelled' | 'failed' | 'refunded' | 'trash'; totalMinor: number; transactionId: string; couponCodes: string[] }>
+  setPaymentOrderPaid(orderId: number, input: OrderQuoteRequest, totals: OrderTotals, paymentId: string): Promise<string>
+  cancelPaymentOrder(orderId: number): Promise<void>
 }

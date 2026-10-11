@@ -32,10 +32,77 @@ test('uses native WooCommerce coupon/stock validation, zero-priced shipping and 
   expect(calls.at(-1)?.headers.get('Cart-Token')).toBeNull()
 })
 
+test('returns the created Woo order ID before its coupon and total are read back', async () => {
+  const calls: { url: URL; method: string; body?: any; headers: Headers }[] = []
+  const provider = createWooCommerceOrders(config, async (url, init) => {
+    const method = init?.method ?? 'GET'
+    const call = { url, method, body: init?.body ? JSON.parse(String(init.body)) : undefined, headers: new Headers(init?.headers) }
+    calls.push(call)
+    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple', stock_status: 'instock' }])
+    if (url.pathname.endsWith('/cart')) return Response.json(cart, { headers: { 'Cart-Token': 'refreshed-cart' } })
+    if (url.pathname.endsWith('/checkout')) return Response.json({ order_id: 12, order_number: 'N-12', status: 'on-hold' })
+    if (url.pathname.endsWith('/orders/12')) return Response.json({ id: 12, number: 'N-12', status: 'on-hold', currency: 'RUB', total: '18.00', coupon_lines: [{ code: 'sale10' }] })
+    throw new Error(`Unexpected WooCommerce request: ${url.pathname}`)
+  })
+  const totals = { currency: 'RUB' as const, items: [{ sku: 'S1', name: 'Station', quantity: 2, totalMinor: 1800 }], totalMinor: 1800, discountMinor: 200, shippingMinor: 0 as const }
+
+  const order = await provider.createPaymentOrder('private-cart', input, totals)
+
+  expect(order).toEqual({ id: 12, number: 'N-12' })
+  const checkout = calls.find(({ url }) => url.pathname.endsWith('/checkout'))!
+  expect(checkout).toMatchObject({
+    method: 'POST',
+    body: { payment_method: 'cheque', expected_total: '1800', billing_address: { email: input.customer.email }, shipping_address: { city: 'Москва' } },
+  })
+  expect(checkout.headers.get('Cart-Token')).toBe('refreshed-cart')
+  expect(calls.some(({ url }) => url.pathname.endsWith('/orders/12'))).toBe(false)
+  expect(await provider.getPaymentOrder(order.id)).toMatchObject({ totalMinor: 1800, couponCodes: ['sale10'], status: 'on-hold' })
+  expect(calls.find(({ url }) => url.pathname.endsWith('/orders/12'))?.method).toBe('GET')
+})
+
+test('marks the reserved order paid in place and cancels only an unpaid reserved order', async () => {
+  let currentStatus = 'on-hold'
+  let paymentUpdate: Record<string, unknown> | undefined
+  const provider = createWooCommerceOrders(config, async (url, init) => {
+    const method = init?.method ?? 'GET'
+    if (url.pathname.endsWith('/orders/12') && method === 'GET') return Response.json({ id: 12, number: 'N-12', status: currentStatus, currency: 'RUB', total: '18.00', coupon_lines: [{ code: 'sale10' }], transaction_id: currentStatus === 'processing' ? '223e4567-e89b-12d3-a456-426614174000' : '' })
+    if (url.pathname.endsWith('/orders/12') && method === 'PUT') {
+      const update = JSON.parse(String(init?.body)) as Record<string, unknown>
+      paymentUpdate = update
+      currentStatus = update.set_paid ? 'processing' : String(update.status)
+      return Response.json({ id: 12, number: 'N-12', status: currentStatus, currency: 'RUB', total: '18.00', coupon_lines: [{ code: 'sale10' }], transaction_id: update.transaction_id ?? '' })
+    }
+    throw new Error(`Unexpected WooCommerce request: ${method} ${url.pathname}`)
+  })
+  const totals = { currency: 'RUB' as const, items: [{ sku: 'S1', name: 'Station', quantity: 2, totalMinor: 1800 }], totalMinor: 1800, discountMinor: 200, shippingMinor: 0 as const }
+  const paymentId = '223e4567-e89b-12d3-a456-426614174000'
+
+  expect(await provider.setPaymentOrderPaid(12, input, totals, paymentId)).toBe('N-12')
+  expect(paymentUpdate!).toMatchObject({ set_paid: true, payment_method: 'yookassa', transaction_id: paymentId })
+  expect(paymentUpdate!).not.toHaveProperty('status')
+  await expect(provider.cancelPaymentOrder(12)).rejects.toThrow('уже изменён')
+  currentStatus = 'on-hold'
+  await provider.cancelPaymentOrder(12)
+  expect(currentStatus).toBe('cancelled')
+})
+
+test('does not mark a Woo order paid if its coupon changed after checkout', async () => {
+  let writes = 0
+  const provider = createWooCommerceOrders(config, async (_url, init) => {
+    if (init?.method === 'PUT') writes += 1
+    return Response.json({ id: 12, number: 'N-12', status: 'on-hold', currency: 'RUB', total: '18.00', coupon_lines: [{ code: 'other-coupon' }] })
+  })
+  const totals = { currency: 'RUB' as const, items: [{ sku: 'S1', name: 'Station', quantity: 2, totalMinor: 1800 }], totalMinor: 1800, discountMinor: 200, shippingMinor: 0 as const }
+
+  await expect(provider.setPaymentOrderPaid(12, input, totals, '223e4567-e89b-12d3-a456-426614174000')).rejects.toThrow('промокод')
+  expect(writes).toBe(0)
+})
+
 test('paid fulfillment writes payment, items and full contacts to WooCommerce and requires a paid order status', async () => {
   let status = 'processing'
   let body: Record<string, unknown> = {}
   const provider = createWooCommerceOrders(config, async (url, init) => {
+    if (url.pathname.endsWith('/products')) return Response.json([{ id: 1, slug: 'station', sku: 'S1', type: 'simple', stock_status: 'instock' }])
     if (url.pathname.endsWith('/cart')) return Response.json(cart)
     body = JSON.parse(String(init?.body))
     return Response.json({ id: 12, number: 'N-12', status })

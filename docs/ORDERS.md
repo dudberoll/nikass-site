@@ -27,16 +27,40 @@ the current tab; PostgreSQL stores its hash. Never log request bodies or tokens.
 - `POST /api/orders/status`: same token, returns only state/order number. This legacy/manual-order
   endpoint remains available for the non-payment path.
 - `POST /api/orders/payment`: same token, creates one hosted YooKassa payment from the stored server
-  totals and returns its provider redirect URL plus a public `attemptId` recovery marker. Existing
-  pending payments can be resumed after the quote's 15-minute expiry; terminal payments never
-  return an active payment link. The idempotency key is derived from the private
-  checkout attempt; the browser never sends an amount or payment credentials.
+  totals and returns its provider redirect URL plus a public `attemptId` recovery marker. When
+  WooCommerce fulfillment is enabled, the backend first submits the private Store API cart to
+  WooCommerce with the confirmed total and the configured offline gateway. WooCommerce validates
+  the coupon and creates an on-hold order, reserving its coupon usage and tracked stock; the backend
+  saves that order ID before asking YooKassa to create the payment. Existing pending payments can
+  be resumed after the quote's 15-minute expiry; terminal payments never return an active payment
+  link. The idempotency key is derived from the private checkout attempt; the browser never sends
+  an amount or payment credentials.
 - `POST /api/orders/payment/status`: payment id, which the backend reconciles with a fresh YooKassa
   `GET /v3/payments/{id}` before returning payment and fulfillment state.
 - `POST /api/orders/payment/webhook`: YooKassa notification endpoint. The body is validated, then the
   backend fetches the current provider object and enqueues durable fulfillment; a return URL alone
   never marks a payment successful.
   Responses are no-store. Tokens never appear in query strings or URL paths.
+
+When YooKassa confirms payment, the backend marks that same WooCommerce order paid; it does not
+create a second order. A canceled YooKassa payment queues cancellation of the unpaid WooCommerce
+order, returning tracked stock. A scheduled reconciliation checks older pending payments every 15
+minutes and records terminal provider results even when a webhook is missed. If YooKassa
+definitively rejects payment creation before a payment exists, the backend marks the attempt
+rejected and queues cancellation of its reserved WooCommerce order. Timeouts and server errors
+remain ambiguous. A single-flight claim prevents concurrent payment-creation requests, and an
+ambiguous request is retried with the same idempotency key only after 10 minutes and within 23
+hours of its first attempt, leaving a one-hour safety margin before YooKassa's 24-hour idempotency
+window. Older unresolved attempts are marked uncertain and require an operator to reconcile them
+before any new payment is created. A saved WooCommerce reservation with no payment start is canceled
+after 10 minutes of inactivity; the reconciliation job runs every 15 minutes, and its conditional
+transition cannot cancel an order after a payment claim wins. WooCommerce order-creation responses
+that time out before the returned order ID is saved also require manual reconciliation; the backend
+never retries that remote write blindly.
+After a WooCommerce fulfillment error, the durable outbox retries transient failures up to five
+times. Recovered outbox leases may safely resume an in-progress fulfillment, and WooCommerce
+recognizes the same transaction ID if the previous update succeeded but its response was lost.
+Attempts that still need a manual decision remain uncertain.
 
 WooCommerce remains the sole order authority. PostgreSQL `checkout_attempts`
 is a private submission log, not a second editable order catalog. A conditional
@@ -93,8 +117,9 @@ and archived snapshots. Starting another basket from a receipt clears the cart o
 that checkout; a rebuilt basket with identical items is preserved. Legacy snapshots
 without a revision never automatically clear the shopping basket.
 Publish the updated website before the backend: its optional `attemptId` accepts
-old responses, while the old website's strict schema rejects the new response field.
-No database migration or payment-provider configuration change is required.
+old responses, while the old website's strict schema rejects the new response field. Apply the
+`woo_order_id` checkout-attempt migration before deploying this backend version; YooKassa settings
+do not change.
 
 `YOO_KASSA_FULFILLMENT_MODE=disabled` skips WooCommerce creation and paid-order
 notifications, including successful test payments. Successful test payments can
@@ -148,9 +173,9 @@ checkout unless that is intended.
 
 ## Activation
 
-1. Start the documented Docker PostgreSQL, generate/apply the pending Prisma migration with
-   `bun run --cwd backend prisma:migrate -- --name add_yookassa_payment_states` and then
-   `bun run --cwd backend prisma:deploy`. The migration must be generated by Prisma, not hand-written.
+1. Start the documented Docker PostgreSQL and apply checked-in Prisma migrations with
+   `bun run --cwd backend prisma:deploy`, then run `bun run --cwd backend prisma:generate`.
+   The `woo_order_id` migration must be applied before this backend version handles checkout.
 2. Set `CATALOG_PROVIDER=woocommerce`, the products endpoint and existing
    WooCommerce REST keys. Set `WOOCOMMERCE_STORE_ENDPOINT` to the full HTTPS base
    ending in `/wp-json/wc/store/v1`, on the same store. Store API must be reachable;
@@ -186,12 +211,15 @@ checkout unless that is intended.
    `test` mode does not match `YOO_KASSA_TEST_MODE`.
    Keep fulfillment disabled by default. To deliberately test order creation in the configured
    WooCommerce store, also set `YOO_KASSA_FULFILLMENT_MODE=woocommerce` and
-   `YOO_KASSA_TEST_FULFILLMENT_ENABLED=true`; this is rejected in production. A successful test
-   payment creates a normal paid/processing WooCommerce order, can reduce stock, and may trigger
-   WooCommerce emails or integrations. Use test customer contact details. Before deleting a test
-   order, move it to Cancelled so WooCommerce restores tracked stock; cancellation emails may also
-   be configured. A real webhook needs a public HTTPS API URL configured in YooKassa; localhost
-   cannot receive it.
+   `YOO_KASSA_TEST_FULFILLMENT_ENABLED=true`; this is rejected in production. Checkout creates a
+   normal on-hold WooCommerce order before redirecting to YooKassa; this can reserve coupon uses
+   and tracked stock, and may trigger WooCommerce emails or integrations. A successful test payment
+   marks that same order paid/processing. A terminal canceled test payment queues WooCommerce
+   cancellation. Use test customer contact details. Before deleting a test order, move it to
+   Cancelled so WooCommerce restores tracked stock; cancellation emails may also be configured. A
+   real webhook needs a public HTTPS API URL configured in YooKassa; localhost cannot receive it.
+   Canceling/deleting an order in WooCommerce does not refund a successful live YooKassa charge;
+   issue the refund separately in YooKassa. The WooCommerce order is not labeled as a test order.
 
 9. For the owner-authorized closed live check on the Beget IP, use the live Shop ID/key,
    `YOO_KASSA_TEST_MODE=false`, `YOO_KASSA_FULFILLMENT_MODE=woocommerce` and
@@ -233,11 +261,17 @@ offset receipt described in
 
 `submitting` or `uncertain` means a remote write may already have succeeded.
 Never reset that attempt or blindly retry checkout. The UI preserves the
-capability and offers status refresh. A manager/operator must compare the
-attempt's customer, items and timestamp with WooCommerce, then reconcile the
-order number and notification tasks. There is no automatic cross-system
-reconciler or public order-history endpoint in this slice. A crash after Woo
-success and before the PostgreSQL success transaction is the same recovery case.
+capability and offers status refresh. Scheduled reconciliation covers pending
+YooKassa payments and ambiguous payment-create requests inside a 23-hour retry window.
+Older payment-create requests stop retrying and need a manager to reconcile them in YooKassa before
+a new payment is created. A crashed or transiently failed fulfillment resumes through the outbox
+with the same WooCommerce order and payment ID; terminal conflicts remain uncertain for operator
+review. Paid legacy attempts without a saved WooCommerce order ID are attempted only once and then
+require manual reconciliation to avoid creating duplicate orders after an ambiguous response. An
+ambiguous order-creation
+response or crash before saving its ID still requires comparing the attempt's customer,
+items and timestamp with WooCommerce. Public order history and automatic repair of those
+ambiguous order writes are not implemented.
 
 The local log contains personal data and a private Woo cart token until success.
 Restrict database access and backups. Before production, define retention and
@@ -258,7 +292,8 @@ reconciliation. WooCommerce retains the authoritative order under its own policy
 
 Official protocol references: [Cart tokens](https://developer.woocommerce.com/docs/apis/store-api/cart-tokens),
 [Cart API](https://developer.woocommerce.com/docs/apis/store-api/resources-endpoints/cart),
-[Checkout API and expected_total](https://developer.woocommerce.com/docs/apis/store-api/resources-endpoints/checkout/).
+[Checkout API and expected_total](https://developer.woocommerce.com/docs/apis/store-api/resources-endpoints/checkout/),
+[YooKassa idempotency window and HTTP 500 handling](https://yookassa.ru/developers/using-api/interaction-format).
 
 ## Implementation verification — 2026-09-08
 

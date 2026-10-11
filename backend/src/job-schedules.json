@@ -16,6 +16,14 @@
     "yandexExecutionTimeoutSeconds": 840
   },
   {
+    "key": "order-payments",
+    "job": "orders:payments:reconcile",
+    "expression": "*/15 * * * *",
+    "yandexExpression": "0/15 * ? * * *",
+    "lockTimeoutMs": 240000,
+    "yandexExecutionTimeoutSeconds": 180
+  },
+  {
     "key": "auth",
     "job": "auth:sessions:cleanup",
     "expression": "0 3 * * *",

@@ -22,8 +22,13 @@ export function createOrdersModule({ env, db, provider }: { env: AppEnv; db: DbC
   const cdekWidget = env.CDEK_ACCOUNT && env.CDEK_PASSWORD
     ? createCdekWidgetService({ account: env.CDEK_ACCOUNT, password: env.CDEK_PASSWORD, environment: env.CDEK_API_ENVIRONMENT, timeoutMs: env.CATALOG_REQUEST_TIMEOUT_MS })
     : undefined
-  return { routes: createOrderRoutes(new OrdersService(store, source, !env.YOO_KASSA_TEST_MODE), new PaymentsService(store, paymentProvider, env.YOO_KASSA_RETURN_URL ?? '', env.YOO_KASSA_TEST_MODE, source), cdekWidget) }
+  const payments = new PaymentsService(store, paymentProvider, env.YOO_KASSA_RETURN_URL ?? '', env.YOO_KASSA_TEST_MODE, source,
+    env.YOO_KASSA_FULFILLMENT_MODE === 'woocommerce')
+  return {
+    routes: createOrderRoutes(new OrdersService(store, source, !env.YOO_KASSA_TEST_MODE), payments, cdekWidget),
+    reconcilePendingPayments: (now: Date) => payments.reconcilePending(now),
+  }
 }
 export type { OrderProvider } from './application/ports'
 export { deliverOrderNotification } from './infrastructure/notifications'
-export { fulfillPayment } from './infrastructure/payment-fulfillment'
+export { cancelPaymentOrder, fulfillPayment } from './infrastructure/payment-fulfillment'

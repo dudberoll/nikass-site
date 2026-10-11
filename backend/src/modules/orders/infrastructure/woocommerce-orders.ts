@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { cdekParcelsResponseSchema, type CartReviewRequest, type OrderQuoteRequest, type OrderTotals } from '@web-app-demo/contracts'
-import { OrderFailure, type OrderProvider, type PaidOrderProvider } from '../application/ports'
+import { OrderFailure, type OrderProvider, type PaidOrderProvider, type PaymentOrderProvider } from '../application/ports'
 
 const minor = z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER))
 const stockStatus = z.enum(['instock', 'onbackorder', 'outofstock'])
@@ -15,7 +15,19 @@ const cartSchema = z.object({
 const productsSchema = z.array(z.object({ id: z.number().int().positive(), slug: z.string(), sku: z.string(), type: z.string().optional(), stock_status: stockStatus, weight: measure, dimensions: dimensionsSchema }))
 const variationsSchema = z.array(z.object({ id: z.number().int().positive(), sku: z.string(), stock_status: stockStatus, weight: measure, dimensions: dimensionsSchema }))
 const shippingSettingsSchema = z.array(z.object({ id: z.string(), value: z.unknown() }).passthrough())
-const orderSchema = z.object({ id: z.number().int().positive(), number: z.string().optional(), status: z.enum(['pending', 'on-hold', 'processing', 'completed']) })
+const orderMoney = z.string().regex(/^\d+(?:\.\d{1,2})?$/).transform((value) => {
+  const [whole, fraction = ''] = value.split('.')
+  return Number(whole) * 100 + Number(fraction.padEnd(2, '0'))
+}).pipe(z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER))
+const orderSchema = z.object({
+  id: z.number().int().positive(), number: z.string().optional(),
+  status: z.enum(['pending', 'on-hold', 'processing', 'completed', 'cancelled', 'failed', 'refunded', 'trash']),
+})
+const paymentOrderSchema = orderSchema.extend({
+  currency: z.literal('RUB'), total: orderMoney, transaction_id: z.string().default(''),
+  coupon_lines: z.array(z.object({ code: z.string() })).default([]),
+})
+const checkoutOrderSchema = z.object({ order_id: z.number().int().positive(), order_number: z.string().optional() }).passthrough()
 
 type Config = { productsEndpoint: string; storeEndpoint: string; consumerKey: string; consumerSecret: string; timeoutMs: number }
 type StoreSession = { cartToken?: string; nonce?: string }
@@ -42,12 +54,12 @@ const dimensions = (...values: Array<z.infer<typeof dimensionsSchema>>) => {
   return null
 }
 
-export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, init?: RequestInit) => Promise<Response> = fetch): OrderProvider & PaidOrderProvider {
-  const request = async (url: URL, body?: unknown, session?: StoreSession, admin = false) => {
+export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, init?: RequestInit) => Promise<Response> = fetch): OrderProvider & PaidOrderProvider & PaymentOrderProvider {
+  const request = async (url: URL, body?: unknown, session?: StoreSession, admin = false, method?: 'POST' | 'PUT') => {
     let response: Response
     try {
       response = await fetchImpl(url, {
-        method: body === undefined ? 'GET' : 'POST', redirect: 'error',
+        method: method ?? (body === undefined ? 'GET' : 'POST'), redirect: 'error',
         headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(session?.cartToken ? { 'Cart-Token': session.cartToken } : {}), ...(session?.nonce ? { Nonce: session.nonce } : {}), ...(admin ? { Authorization: `Basic ${btoa(`${config.consumerKey}:${config.consumerSecret}`)}` } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(config.timeoutMs),
       })
@@ -61,9 +73,9 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
       // Only explicit validation responses are known not to have completed an order.
       const validation = url.pathname.endsWith('/checkout')
         ? data?.code === 'woocommerce_rest_checkout_total_mismatch'
-        : url.pathname.endsWith('/orders')
+        : method === 'POST' && url.pathname.endsWith('/orders')
           ? data?.code === 'woocommerce_rest_invalid_param'
-          : response.status === 400 || response.status === 409
+          : !admin && url.pathname.includes('/cart') && (response.status === 400 || response.status === 409)
       const coupon = data?.code?.includes('coupon')
       throw new OrderFailure(validation ? 'invalid' : 'unavailable', coupon
         ? 'Промокод недействителен или не подходит к этому заказу.'
@@ -118,6 +130,75 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
     const product = await productReferenceInStock(item)
     return product.variationId ?? product.productId
   }
+  const readPaymentOrder = async (orderId: number) => {
+    const parsed = paymentOrderSchema.safeParse((await request(adminUrl(`orders/${orderId}`), undefined, undefined, true)).data)
+    if (!parsed.success || parsed.data.id !== orderId) throw new OrderFailure('unavailable', 'Заказ WooCommerce требует проверки менеджером.')
+    return { id: parsed.data.id, number: parsed.data.number ?? String(parsed.data.id), status: parsed.data.status,
+      totalMinor: parsed.data.total, transactionId: parsed.data.transaction_id,
+      couponCodes: parsed.data.coupon_lines.map(({ code }) => code.trim().toLocaleLowerCase()) }
+  }
+  const assertPaymentOrderMatches = (order: Awaited<ReturnType<typeof readPaymentOrder>>, totals: OrderTotals, input: OrderQuoteRequest) => {
+    const expectedCoupon = input.promoCode.trim().toLocaleLowerCase()
+    const expectedCoupons = expectedCoupon ? [expectedCoupon] : []
+    if (order.totalMinor !== totals.totalMinor || order.couponCodes.length !== expectedCoupons.length || expectedCoupons.some((code) => !order.couponCodes.includes(code))) {
+      throw new OrderFailure('unavailable', 'Сумма или промокод заказа WooCommerce не совпали с расчётом. Заказ требует проверки менеджером.')
+    }
+  }
+  const noteFor = (input: OrderQuoteRequest) => {
+    const cdekPoint = input.customer.cdekPoint
+    const cdekDelivery = input.customer.cdekDelivery
+    const deliveryNote = cdekDelivery
+      ? cdekDelivery.mode === 'office'
+        ? `СДЭК, ПВЗ ${cdekDelivery.point.code}: ${cdekDelivery.point.name}, ${cdekDelivery.point.city}, ${cdekDelivery.point.address}. ${cdekDelivery.tariff.shippingMinor === null ? 'Стоимость подтвердит менеджер.' : `Ориентир доставки ${(cdekDelivery.tariff.shippingMinor / 100).toFixed(2)} ₽.`} Доставка оплачивается при получении.`
+        : `СДЭК, курьер: ${cdekDelivery.address.city}, ${cdekDelivery.address.street}, д. ${cdekDelivery.address.house}${cdekDelivery.address.apartment ? `, кв. ${cdekDelivery.address.apartment}` : ''}. ${cdekDelivery.tariff.shippingMinor === null ? 'Стоимость подтвердит менеджер.' : `Ориентир доставки ${(cdekDelivery.tariff.shippingMinor / 100).toFixed(2)} ₽.`} Доставка оплачивается при получении.`
+      : cdekPoint
+        ? `СДЭК, ПВЗ ${cdekPoint.code}: ${cdekPoint.name}, ${cdekPoint.city}, ${cdekPoint.address}${cdekPoint.shippingMinor === null ? '. Стоимость подтвердит менеджер.' : `. Ориентир доставки ${(cdekPoint.shippingMinor / 100).toFixed(2)} ₽, оплачивается отдельно.`}`
+        : ''
+    return [input.customer.comment, deliveryNote].filter(Boolean).join('\n\n')
+  }
+  const createPaymentOrder = async (cartToken: string, input: OrderQuoteRequest, totals: OrderTotals) => {
+    const session: StoreSession = { cartToken }
+    const fresh = parseCart((await request(storeUrl('cart'), undefined, session)).data)
+    if (fresh.totals.total_price !== totals.totalMinor || fresh.items.length !== totals.items.length || fresh.items.some((item) => !totals.items.some((line) => line.sku === item.sku && line.quantity === item.quantity && line.totalMinor === item.totals.line_total + item.totals.line_total_tax))) {
+      throw new OrderFailure('invalid', 'Цена или состав заказа изменились. Проверьте заказ заново.')
+    }
+
+    const { billing_address, shipping_address } = addresses(input)
+    const created = checkoutOrderSchema.safeParse((await request(storeUrl('checkout'), {
+      billing_address, shipping_address, customer_note: noteFor(input), payment_method: 'cheque', expected_total: String(totals.totalMinor),
+    }, session)).data)
+    if (!created.success) throw new OrderFailure('unavailable', 'Результат создания заказа WooCommerce требует проверки менеджером.')
+    return { id: created.data.order_id, number: created.data.order_number ?? String(created.data.order_id) }
+  }
+  const getPaymentOrder = (orderId: number) => readPaymentOrder(orderId)
+  const setPaymentOrderPaid = async (orderId: number, input: OrderQuoteRequest, totals: OrderTotals, paymentId: string) => {
+    const current = await readPaymentOrder(orderId)
+    assertPaymentOrderMatches(current, totals, input)
+    if (current.status === 'processing' || current.status === 'completed') {
+      if (current.transactionId === paymentId) return current.number
+      throw new OrderFailure('unavailable', 'Заказ уже оплачен другим платежом. Нужна проверка менеджера.')
+    }
+    if (current.status !== 'on-hold' && current.status !== 'pending') throw new OrderFailure('unavailable', 'Оплаченный заказ WooCommerce был отменён или изменён. Нужна проверка менеджера.')
+    if (current.transactionId && current.transactionId !== paymentId) throw new OrderFailure('unavailable', 'В заказе указан другой платёж. Нужна проверка менеджера.')
+
+    const paid = paymentOrderSchema.safeParse((await request(adminUrl(`orders/${orderId}`), {
+      set_paid: true, payment_method: 'yookassa', payment_method_title: 'ЮKassa', transaction_id: paymentId,
+      meta_data: [{ key: 'nikass_payment_id', value: paymentId }],
+    }, undefined, true, 'PUT')).data)
+    if (!paid.success || paid.data.id !== orderId || !['processing', 'completed'].includes(paid.data.status) || paid.data.transaction_id !== paymentId || paid.data.total !== totals.totalMinor) {
+      throw new OrderFailure('unavailable', 'Результат оплаты заказа WooCommerce требует проверки менеджером.')
+    }
+    return paid.data.number ?? String(orderId)
+  }
+  const cancelPaymentOrder = async (orderId: number) => {
+    const current = await readPaymentOrder(orderId)
+    if (current.status === 'cancelled') return
+    if (current.status !== 'on-hold' && current.status !== 'pending') throw new OrderFailure('unavailable', 'Неоплаченный заказ WooCommerce уже изменён. Нужна проверка менеджера.')
+    const canceled = paymentOrderSchema.safeParse((await request(adminUrl(`orders/${orderId}`), { status: 'cancelled' }, undefined, true, 'PUT')).data)
+    if (!canceled.success || canceled.data.id !== orderId || canceled.data.status !== 'cancelled') {
+      throw new OrderFailure('unavailable', 'Не удалось отменить заказ WooCommerce. Нужна проверка менеджера.')
+    }
+  }
   const submitOrder = async (cartToken: string, input: OrderQuoteRequest, totals: OrderTotals, paidPaymentId?: string) => {
     const session: StoreSession = { cartToken }
     const fresh = parseCart((await request(storeUrl('cart'), undefined, session)).data)
@@ -142,20 +223,11 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
         total: (line.totalMinor / 100).toFixed(2),
       }
     }))
-    const cdekPoint = input.customer.cdekPoint
-    const cdekDelivery = input.customer.cdekDelivery
-    const deliveryNote = cdekDelivery
-      ? cdekDelivery.mode === 'office'
-        ? `СДЭК, ПВЗ ${cdekDelivery.point.code}: ${cdekDelivery.point.name}, ${cdekDelivery.point.city}, ${cdekDelivery.point.address}. ${cdekDelivery.tariff.shippingMinor === null ? 'Стоимость подтвердит менеджер.' : `Ориентир доставки ${(cdekDelivery.tariff.shippingMinor / 100).toFixed(2)} ₽.`} Доставка оплачивается при получении.`
-        : `СДЭК, курьер: ${cdekDelivery.address.city}, ${cdekDelivery.address.street}, д. ${cdekDelivery.address.house}${cdekDelivery.address.apartment ? `, кв. ${cdekDelivery.address.apartment}` : ''}. ${cdekDelivery.tariff.shippingMinor === null ? 'Стоимость подтвердит менеджер.' : `Ориентир доставки ${(cdekDelivery.tariff.shippingMinor / 100).toFixed(2)} ₽.`} Доставка оплачивается при получении.`
-      : cdekPoint
-        ? `СДЭК, ПВЗ ${cdekPoint.code}: ${cdekPoint.name}, ${cdekPoint.city}, ${cdekPoint.address}${cdekPoint.shippingMinor === null ? '. Стоимость подтвердит менеджер.' : `. Ориентир доставки ${(cdekPoint.shippingMinor / 100).toFixed(2)} ₽, оплачивается отдельно.`}`
-        : ''
     const response = await request(adminUrl('orders'), {
       status: paid ? 'processing' : 'pending', set_paid: paid, billing, shipping,
       ...(paid ? { payment_method: 'yookassa', payment_method_title: 'ЮKassa', transaction_id: paidPaymentId, meta_data: [{ key: 'nikass_payment_id', value: paidPaymentId }] } : {}),
       line_items: lineItems,
-      customer_note: [input.customer.comment, deliveryNote].filter(Boolean).join('\n\n'),
+      customer_note: noteFor(input),
       ...(selectedRates.length ? { shipping_lines: selectedRates } : {}),
     }, undefined, true)
     const order = orderSchema.safeParse(response.data)
@@ -219,6 +291,10 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
     },
     submit: async (cartToken, input, totals: OrderTotals) => submitOrder(cartToken, input, totals),
     submitPaid: async (cartToken, input, totals: OrderTotals, paymentId: string) => submitOrder(cartToken, input, totals, paymentId),
+    createPaymentOrder,
+    getPaymentOrder,
+    setPaymentOrderPaid,
+    cancelPaymentOrder,
   }
 }
 

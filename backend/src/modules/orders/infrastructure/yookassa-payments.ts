@@ -57,6 +57,7 @@ export function createYooKassaPayments(config: Config): PaymentProvider {
       throw new PaymentFailure(
         response.status === 404 ? 'not_found' : response.status < 500 ? 'invalid' : 'unavailable',
         response.status < 500 ? 'ЮKassa отклонила запрос на оплату.' : 'ЮKassa временно недоступна. Попробуйте ещё раз.',
+        response.status < 500 ? 'not_created' : 'unknown',
       )
     }
     return data
@@ -93,15 +94,19 @@ export function createYooKassaPayments(config: Config): PaymentProvider {
   return {
     create: async ({ amountMinor, description, idempotenceKey, metadata, returnUrl, customerEmail, items }) => {
       if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) {
-        throw new PaymentFailure('invalid', 'Сумма заказа должна быть больше нуля.')
+        throw new PaymentFailure('invalid', 'Сумма заказа должна быть больше нуля.', 'not_created')
       }
-      const shop = await assertShopMode()
+      let shop: z.infer<typeof shopSchema>
+      try { shop = await assertShopMode() } catch (error) {
+        if (error instanceof PaymentFailure) throw new PaymentFailure(error.kind, error.message, 'not_created')
+        throw error
+      }
       let receipt
       if (shop.fiscalization?.enabled ?? shop.fiscalization_enabled ?? false) {
         const vatCode = config.receiptVatCode
-        if (vatCode === undefined) throw new PaymentFailure('unavailable', 'Оплата временно недоступна: магазин ещё не настроил отправку чеков.')
+        if (vatCode === undefined) throw new PaymentFailure('unavailable', 'Оплата временно недоступна: магазин ещё не настроил отправку чеков.', 'not_created')
         if (items.reduce((sum, item) => sum + item.totalMinor, 0) !== amountMinor) {
-          throw new PaymentFailure('invalid', 'Сумма товаров не совпадает с суммой оплаты. Проверьте заказ заново.')
+          throw new PaymentFailure('invalid', 'Сумма товаров не совпадает с суммой оплаты. Проверьте заказ заново.', 'not_created')
         }
         const receiptItems = items.flatMap((item) => {
           const unitMinor = Math.floor(item.totalMinor / item.quantity)
@@ -115,7 +120,7 @@ export function createYooKassaPayments(config: Config): PaymentProvider {
               vat_code: vatCode, payment_mode: 'full_prepayment', payment_subject: 'commodity', measure: 'piece',
             }))
         })
-        if (receiptItems.length > 80) throw new PaymentFailure('invalid', 'В заказе слишком много позиций для чека. Разделите заказ на несколько покупок.')
+        if (receiptItems.length > 80) throw new PaymentFailure('invalid', 'В заказе слишком много позиций для чека. Разделите заказ на несколько покупок.', 'not_created')
         receipt = { customer: { email: customerEmail }, items: receiptItems, internet: true }
       }
       const payment = normalize(await requestPayment('/v3/payments', {

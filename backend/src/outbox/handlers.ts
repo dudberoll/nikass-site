@@ -24,10 +24,17 @@ export const taskHandlers = {
     },
   },
   'payment:fulfill': {
-    maxAttempts: 1,
+    maxAttempts: 5,
     run: async ({ payload, signal }, runtime) => {
       const { fulfillPayment } = await import('../modules/orders')
       return fulfillPayment(payload, runtime, signal)
+    },
+  },
+  'payment:cancel-order': {
+    maxAttempts: 5,
+    run: async ({ payload, signal }, runtime) => {
+      const { cancelPaymentOrder } = await import('../modules/orders')
+      return cancelPaymentOrder(payload, runtime, signal)
     },
   },
   'orders:notify': {

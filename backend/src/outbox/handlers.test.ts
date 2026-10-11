@@ -46,3 +46,7 @@ describe('a task payload that cannot be used', () => {
     }
   })
 })
+
+test('paid WooCommerce fulfillment can retry provider failures and recover a lost outbox lease', () => {
+  expect(taskHandlers['payment:fulfill']!.maxAttempts).toBe(5)
+})

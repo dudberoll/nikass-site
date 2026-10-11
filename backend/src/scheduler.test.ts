@@ -40,6 +40,11 @@ test('the production scheduler runs every required maintenance job in UTC', () =
       timeoutMs: 900_000,
     },
     {
+      expression: '*/15 * * * *',
+      job: 'orders:payments:reconcile',
+      timeoutMs: 240_000,
+    },
+    {
       expression: '0 3 * * *',
       job: 'auth:sessions:cleanup',
       timeoutMs: 240_000,
