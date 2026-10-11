@@ -60,17 +60,20 @@ test('returns the created Woo order ID before its coupon and total are read back
   expect(calls.find(({ url }) => url.pathname.endsWith('/orders/12'))?.method).toBe('GET')
 })
 
-test('marks the reserved order paid in place and cancels only an unpaid reserved order', async () => {
+test('moves an on-hold reserved order through WooCommerce payment completion and cancels only an unpaid order', async () => {
   let currentStatus = 'on-hold'
+  let currentTransactionId = ''
   let paymentUpdate: Record<string, unknown> | undefined
   const provider = createWooCommerceOrders(config, async (url, init) => {
     const method = init?.method ?? 'GET'
-    if (url.pathname.endsWith('/orders/12') && method === 'GET') return Response.json({ id: 12, number: 'N-12', status: currentStatus, currency: 'RUB', total: '18.00', coupon_lines: [{ code: 'sale10' }], transaction_id: currentStatus === 'processing' ? '223e4567-e89b-12d3-a456-426614174000' : '' })
+    if (url.pathname.endsWith('/orders/12') && method === 'GET') return Response.json({ id: 12, number: 'N-12', status: currentStatus, currency: 'RUB', total: '18.00', coupon_lines: [{ code: 'sale10' }], transaction_id: currentTransactionId })
     if (url.pathname.endsWith('/orders/12') && method === 'PUT') {
       const update = JSON.parse(String(init?.body)) as Record<string, unknown>
       paymentUpdate = update
-      currentStatus = update.set_paid ? 'processing' : String(update.status)
-      return Response.json({ id: 12, number: 'N-12', status: currentStatus, currency: 'RUB', total: '18.00', coupon_lines: [{ code: 'sale10' }], transaction_id: update.transaction_id ?? '' })
+      currentStatus = String(update.status ?? currentStatus)
+      currentTransactionId = String(update.transaction_id ?? currentTransactionId)
+      if (update.set_paid && ['pending', 'failed'].includes(currentStatus)) currentStatus = 'processing'
+      return Response.json({ id: 12, number: 'N-12', status: currentStatus, currency: 'RUB', total: '18.00', coupon_lines: [{ code: 'sale10' }], transaction_id: currentTransactionId })
     }
     throw new Error(`Unexpected WooCommerce request: ${method} ${url.pathname}`)
   })
@@ -78,8 +81,7 @@ test('marks the reserved order paid in place and cancels only an unpaid reserved
   const paymentId = '223e4567-e89b-12d3-a456-426614174000'
 
   expect(await provider.setPaymentOrderPaid(12, input, totals, paymentId)).toBe('N-12')
-  expect(paymentUpdate!).toMatchObject({ set_paid: true, payment_method: 'yookassa', transaction_id: paymentId })
-  expect(paymentUpdate!).not.toHaveProperty('status')
+  expect(paymentUpdate!).toMatchObject({ status: 'pending', set_paid: true, payment_method: 'yookassa', transaction_id: paymentId })
   await expect(provider.cancelPaymentOrder(12)).rejects.toThrow('уже изменён')
   currentStatus = 'on-hold'
   await provider.cancelPaymentOrder(12)

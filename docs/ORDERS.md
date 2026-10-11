@@ -43,7 +43,9 @@ the current tab; PostgreSQL stores its hash. Never log request bodies or tokens.
   Responses are no-store. Tokens never appear in query strings or URL paths.
 
 When YooKassa confirms payment, the backend marks that same WooCommerce order paid; it does not
-create a second order. A canceled YooKassa payment queues cancellation of the unpaid WooCommerce
+create a second order. The paid update sets the reserved order to pending and calls WooCommerce's
+`set_paid` completion in the same REST request, so an initial on-hold status cannot suppress the
+payment transition. A canceled YooKassa payment queues cancellation of the unpaid WooCommerce
 order, returning tracked stock. A scheduled reconciliation checks older pending payments every 15
 minutes and records terminal provider results even when a webhook is missed. If YooKassa
 definitively rejects payment creation before a payment exists, the backend marks the attempt

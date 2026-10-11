@@ -182,7 +182,7 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
     if (current.transactionId && current.transactionId !== paymentId) throw new OrderFailure('unavailable', 'В заказе указан другой платёж. Нужна проверка менеджера.')
 
     const paid = paymentOrderSchema.safeParse((await request(adminUrl(`orders/${orderId}`), {
-      set_paid: true, payment_method: 'yookassa', payment_method_title: 'ЮKassa', transaction_id: paymentId,
+      status: 'pending', set_paid: true, payment_method: 'yookassa', payment_method_title: 'ЮKassa', transaction_id: paymentId,
       meta_data: [{ key: 'nikass_payment_id', value: paymentId }],
     }, undefined, true, 'PUT')).data)
     if (!paid.success || paid.data.id !== orderId || !['processing', 'completed'].includes(paid.data.status) || paid.data.transaction_id !== paymentId || paid.data.total !== totals.totalMinor) {
