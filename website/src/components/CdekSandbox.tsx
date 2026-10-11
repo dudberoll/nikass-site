@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import { cdekParcelsResponseSchema, cartReviewRequestSchema } from "@web-app-demo/contracts";
+import { cdekParcelsResponseSchema, cartReviewRequestSchema, type CdekOrderDelivery, type CartReviewRequest } from "@web-app-demo/contracts";
 import { loadCdekWidget, type CdekWidgetInstance, type CdekTariff } from "../lib/cdek-widget";
 import { selectCdekDeliveryOptions, type CdekDeliveryOption } from "../lib/cdek-tariffs";
-import { readCart, subscribeToCart, type CartLine } from "../lib/cart";
+import { readCart, subscribeToCart } from "../lib/cart";
 import { formatYandexSuggestion, parseYandexAddress, yandexSuggestType, type YandexSuggestResult } from "../lib/yandex-address";
 
 type Address = { region?: string; city?: string; street?: string; house?: string; apartment?: string; postcode?: string };
@@ -15,9 +15,11 @@ type CdekPoint = {
   work_time?: string;
   address?: string;
   city?: string;
+  type?: string;
+  postal_code?: string;
   location?: { city_code?: number; city?: string; address?: string; address_full?: string; longitude?: number; latitude?: number };
 };
-type Props = { apiBase: string; cdekYandexApiKey: string; yandexGeocoderApiKey: string; yandexSuggestApiKey: string };
+type Props = { apiBase: string; cdekYandexApiKey: string; yandexGeocoderApiKey: string; yandexSuggestApiKey: string; checkoutCart?: CartReviewRequest; onContinue?: (delivery: CdekOrderDelivery) => void };
 const courierAddressFields = [["house", "Дом / корпус", "text", "address-line2", 30], ["apartment", "Квартира / офис (необязательно)", "text", "address-line3", 30], ["postcode", "Почтовый индекс", "text", "postal-code", 6]] as const;
 const manualCourierAddressFields = [["region", "Регион / область", "text", "address-level1", 100], ["city", "Город", "text", "address-level2", 100], ["street", "Улица", "text", "address-line1", 150]] as const;
 
@@ -59,7 +61,7 @@ function parseTariffs(value: unknown): CdekTariff[] {
 
 const money = (minor: number) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", minimumFractionDigits: 0 }).format(minor / 100);
 
-export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderApiKey, yandexSuggestApiKey }: Props) {
+export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderApiKey, yandexSuggestApiKey, checkoutCart, onContinue }: Props) {
   const [addressQuery, setAddressQuery] = useState("");
   const [address, setAddress] = useState<Address | null>(null);
   const [selectedAddressText, setSelectedAddressText] = useState("");
@@ -74,13 +76,14 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [manualCourierAddress, setManualCourierAddress] = useState(false);
   const [selectedCode, setSelectedCode] = useState("");
   const [selectedCityCode, setSelectedCityCode] = useState<number | null>(null);
+  const [selectedPoint, setSelectedPoint] = useState<CdekPoint | null>(null);
   const [error, setError] = useState("");
   const [apiMessage, setApiMessage] = useState("");
   const [mapLocation, setMapLocation] = useState("");
   const [mapCoordinates, setMapCoordinates] = useState<[number, number] | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState("");
-  const [cartLines, setCartLines] = useState<CartLine[]>([]);
+  const [cart, setCart] = useState<CartReviewRequest | null>(checkoutCart ?? null);
   const [cartReadFailed, setCartReadFailed] = useState(false);
   const [parcels, setParcels] = useState<ReturnType<typeof cdekParcelsResponseSchema.parse> | null>(null);
   const [parcelsLoading, setParcelsLoading] = useState(false);
@@ -97,13 +100,19 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
 
   useEffect(() => {
+    if (checkoutCart) {
+      setCart(checkoutCart);
+      setCartReadFailed(false);
+      return;
+    }
     const updateCart = (state: ReturnType<typeof readCart>) => {
-      setCartLines(state.items);
-      setCartReadFailed(Boolean(state.error));
+      const parsed = cartReviewRequestSchema.safeParse({ version: 1, items: state.items.map(({ productSlug, variantSku, quantity }) => ({ slug: productSlug, sku: variantSku, quantity })) });
+      setCartReadFailed(Boolean(state.error) || !parsed.success);
+      setCart(parsed.success ? parsed.data : null);
     };
     updateCart(readCart());
     return subscribeToCart(updateCart);
-  }, []);
+  }, [checkoutCart]);
 
   useEffect(() => () => officeSearchController.current?.abort(), []);
 
@@ -118,18 +127,10 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   }, [servicePath]);
 
   useEffect(() => {
-    if (!apiEnabled || cartReadFailed || cartLines.length === 0) {
+    if (!apiEnabled || cartReadFailed || !cart?.items.length) {
       setParcels(null);
       setParcelsLoading(false);
       setParcelsError("");
-      return;
-    }
-
-    const cart = cartReviewRequestSchema.safeParse({ version: 1, items: cartLines.map(({ productSlug, variantSku, quantity }) => ({ slug: productSlug, sku: variantSku, quantity })) });
-    if (!cart.success) {
-      setParcels(null);
-      setParcelsLoading(false);
-      setParcelsError("Не удалось прочитать корзину для расчёта доставки.");
       return;
     }
 
@@ -140,7 +141,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     void fetch(`${apiBase}/api/orders/cdek-parcels`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cart: cart.data }),
+      body: JSON.stringify({ cart }),
     }).then(async (response) => {
       const value: unknown = await response.json();
       if (!response.ok) throw new Error();
@@ -153,7 +154,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       if (active) setParcelsLoading(false);
     });
     return () => { active = false; };
-  }, [apiBase, apiEnabled, cartLines, cartReadFailed]);
+  }, [apiBase, apiEnabled, cart, cartReadFailed]);
 
   useEffect(() => {
     if (!apiEnabled || initialSearchStarted.current) return;
@@ -231,6 +232,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
             setDeliveryMode("office");
             setSelectedCode(target.code);
             setSelectedCityCode(target.city_code);
+            setSelectedPoint({ code: target.code, name: target.name, address: target.address, city: target.city, type: target.type, postal_code: target.postal_code, location: { city_code: target.city_code, city: target.city, address: target.address } });
           }
         },
       });
@@ -307,6 +309,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setResultsAddress("");
     setSelectedCode("");
     setSelectedCityCode(null);
+    setSelectedPoint(null);
     setError("");
     setApiMessage("");
   }
@@ -317,6 +320,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setDeliveryMode(mode);
     setSelectedCode("");
     setSelectedCityCode(null);
+    setSelectedPoint(null);
     setError("");
     setApiMessage("");
   }
@@ -337,6 +341,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setResultsAddress("");
     setSelectedCode("");
     setSelectedCityCode(null);
+    setSelectedPoint(null);
     setError("");
     setApiMessage("");
     if (deliveryMode === "office") void findOffices(nextAddress, displayAddress);
@@ -389,6 +394,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setError("");
     setSelectedCode("");
     setSelectedCityCode(null);
+    setSelectedPoint(null);
     setResultsAddress("");
     try {
       const cityUrl = new URL(servicePath);
@@ -440,9 +446,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       setOffices(points);
       setMapCoordinates(coordinates);
       setResultsAddress(initial ? "" : displayAddress);
-      setApiMessage(initial
-        ? ""
-        : `Найдено ПВЗ: ${points.length}.${geocodeNote}`);
+      setApiMessage(initial ? "" : `Найдено ПВЗ: ${points.length}.${geocodeNote}`);
       setMapLocation(resolvedLocation);
     } catch (cause) {
       if (controller.signal.aborted) return;
@@ -458,10 +462,54 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const visibleOffices = rankedOffices.slice(0, 5);
   const selectedOption = tariffs.find((option) => option.tariff?.tariff_code === selectedTariffCode);
   const selectedTariff = selectedOption?.tariff;
+  const destinationReady = deliveryMode === "office"
+    ? Boolean(selectedCode && selectedCityCode && selectedPoint)
+    : Boolean((address?.region?.trim() || address?.city?.trim()) && address?.city?.trim() && address.street?.trim() && address.house?.trim());
+
+  function continueToCheckout() {
+    if (!onContinue || !destinationReady) return;
+    const tariff = {
+      tariffCode: selectedTariff?.tariff_code ?? null,
+      tariffName: selectedTariff?.tariff_name ?? null,
+      periodMin: selectedTariff?.period_min ?? null,
+      periodMax: selectedTariff?.period_max ?? null,
+      shippingMinor: selectedTariff ? Math.round(selectedTariff.delivery_sum * 100) : null,
+    };
+    if (deliveryMode === "office" && selectedPoint && selectedCityCode) {
+      onContinue({
+        mode: "office",
+        point: {
+          code: selectedPoint.code,
+          cityCode: selectedCityCode,
+          city: selectedPoint.location?.city || selectedPoint.city || address?.city || "",
+          name: selectedPoint.name || selectedPoint.code,
+          address: officeAddress(selectedPoint),
+          type: selectedPoint.type || "PVZ",
+          postalCode: selectedPoint.postal_code ?? "",
+        },
+        tariff,
+      });
+      return;
+    }
+    if (deliveryMode === "courier" && address) {
+      onContinue({
+        mode: "courier",
+        address: {
+          region: address.region ?? address.city ?? "",
+          city: address.city ?? "",
+          street: address.street ?? "",
+          house: address.house ?? "",
+          apartment: address.apartment ?? "",
+          postcode: address.postcode ?? "",
+        },
+        tariff,
+      });
+    }
+  }
 
   function renderTariffState() {
     if (cartReadFailed) return <p className="checkout-error" role="alert">Не удалось прочитать корзину в этом браузере.</p>;
-    if (cartLines.length === 0) return <p className="checkout-hint" role="status">Добавьте товар в <a href="/cart">корзину</a>, чтобы рассчитать стоимость.</p>;
+    if (!cart?.items.length) return <p className="checkout-hint" role="status">Добавьте товар в <a href="/cart">корзину</a>, чтобы рассчитать стоимость.</p>;
     if (parcelsLoading) return <p className="checkout-hint" role="status">Получаем вес и габариты товаров…</p>;
     if (parcelsError) return <p className="checkout-error" role="alert">{parcelsError}</p>;
     if (!parcels?.canCalculate) return parcels
@@ -476,7 +524,6 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       <button className={`cdek-sandbox-tariff${tariff && selectedTariffCode === tariff.tariff_code ? " is-selected" : ""}`} type="button" disabled={!tariff} aria-pressed={Boolean(tariff && selectedTariffCode === tariff.tariff_code)} onClick={() => tariff && setSelectedTariffCode(tariff.tariff_code)}>
         <span className="cdek-sandbox-tariff-copy"><strong>{label}</strong><small>{tariff ? deliveryMode === "office" ? "До пункта выдачи СДЭК" : "Курьером по адресу" : "Недоступна для этого адреса и корзины"}</small></span>
         {tariff && <span className="cdek-sandbox-tariff-meta"><strong>{money(Math.round(tariff.delivery_sum * 100))}</strong><small>{tariff.period_min === tariff.period_max ? `${tariff.period_min} дн.` : `${tariff.period_min}–${tariff.period_max} дн.`}</small></span>}
-        {tariff && selectedTariffCode === tariff.tariff_code && <span className="cdek-sandbox-selected-mark" aria-hidden="true">✓</span>}
       </button>
     </li>)}</ul>;
   }
@@ -484,7 +531,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   return <div className="cdek-sandbox">
     <h1 className="sr-only">Доставка</h1>
     <section className="cdek-sandbox-panel" aria-labelledby="cdek-delivery-title">
-      <h2 id="cdek-delivery-title">1. Способ доставки</h2>
+      <h2 id="cdek-delivery-title" tabIndex={-1}>1. Способ доставки</h2>
       <p className="cdek-sandbox-step-description">Выберите, как хотите получить заказ.</p>
       <div className="checkout-delivery-options" role="group" aria-label="Способ получения">
         <button className={`checkout-delivery-option${deliveryMode === "office" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMode === "office"} onClick={() => chooseDeliveryMode("office")}>
@@ -530,7 +577,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
         {!yandexSuggestApiKey && deliveryMode === "office" && <p className="checkout-error" role="alert">Не настроен ключ Яндекс Геосаджеста для подсказок адреса.</p>}
         {!yandexSuggestApiKey && deliveryMode === "courier" && !manualCourierAddress && <p className="checkout-hint" role="status">Подсказки выключены — введите адрес вручную.</p>}
         {loading && <p className="checkout-hint" role="status">Ищем ближайшие пункты выдачи…</p>}
-        {apiMessage && deliveryMode === "office" && <p className="checkout-hint" role="status">{apiMessage}</p>}
+        {!checkoutCart && apiMessage && deliveryMode === "office" && <p className="checkout-hint" role="status">{apiMessage}</p>}
         {error && <p className="checkout-error" role="alert">{error}</p>}
       </form>
 
@@ -551,7 +598,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
             <h3>{mapCoordinates ? "Ближайшие пункты выдачи" : "Пункты выдачи"}</h3>
             <p className="checkout-hint">{mapCoordinates ? `Показаны ${visibleOffices.length} ближайших из ${offices.length}; расстояние по прямой.` : "Не удалось определить расстояние; показаны пункты города."}</p>
             <ul>{visibleOffices.map((point) => <li key={point.code}>
-              <button className={`cdek-sandbox-point${selectedCode === point.code ? " is-selected" : ""}`} type="button" aria-pressed={selectedCode === point.code} onClick={() => { setSelectedCode(point.code); setSelectedCityCode(point.location?.city_code ?? null); }}>
+              <button className={`cdek-sandbox-point${selectedCode === point.code ? " is-selected" : ""}`} type="button" aria-pressed={selectedCode === point.code} onClick={() => { setSelectedCode(point.code); setSelectedCityCode(point.location?.city_code ?? null); setSelectedPoint(point); }}>
                 <strong>{point.location?.city || point.city || address?.city || "Москва"}, {officeAddress(point)}</strong>
                 <small>{point.code}{point.distance !== null ? ` · ${point.distance < 1000 ? `${Math.round(point.distance)} м` : `${(point.distance / 1000).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} км`} от адреса` : ""}</small>
                 {point.work_time && <small>{point.work_time}</small>}
@@ -568,7 +615,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       {renderTariffState()}
       <div className="checkout-actions cdek-sandbox-actions">
         {selectedTariff && <p className="cdek-sandbox-total"><span>Стоимость доставки</span><strong>{money(Math.round(selectedTariff.delivery_sum * 100))}</strong></p>}
-        <a className="store-primary-button" href="/checkout">Перейти к оплате</a>
+        {onContinue ? <button className="store-primary-button" type="button" disabled={!destinationReady} onClick={continueToCheckout}>Перейти к оплате</button> : <a className="store-primary-button" href="/checkout">Перейти к оплате</a>}
       </div>
     </section>
   </div>;

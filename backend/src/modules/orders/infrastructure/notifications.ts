@@ -13,6 +13,12 @@ export async function deliverOrderNotification(payload: unknown, runtime: Backen
   if (!row || row.state !== 'confirmed') throw new TerminalTaskError('Confirmed order missing')
   const { customer, promoCode } = orderQuoteRequestSchema.parse(row.input)
   const totals = orderTotalsSchema.parse(row.totals)
+  const cdekDelivery = customer.cdekDelivery
+  const customerAddress = cdekDelivery?.mode === 'office'
+    ? `ПВЗ ${cdekDelivery.point.code}: ${cdekDelivery.point.name}, ${cdekDelivery.point.city}, ${cdekDelivery.point.address}`
+    : cdekDelivery?.mode === 'courier'
+      ? `${cdekDelivery.address.postcode}, ${cdekDelivery.address.region}, ${cdekDelivery.address.city}, ${cdekDelivery.address.street}, д. ${cdekDelivery.address.house}${cdekDelivery.address.apartment ? `, кв. ${cdekDelivery.address.apartment}` : ''}`
+      : `${customer.postcode}, ${customer.region}, ${customer.city}, ${customer.street}, д. ${customer.house}${customer.apartment ? `, кв. ${customer.apartment}` : ''}`
   const text = [
     `${row.paymentState === 'succeeded' ? 'Оплачен заказ NIKASS' : 'Новый заказ'} №${row.orderNumber}`,
     ...(runtime.env.YOO_KASSA_TEST_MODE ? ['Тестовая оплата'] : []),
@@ -23,12 +29,17 @@ export async function deliverOrderNotification(payload: unknown, runtime: Backen
     `Покупатель: ${customer.name}`,
     `Телефон: ${customer.phone}`,
     `Email: ${customer.email}`,
-    `Получение: ${customer.deliveryMethod === 'pickup' ? 'Самовывоз' : 'Доставка СДЭК'}`,
+    `Получение: ${customer.deliveryMethod === 'pickup' ? 'Самовывоз' : cdekDelivery?.mode === 'courier' ? 'Курьер СДЭК' : 'Доставка СДЭК'}`,
+    ...(cdekDelivery ? [
+      ...(cdekDelivery.mode === 'office' ? [`Пункт СДЭК: ${cdekDelivery.point.name} (${cdekDelivery.point.code}), ${cdekDelivery.point.city}, ${cdekDelivery.point.address}`] : []),
+      ...(cdekDelivery.tariff.tariffName ? [`Тариф СДЭК: ${cdekDelivery.tariff.tariffName}${cdekDelivery.tariff.periodMin === null ? '' : `, ${cdekDelivery.tariff.periodMin}–${cdekDelivery.tariff.periodMax} дн.`}`] : []),
+      `Стоимость СДЭК при получении: ${cdekDelivery.tariff.shippingMinor === null ? 'подтвердит менеджер' : `${(cdekDelivery.tariff.shippingMinor / 100).toFixed(2)} ₽ (ориентир)`}`,
+    ] : []),
     ...(customer.cdekPoint ? [
       `Пункт СДЭК: ${customer.cdekPoint.name} (${customer.cdekPoint.code}), ${customer.cdekPoint.city}, ${customer.cdekPoint.address}`,
       `Стоимость СДЭК отдельно: ${customer.cdekPoint.shippingMinor === null ? 'подтвердить менеджеру' : `${(customer.cdekPoint.shippingMinor / 100).toFixed(2)} ₽ (ориентир)`}`,
     ] : []),
-    `Адрес: ${customer.postcode}, ${customer.region}, ${customer.city}, ${customer.street}, д. ${customer.house}${customer.apartment ? `, кв. ${customer.apartment}` : ''}`,
+    `Адрес: ${customerAddress}`,
     `Комментарий: ${customer.comment || 'нет'}`,
   ].join('\n')
   if (input.data.channel === 'email') {

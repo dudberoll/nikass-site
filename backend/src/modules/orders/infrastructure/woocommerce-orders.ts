@@ -143,9 +143,14 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
       }
     }))
     const cdekPoint = input.customer.cdekPoint
-    const deliveryNote = cdekPoint
-      ? `СДЭК, ПВЗ ${cdekPoint.code}: ${cdekPoint.name}, ${cdekPoint.city}, ${cdekPoint.address}${cdekPoint.shippingMinor === null ? '. Стоимость подтвердит менеджер.' : `. Ориентир доставки ${(cdekPoint.shippingMinor / 100).toFixed(2)} ₽, оплачивается отдельно.`}`
-      : ''
+    const cdekDelivery = input.customer.cdekDelivery
+    const deliveryNote = cdekDelivery
+      ? cdekDelivery.mode === 'office'
+        ? `СДЭК, ПВЗ ${cdekDelivery.point.code}: ${cdekDelivery.point.name}, ${cdekDelivery.point.city}, ${cdekDelivery.point.address}. ${cdekDelivery.tariff.shippingMinor === null ? 'Стоимость подтвердит менеджер.' : `Ориентир доставки ${(cdekDelivery.tariff.shippingMinor / 100).toFixed(2)} ₽.`} Доставка оплачивается при получении.`
+        : `СДЭК, курьер: ${cdekDelivery.address.city}, ${cdekDelivery.address.street}, д. ${cdekDelivery.address.house}${cdekDelivery.address.apartment ? `, кв. ${cdekDelivery.address.apartment}` : ''}. ${cdekDelivery.tariff.shippingMinor === null ? 'Стоимость подтвердит менеджер.' : `Ориентир доставки ${(cdekDelivery.tariff.shippingMinor / 100).toFixed(2)} ₽.`} Доставка оплачивается при получении.`
+      : cdekPoint
+        ? `СДЭК, ПВЗ ${cdekPoint.code}: ${cdekPoint.name}, ${cdekPoint.city}, ${cdekPoint.address}${cdekPoint.shippingMinor === null ? '. Стоимость подтвердит менеджер.' : `. Ориентир доставки ${(cdekPoint.shippingMinor / 100).toFixed(2)} ₽, оплачивается отдельно.`}`
+        : ''
     const response = await request(adminUrl('orders'), {
       status: paid ? 'processing' : 'pending', set_paid: paid, billing, shipping,
       ...(paid ? { payment_method: 'yookassa', payment_method_title: 'ЮKassa', transaction_id: paidPaymentId, meta_data: [{ key: 'nikass_payment_id', value: paidPaymentId }] } : {}),
@@ -219,6 +224,9 @@ export function createWooCommerceOrders(config: Config, fetchImpl: (url: URL, in
 
 function addresses({ customer }: OrderQuoteRequest) {
   const [firstName, ...lastName] = customer.name.split(/\s+/)
-  const address = { first_name: firstName, last_name: lastName.join(' '), company: '', country: 'RU', city: customer.city, state: customer.region, postcode: customer.postcode, address_1: `${customer.street}, д. ${customer.house}`, address_2: customer.apartment ? `кв. ${customer.apartment}` : '' }
+  const destination = customer.cdekDelivery?.mode === 'office'
+    ? { city: customer.cdekDelivery.point.city, region: customer.cdekDelivery.point.city, street: `${customer.cdekDelivery.point.name}, ${customer.cdekDelivery.point.address}`, house: '', apartment: '', postcode: customer.cdekDelivery.point.postalCode }
+    : customer.cdekDelivery?.mode === 'courier' ? customer.cdekDelivery.address : customer
+  const address = { first_name: firstName, last_name: lastName.join(' '), company: '', country: 'RU', city: destination.city ?? '', state: destination.region ?? '', postcode: destination.postcode ?? '', address_1: `${destination.street ?? ''}${destination.house ? `, д. ${destination.house}` : ''}`, address_2: destination.apartment ? `кв. ${destination.apartment}` : '' }
   return { billing_address: { ...address, email: customer.email, phone: customer.phone }, shipping_address: address }
 }

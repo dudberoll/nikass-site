@@ -15,14 +15,15 @@ the current tab; PostgreSQL stores its hash. Never log request bodies or tokens.
   private WooCommerce cart, resolves the exact SKU, sets the Russian address,
   selects free shipping and applies the coupon. The response contains totals
   in kopecks and a private `checkoutToken`, valid for submission for 15 minutes.
-  A selected CDEK pickup point is retained in the quote; its informational tariff
-  is not part of the WooCommerce or YooKassa total.
+  A selected CDEK pickup point or courier destination is retained with the
+  server-side quote. Its informational tariff is not part of the WooCommerce or
+  YooKassa total; CDEK delivery is paid on receipt.
 - `POST /api/orders`: `{ checkoutToken }`, after the shopper confirms the quote.
   Fresh cart checks and Store API `expected_total` reject price changes. Native
   WooCommerce validates stock and coupon rules during checkout. Clients cannot
   submit a product price, discount, amount to charge, payment status or order
-  status. The optional CDEK estimate travels with the selected point only as an
-  informational value for the shopper and manager.
+  status. CDEK destination and the optional estimate are retained for the
+  shopper and manager; delivery is not added to the online amount.
 - `POST /api/orders/status`: same token, returns only state/order number. This legacy/manual-order
   endpoint remains available for the non-payment path.
 - `POST /api/orders/payment`: same token, creates one hosted YooKassa payment from the stored server
@@ -44,7 +45,8 @@ API processes. Verified payment and successful WooCommerce fulfillment commit
 with a Telegram `orders:notify` task and, when configured, a separate email task.
 Telegram includes product names/SKUs, quantities, line totals, total and discount,
 customer name, phone, email, delivery method, address and comment. For CDEK orders
-it also includes the selected pickup point and separate tariff estimate, if available.
+it also includes the selected pickup point or courier address and separate tariff
+estimate, if available.
 The recipient is
 only the server-configured `ORDER_TELEGRAM_CHAT_ID`; the task payload contains
 only the checkout attempt ID and channel. The delivery handler checks payment,
@@ -63,7 +65,7 @@ Customer contacts and address remain in form memory and server-side storage,
 never checkout `localStorage` or `sessionStorage`. Opening checkout rewrites
 legacy saved snapshots without customer data, including after payment returns.
 Browser recovery keeps only cart identifiers and a cart revision, quote totals and optional selected
-CDEK pickup point/estimate, the opaque checkout capability, payment ID and public attempt marker;
+CDEK pickup point/estimate (courier addresses remain server-side), the opaque checkout capability, payment ID and public attempt marker;
 public status responses never include contacts.
 After a redirect, contact details are intentionally omitted from the receipt UI.
 Checkout API URLs require HTTPS except for local loopback development. Telegram,
@@ -114,14 +116,19 @@ the address search sits above the map and the nearby point list appears alongsid
 it. Courier mode replaces the map with editable city, street and house fields.
 Both delivery modes calculate available tariffs, including express options when
 CDEK returns them, using parcel sizes from the current WooCommerce cart. The
-selected tariff and estimate are informational; checkout still uses its own
-delivery flow. The map area remains visible as a placeholder when the Yandex Maps
-key is absent, but pickup point selection requires the map.
+selected tariff and estimate are informational; CDEK delivery is paid on receipt
+and does not change the online goods total. In checkout, only the CDEK choice uses
+this three-step component; the existing self-pickup form is unchanged. The map
+area remains visible as a placeholder when the Yandex Maps key is absent, but
+pickup point selection requires the map.
 Set `CDEK_ACCOUNT` and `CDEK_PASSWORD` in `backend/.env`. The playground reads
-separate `PUBLIC_CDEK_SANDBOX_YANDEX_API_KEY` (JavaScript API) and
-`PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY` (HTTP Geocoder) values from `website/.env`;
-these do not enable the checkout map. Restrict both public keys to
-`http://127.0.0.1:4322`; never put CDEK credentials in the website env. The widget
+`PUBLIC_CDEK_SANDBOX_YANDEX_API_KEY` (JavaScript API) and
+`PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY` (HTTP Geocoder) values from `website/.env`.
+The integrated checkout map uses `PUBLIC_CDEK_YANDEX_API_KEY`, and street search
+uses `PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY`; allow the map and geocoder keys for the
+store's published and local origins. Restrict the playground map key to
+`http://127.0.0.1:4322`. Never put CDEK credentials in
+the website env. The widget
 requires an active network connection and working CDEK/Yandex access.
 
 `POST /api/orders/cdek-parcels` reads each selected WooCommerce product's weight

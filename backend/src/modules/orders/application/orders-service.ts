@@ -15,7 +15,10 @@ export class OrdersService {
     const checkoutToken = randomBytes(32).toString('hex')
     const expiresAt = new Date(Date.now() + 15 * 60_000)
     await this.store.create(hash(checkoutToken), cartToken, input, checkedTotals, expiresAt)
-    return { checkoutToken, expiresAt: expiresAt.toISOString(), totals: checkedTotals, ...(input.customer.cdekPoint ? { deliveryPoint: input.customer.cdekPoint } : {}) }
+    const delivery = input.customer.cdekDelivery
+    const cdekDelivery = delivery?.mode === 'office' ? delivery : delivery ? { mode: 'courier' as const, tariff: delivery.tariff } : undefined
+    return { checkoutToken, expiresAt: expiresAt.toISOString(), totals: checkedTotals,
+      ...(input.customer.cdekPoint ? { deliveryPoint: input.customer.cdekPoint } : {}), ...(cdekDelivery ? { cdekDelivery } : {}) }
   }
 
   async shippingParcels(value: CartReviewRequest) {
