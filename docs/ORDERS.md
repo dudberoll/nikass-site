@@ -100,8 +100,11 @@ entered only on the hosted payment page.
 
 Opening `/cart` checks the selected pending payment in the current tab with the backend.
 The customer sees at most one reminder and can continue that payment or choose a new
-basket. Choosing a new basket dismisses the reminder but does not cancel or mutate the
-old payment; if it is paid later, it is still processed as a separate order. A newly
+basket. Continuing it saves the selected snapshot and opens `/checkout` in the same tab;
+checkout refreshes payment status and exposes the provider link only while the backend
+confirms that payment is still pending. Choosing a new basket dismisses the reminder but
+does not cancel or mutate the old payment; if it is paid later, it is still processed as a
+separate order. A newly
 created payment becomes the only reminder. Succeeded and canceled payments stop blocking
 the basket. If status verification fails, the selected payment remains recoverable and
 the customer can still choose a new basket. Older payment snapshots stay in

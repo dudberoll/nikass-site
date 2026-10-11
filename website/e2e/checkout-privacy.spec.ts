@@ -6,6 +6,14 @@ const quote = { checkoutToken: 'a'.repeat(64), expiresAt: '2099-01-01T00:00:00.0
     discountMinor: 0, shippingMinor: 0, totalMinor: 25000 } };
 const customer = { name: 'Анна Иванова', phone: '+79991234567', email: 'anna@example.test' };
 const paymentId = '223e4567-e89b-12d3-a456-426614174000';
+const attemptId = '323e4567-e89b-12d3-a456-426614174000';
+
+async function seedPendingPayment(page: import('@playwright/test').Page) {
+  await page.addInitScript(({ cart, quote, paymentId, attemptId }) => {
+    sessionStorage.setItem('nikass-checkout-payments', JSON.stringify([{ cart, quote, paymentId, attemptId }]));
+    sessionStorage.setItem('nikass-checkout-active-payment', paymentId);
+  }, { cart, quote, paymentId, attemptId });
+}
 
 test('removes legacy saved contacts and recovers payment after reload without returning customer data', async ({ page }) => {
   await page.addInitScript(({ cart, quote, customer, paymentId }) => {
@@ -45,6 +53,8 @@ test('submits contacts only to the API and never saves them at quote or payment 
   await page.getByRole('button', { name: 'Перейти к способу доставки' }).click();
   await page.getByRole('button', { name: /Самовывоз/ }).click();
   await page.getByRole('button', { name: 'Перейти к адресу' }).click();
+  await page.locator('label:has(input[name="termsAccepted"]) .checkout-consent-box').click();
+  await expect(page.locator('input[name="termsAccepted"]')).toBeChecked();
   await page.locator('label:has(input[name="consent"]) .checkout-consent-box').click();
   await expect(page.locator('input[name="consent"]')).toBeChecked();
   await page.locator('.checkout-form button[type="submit"]').click();
@@ -59,4 +69,57 @@ test('submits contacts only to the API and never saves them at quote or payment 
   expect(savedPayment).toEqual({ cart, quote, paymentId });
   const serialized = JSON.stringify(storage);
   for (const detail of Object.values(customer)) expect(serialized).not.toContain(detail);
+});
+
+test('continues a previous payment through checkout status confirmation', async ({ page }) => {
+  await seedPendingPayment(page);
+  let statusCalls = 0;
+  let paymentCalls = 0;
+  await page.route('**/api/orders/payment/status', async (route) => {
+    statusCalls += 1;
+    await route.fulfill({ json: { paymentId, paymentState: 'pending', fulfillmentState: 'not_started', orderNumber: null } });
+  });
+  await page.route('**/api/orders/payment', async (route) => {
+    paymentCalls += 1;
+    expect(route.request().postDataJSON()).toEqual({ checkoutToken: quote.checkoutToken });
+    await route.fulfill({ json: { paymentId, confirmationUrl: 'https://example.test/payment', attemptId } });
+  });
+
+  await page.goto('/cart');
+  await expect(page.getByRole('heading', { name: 'У вас есть неоплаченный заказ' })).toBeVisible();
+  await page.getByRole('button', { name: 'Продолжить предыдущую оплату' }).click();
+
+  await expect(page).toHaveURL(/\/checkout$/);
+  await expect(page.getByRole('heading', { name: 'Ожидает оплаты' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Обновить статус' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Оплатить' })).toBeVisible();
+  expect(statusCalls).toBe(2);
+  expect(paymentCalls).toBe(1);
+});
+
+test('does not offer payment after checkout refresh finds the previous payment canceled', async ({ page }) => {
+  await seedPendingPayment(page);
+  let statusCalls = 0;
+  let paymentCalls = 0;
+  await page.route('**/api/orders/payment/status', async (route) => {
+    statusCalls += 1;
+    await route.fulfill({ json: {
+      paymentId, paymentState: statusCalls === 1 ? 'pending' : 'canceled',
+      fulfillmentState: 'not_started', orderNumber: null,
+    } });
+  });
+  await page.route('**/api/orders/payment', async (route) => {
+    paymentCalls += 1;
+    await route.fulfill({ json: { paymentId, confirmationUrl: 'https://example.test/payment', attemptId } });
+  });
+
+  await page.goto('/cart');
+  await expect(page.getByRole('heading', { name: 'У вас есть неоплаченный заказ' })).toBeVisible();
+  await page.getByRole('button', { name: 'Продолжить предыдущую оплату' }).click();
+
+  await expect(page).toHaveURL(/\/checkout$/);
+  await expect(page.getByRole('heading', { name: 'Оплата отменена' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Оплатить' })).toHaveCount(0);
+  expect(statusCalls).toBe(2);
+  expect(paymentCalls).toBe(0);
 });

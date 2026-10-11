@@ -1,4 +1,4 @@
-import { cartReviewRequestSchema, paymentStartResponseSchema, paymentStatusResponseSchema } from "@web-app-demo/contracts";
+import { cartReviewRequestSchema, paymentStatusResponseSchema } from "@web-app-demo/contracts";
 import { useEffect, useMemo, useState } from "react";
 
 import { AVAILABILITY_LABELS, displayProductSku, formatPrice, formatVariantPrice, type Product } from "../data/catalog";
@@ -65,25 +65,15 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
     return () => { active = false; window.removeEventListener("pageshow", onPageShow); };
   }, [apiBase]);
 
-  async function continuePayment(saved: SavedPayment) {
+  function continuePayment(saved: SavedPayment) {
     if (busy) return;
     setBusy(true); setPaymentError("");
     try {
-      const next = await requestCheckout(apiBase, "/api/orders/payment", { checkoutToken: saved.quote.checkoutToken }, paymentStartResponseSchema);
-      if (next.paymentId !== saved.paymentId) throw new Error("Сервис вернул другую оплату. Обновите страницу.");
-      saveCheckoutSnapshot({ ...saved, ...(next.attemptId ? { attemptId: next.attemptId } : {}) });
+      saveCheckoutSnapshot(saved);
       setActivePayment(saved.paymentId);
-      location.assign(next.confirmationUrl);
+      location.assign("/checkout");
     } catch (cause) {
-      setPaymentError(cause instanceof Error ? cause.message : "Не удалось открыть оплату.");
-      try {
-        const status = await requestCheckout(apiBase, "/api/orders/payment/status", { paymentId: saved.paymentId }, paymentStatusResponseSchema);
-        if (status.paymentState === "succeeded" || status.paymentState === "canceled") {
-          clearActivePayment(saved.paymentId);
-          setPreviousPayments((payments) => payments.filter((payment) => payment.paymentId !== saved.paymentId));
-          setPaymentError(status.paymentState === "succeeded" ? "Предыдущая оплата уже подтверждена. Можно оформить новую корзину." : "Предыдущая оплата отменена. Можно оформить новую корзину.");
-        }
-      } catch { /* Keep the saved payment available when its status cannot be verified. */ }
+      setPaymentError(cause instanceof Error ? cause.message : "Не удалось открыть заказ.");
       setBusy(false);
     }
   }
@@ -97,7 +87,7 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
     <div className="cart-pending-payments">{previousPayments.map((saved) => <article className="cart-pending-payment" key={saved.paymentId}>
       <ul className="checkout-total-list">{saved.quote.totals.items.map((item) => <li key={item.sku}><span>{item.name} · {item.quantity} шт.</span></li>)}</ul>
       <strong>{formatPrice(saved.quote.totals.totalMinor / 100)}</strong>
-      <button className="checkout-secondary-button" type="button" disabled={busy} onClick={() => continuePayment(saved)}>{busy ? "Проверяем оплату…" : "Продолжить предыдущую оплату"}</button>
+      <button className="checkout-secondary-button" type="button" disabled={busy} onClick={() => continuePayment(saved)}>{busy ? "Открываем заказ…" : "Продолжить предыдущую оплату"}</button>
     </article>)}</div>
     <button className="store-primary-button" type="button" disabled={busy} onClick={() => {
       try { clearActivePayment(previousPayments[0]?.paymentId); setPreviousPayments([]); setPaymentError(""); setProceed(true); }
