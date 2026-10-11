@@ -2,7 +2,7 @@ import { cartReviewRequestSchema, orderCustomerContactSchema, orderQuoteRequestS
 import { useEffect, useState, type MouseEvent, type SyntheticEvent } from "react";
 
 import { clearCartIfUnchanged, readCart } from "../lib/cart";
-import { clearCheckoutSnapshot, readCheckoutSnapshot, readSavedPayments, requestCheckout, saveCheckoutSnapshot } from "../lib/checkout-session";
+import { clearActivePayment, clearCheckoutSnapshot, readCheckoutSnapshot, readSavedPayments, requestCheckout, saveCheckoutSnapshot, setActivePayment } from "../lib/checkout-session";
 import CdekSandbox from "./CdekSandbox";
 
 const contactFields = [["name", "Имя и фамилия", "text", "name", 100], ["phone", "Телефон", "tel", "tel", 30], ["email", "Email", "email", "email", 254]] as const;
@@ -223,6 +223,7 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, cd
     try {
       const next = await requestCheckout(apiBase, "/api/orders/payment", { checkoutToken: quote.checkoutToken }, paymentStartResponseSchema);
       saveCheckoutSnapshot({ cart, cartRevision: initial.cartRevision, quote, paymentId: next.paymentId, ...(next.attemptId ? { attemptId: next.attemptId } : {}) });
+      setActivePayment(next.paymentId);
       setPaymentId(next.paymentId);
       location.assign(next.confirmationUrl);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось открыть оплату."); setBusy(false); }
@@ -248,6 +249,7 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, cd
       const local = clearCartIfUnchanged(initial.cartRevision);
       if (local.error) throw new Error();
       clearCheckoutSnapshot();
+      if (paymentId) clearActivePayment(paymentId);
       location.assign(local.items.length ? "/cart" : "/catalog");
     } catch { setError("Не удалось открыть корзину. Проверьте доступ к хранилищу браузера."); }
   }
@@ -256,7 +258,7 @@ function CheckoutClient({ apiBase, privacyUrl, termsUrl, yandexSuggestApiKey, cd
     {error && <p className="checkout-error" role="alert">{error}</p>}
     {payment?.paymentState === "succeeded" ? <section className="checkout-result" aria-live="polite"><p className="store-eyebrow">ОПЛАТА ПРОШЛА</p><h2>Успешная оплата</h2>{payment.fulfillmentState !== "skipped" && <p>Менеджер свяжется с вами в течение часа в рабочее время, чтобы подтвердить все данные и заказ</p>}<PaymentDetails quote={quote!} customer={customer} /><p>{paymentResultMessage(payment)}</p><button className="store-primary-button" type="button" onClick={newCart}>Перейти к новой корзине</button></section>
       : payment?.paymentState === "canceled" ? <section className="checkout-result" aria-live="polite"><h2>Оплата отменена</h2><p>Заказ не оформлен. Вы можете вернуться к данным и повторить попытку.</p><button className="store-primary-button" type="button" onClick={edit}>Вернуться к заказу</button></section>
-      : paymentId ? <section className="checkout-result" aria-live="polite"><h2>Ожидает оплаты</h2><p>Платёж ещё не подтверждён. Мы ожидаем оплату через {payment?.paymentState === "pending" && confirmationUrl ? <a href={confirmationUrl} rel="noreferrer">YooKassa</a> : "YooKassa"}.</p><PaymentDetails quote={quote!} customer={customer} /><button className="store-primary-button" type="button" disabled={busy} onClick={() => refreshPayment()}>{busy ? "Проверяем…" : "Обновить статус"}</button></section>
+      : paymentId ? <section className="checkout-result" aria-live="polite"><h2>Ожидает оплаты</h2><p>Платёж ещё не подтверждён. Мы ожидаем оплату через YooKassa.</p><PaymentDetails quote={quote!} customer={customer} /><div className="checkout-actions"><button className="checkout-secondary-button" type="button" disabled={busy} onClick={() => refreshPayment()}>{busy ? "Проверяем…" : "Обновить статус"}</button>{payment?.paymentState === "pending" && confirmationUrl && <button className="store-primary-button" type="button" onClick={() => location.assign(confirmationUrl)}>Оплатить</button>}</div></section>
       : quote ? <section className="checkout-result"><h2>Проверьте итоговую сумму</h2><ul className="checkout-total-list">{quote.totals.items.map((item) => <li key={item.sku}><span>{item.name} · {item.quantity} шт.</span><strong>{money(item.totalMinor)}</strong></li>)}</ul><div className="checkout-summary-line"><span>Скидка</span><strong>{money(quote.totals.discountMinor)}</strong></div><CdekDeliveryDetails point={quote.deliveryPoint} delivery={quote.cdekDelivery} address={cdekDelivery?.mode === "courier" ? cdekDelivery.address : undefined} /><div className="checkout-summary-line checkout-summary-total"><span>К оплате онлайн</span><strong>{money(quote.totals.totalMinor)}</strong></div><div className="checkout-actions"><button className="store-primary-button" type="button" disabled={busy} onClick={startPayment}>{busy ? "Открываем оплату…" : "Перейти к оплате"}</button><button className="checkout-secondary-button" type="button" disabled={busy} onClick={edit}>Изменить данные</button></div></section>
       : deliveryMethod === "delivery" && step >= 3 ? <div className={step === 3 ? "checkout-cdek-flow" : "checkout-form"}>
         {step === 3 && <div className="checkout-actions"><button className="checkout-secondary-button" type="button" onClick={() => { setStep(2); window.setTimeout(() => document.getElementById("checkout-step-2-title")?.focus(), 0); }}>Назад</button></div>}

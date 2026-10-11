@@ -2,6 +2,7 @@ import { cartReviewRequestSchema, cdekParcelsResponseSchema, orderQuoteResponseS
 
 export const CHECKOUT_STORAGE_KEY = "nikass-checkout";
 const PAYMENTS_STORAGE_KEY = "nikass-checkout-payments";
+const ACTIVE_PAYMENT_STORAGE_KEY = "nikass-checkout-active-payment";
 export type CheckoutSnapshot = { cart: CartReviewRequest; cartRevision?: string; quote?: ReturnType<typeof orderQuoteResponseSchema.parse>; paymentId?: string; attemptId?: string };
 export type SavedPayment = CheckoutSnapshot & { quote: NonNullable<CheckoutSnapshot["quote"]>; paymentId: string };
 
@@ -46,6 +47,23 @@ export function readSavedPayments(): SavedPayment[] {
     if (snapshot?.quote && snapshot.paymentId) payments.set(snapshot.paymentId, snapshot as SavedPayment);
   }
   return [...payments.values()];
+}
+
+export function readActiveSavedPayment(): SavedPayment | null {
+  const activePaymentId = sessionStorage.getItem(ACTIVE_PAYMENT_STORAGE_KEY);
+  const payments = readSavedPayments();
+  if (activePaymentId === null) return payments.at(-1) ?? null;
+  return payments.find((payment) => payment.paymentId === activePaymentId) ?? null;
+}
+
+export function setActivePayment(paymentId: string) {
+  sessionStorage.setItem(ACTIVE_PAYMENT_STORAGE_KEY, paymentId);
+}
+
+export function clearActivePayment(paymentId?: string) {
+  const activePaymentId = sessionStorage.getItem(ACTIVE_PAYMENT_STORAGE_KEY);
+  if (paymentId && activePaymentId && activePaymentId !== paymentId) return;
+  sessionStorage.setItem(ACTIVE_PAYMENT_STORAGE_KEY, "");
 }
 
 export function saveCheckoutSnapshot(value: CheckoutSnapshot) {

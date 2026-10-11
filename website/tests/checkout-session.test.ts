@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { clearCartIfUnchanged, readCart, saveCart } from "../src/lib/cart";
-import { readCheckoutSnapshot, readSavedPayments, saveCheckoutSnapshot } from "../src/lib/checkout-session";
+import { clearActivePayment, readActiveSavedPayment, readCheckoutSnapshot, readSavedPayments, saveCheckoutSnapshot, setActivePayment } from "../src/lib/checkout-session";
 
 test("an older receipt preserves an identical rebuilt basket and its checkout revision", () => {
   const previousWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
@@ -26,6 +26,24 @@ test("an older receipt preserves an identical rebuilt basket and its checkout re
     saveCheckoutSnapshot({ cart: { version: 1, items: [{ slug: "station", sku: "S1", quantity: 1 }] } });
     const oldPayment = readSavedPayments()[0];
     assert.equal(oldPayment.cartRevision, first.revision);
+    assert.equal(readActiveSavedPayment()?.paymentId, oldPayment.paymentId);
+
+    const secondPaymentId = "323e4567-e89b-12d3-a456-426614174000";
+    const secondPayment = { ...oldPayment, quote: { ...quote, checkoutToken: "b".repeat(64) }, paymentId: secondPaymentId };
+    saveCheckoutSnapshot(secondPayment);
+    setActivePayment(secondPaymentId);
+    clearActivePayment(oldPayment.paymentId);
+    assert.equal(readActiveSavedPayment()?.paymentId, secondPaymentId);
+    clearActivePayment(secondPaymentId);
+    assert.equal(readActiveSavedPayment(), null);
+    assert.deepEqual(readSavedPayments().map((payment) => payment.paymentId), [oldPayment.paymentId, secondPaymentId]);
+
+    const thirdPaymentId = "423e4567-e89b-12d3-a456-426614174000";
+    saveCheckoutSnapshot({ ...oldPayment, quote: { ...quote, checkoutToken: "c".repeat(64) }, paymentId: thirdPaymentId });
+    setActivePayment(thirdPaymentId);
+    saveCheckoutSnapshot(oldPayment);
+    assert.equal(readActiveSavedPayment()?.paymentId, thirdPaymentId);
+    assert.deepEqual(readSavedPayments().map((payment) => payment.paymentId), [oldPayment.paymentId, secondPaymentId, thirdPaymentId]);
 
     saveCart([]);
     const rebuilt = saveCart(items);

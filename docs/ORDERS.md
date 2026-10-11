@@ -98,24 +98,25 @@ Checkout API URLs require HTTPS except for local loopback development. Telegram,
 WooCommerce and payment credentials remain backend-only. Raw card details are
 entered only on the hosted payment page.
 
-Opening `/cart` checks saved payments in the current tab with the backend. Before
-showing the basket, pending payments offer “Продолжить предыдущую оплату” or
-“Перейти к новой корзине”, with a warning that both paid attempts produce separate
-orders. Proceeding leaves the old payment active and hands off the current basket
-as a fresh checkout; it does not cancel or mutate the old attempt. Succeeded and
-canceled payments do not block the basket. If status verification fails, the saved
-payment remains recoverable and the user can still proceed with the current basket.
-Previous payment snapshots stay in `nikass-checkout-payments` for the tab's lifetime,
-without contacts. New hosted payments return to `/checkout#attempt=<uuid>` so an
-older payment can recover its own snapshot even after a newer checkout; the fragment
-grants no API access and is removed after recovery. Payment links created before
-this change retain their original return URL; use the basket's continuation action
-to select their snapshot before returning. Recovery requires the original tab's
-session storage. On checkout return, a verified pending payment recovers its existing
-hosted URL through the checkout capability when it still passes the backend stock check;
-the public status response does not expose payment links. Each cart write creates a
-new revision, which checkout captures and preserves through quotes, payment redirects
-and archived snapshots. Starting another basket from a receipt clears the cart only when its revision still matches
+Opening `/cart` checks the selected pending payment in the current tab with the backend.
+The customer sees at most one reminder and can continue that payment or choose a new
+basket. Choosing a new basket dismisses the reminder but does not cancel or mutate the
+old payment; if it is paid later, it is still processed as a separate order. A newly
+created payment becomes the only reminder. Succeeded and canceled payments stop blocking
+the basket. If status verification fails, the selected payment remains recoverable and
+the customer can still choose a new basket. Older payment snapshots stay in
+`nikass-checkout-payments` for return-path recovery, without contacts. New hosted payments
+return to `/checkout#attempt=<uuid>` so an older payment can recover its own snapshot even
+after a newer checkout; the fragment grants no API access and is removed after recovery.
+Payment links created before this change retain their original return URL; use the
+basket's continuation action to select their snapshot before returning. Recovery requires
+the original tab's session storage. On checkout return, a verified pending payment
+recovers its existing hosted URL through the checkout capability when it still passes
+the backend stock check; only then does the page show “Оплатить” beside “Обновить статус”.
+Unknown, succeeded, canceled, or failed checks never expose the payment action. The public
+status response does not expose payment links. Each cart write creates a new revision, which checkout captures and preserves through quotes,
+payment redirects and archived snapshots. Starting another basket from a receipt clears
+the cart only when its revision still matches
 that checkout; a rebuilt basket with identical items is preserved. Legacy snapshots
 without a revision never automatically clear the shopping basket.
 Publish the updated website before the backend: its optional `attemptId` accepts

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AVAILABILITY_LABELS, displayProductSku, formatPrice, formatVariantPrice, type Product } from "../data/catalog";
 import { getCartCount, readCart, removeCartItem, saveCart, setCartItemQuantity, subscribeToCart, type CartLine, type CartStorageError } from "../lib/cart";
-import { readSavedPayments, requestCheckout, saveCheckoutSnapshot, type SavedPayment } from "../lib/checkout-session";
+import { clearActivePayment, readActiveSavedPayment, requestCheckout, saveCheckoutSnapshot, setActivePayment, type SavedPayment } from "../lib/checkout-session";
 import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
 
 function resolve(lines: CartLine[], products: Product[]) {
@@ -43,19 +43,26 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
     let active = true;
     async function check() {
       try {
-        const saved = readSavedPayments();
-        const results = await Promise.allSettled(saved.map((payment) => requestCheckout(apiBase, "/api/orders/payment/status", { paymentId: payment.paymentId }, paymentStatusResponseSchema, AbortSignal.timeout(10_000))));
+        const saved = readActiveSavedPayment();
         if (!active) return;
-        setPreviousPayments(saved.filter((_, index) => {
-          const result = results[index];
-          return result.status === "rejected" || result.value.paymentState === "pending";
-        }));
-        if (results.some((result) => result.status === "rejected")) setPaymentError("Не удалось проверить предыдущую оплату. Можно повторить попытку или перейти к новой корзине.");
-      } catch { if (active) setPaymentError("Не удалось прочитать сохранённые оплаты. Проверьте доступ к хранилищу браузера."); }
+        if (!saved) { setPreviousPayments([]); return; }
+        setPreviousPayments([saved]);
+        const status = await requestCheckout(apiBase, "/api/orders/payment/status", { paymentId: saved.paymentId }, paymentStatusResponseSchema, AbortSignal.timeout(10_000));
+        if (!active || status.paymentState === "pending") return;
+        clearActivePayment(saved.paymentId);
+        setPreviousPayments([]);
+        setPaymentError(status.paymentState === "succeeded" ? "Предыдущая оплата уже подтверждена." : "Предыдущая оплата отменена.");
+      } catch { if (active) setPaymentError("Не удалось проверить статус оплаты. Её можно продолжить или перейти к новой корзине."); }
       finally { if (active) setCheckingPayments(false); }
     }
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      setProceed(false); setBusy(false); setPaymentError(""); setPreviousPayments([]); setCheckingPayments(true);
+      void check();
+    };
     void check();
-    return () => { active = false; };
+    window.addEventListener("pageshow", onPageShow);
+    return () => { active = false; window.removeEventListener("pageshow", onPageShow); };
   }, [apiBase]);
 
   async function continuePayment(saved: SavedPayment) {
@@ -65,12 +72,14 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
       const next = await requestCheckout(apiBase, "/api/orders/payment", { checkoutToken: saved.quote.checkoutToken }, paymentStartResponseSchema);
       if (next.paymentId !== saved.paymentId) throw new Error("Сервис вернул другую оплату. Обновите страницу.");
       saveCheckoutSnapshot({ ...saved, ...(next.attemptId ? { attemptId: next.attemptId } : {}) });
+      setActivePayment(saved.paymentId);
       location.assign(next.confirmationUrl);
     } catch (cause) {
       setPaymentError(cause instanceof Error ? cause.message : "Не удалось открыть оплату.");
       try {
         const status = await requestCheckout(apiBase, "/api/orders/payment/status", { paymentId: saved.paymentId }, paymentStatusResponseSchema);
         if (status.paymentState === "succeeded" || status.paymentState === "canceled") {
+          clearActivePayment(saved.paymentId);
           setPreviousPayments((payments) => payments.filter((payment) => payment.paymentId !== saved.paymentId));
           setPaymentError(status.paymentState === "succeeded" ? "Предыдущая оплата уже подтверждена. Можно оформить новую корзину." : "Предыдущая оплата отменена. Можно оформить новую корзину.");
         }
@@ -82,15 +91,18 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
   if (!hydrated || checkingPayments) return <div className="cart-empty" role="status"><h2>Загружаем корзину…</h2></div>;
   if (error) return <div className="cart-empty" role="alert"><h2>Корзина недоступна</h2><p>Разрешите хранение данных в браузере и обновите страницу.</p></div>;
   if (!proceed && previousPayments.length) return <section className="cart-payment-choice" aria-labelledby="previous-payment-title">
-    <h2 id="previous-payment-title">{paymentError ? "Предыдущая оплата" : previousPayments.length === 1 ? "У вас есть неоплаченный заказ" : "У вас есть неоплаченные заказы"}</h2>
-    <p>{paymentError ? "Если оплатить предыдущий и новый заказы, каждый будет оформлен отдельно." : previousPayments.length === 1 ? "Предыдущая ссылка на оплату ещё активна. Если оплатить оба заказа, каждый будет оформлен отдельно." : "Предыдущие ссылки на оплату ещё активны. Каждый оплаченный заказ будет оформлен отдельно."}</p>
+    <h2 id="previous-payment-title">У вас есть неоплаченный заказ</h2>
+    <p>Ссылка на оплату ещё активна. Если оплатить и этот заказ, и новый, каждый будет оформлен отдельно.</p>
     {paymentError && <p role="alert">{paymentError}</p>}
     <div className="cart-pending-payments">{previousPayments.map((saved) => <article className="cart-pending-payment" key={saved.paymentId}>
       <ul className="checkout-total-list">{saved.quote.totals.items.map((item) => <li key={item.sku}><span>{item.name} · {item.quantity} шт.</span></li>)}</ul>
       <strong>{formatPrice(saved.quote.totals.totalMinor / 100)}</strong>
       <button className="checkout-secondary-button" type="button" disabled={busy} onClick={() => continuePayment(saved)}>{busy ? "Проверяем оплату…" : "Продолжить предыдущую оплату"}</button>
     </article>)}</div>
-    <button className="store-primary-button" type="button" disabled={busy} onClick={() => setProceed(true)}>Перейти к новой корзине</button>
+    <button className="store-primary-button" type="button" disabled={busy} onClick={() => {
+      try { clearActivePayment(previousPayments[0]?.paymentId); setPreviousPayments([]); setPaymentError(""); setProceed(true); }
+      catch { setPaymentError("Не удалось сохранить выбор. Разрешите хранение данных в браузере и повторите попытку."); }
+    }}>Перейти к новой корзине</button>
   </section>;
   const lines = resolve(cart, products);
   if (!lines.length) return <div className="cart-empty"><h2>Корзина пока пуста</h2><p>Добавьте подходящий источник энергии из каталога.</p><a className="store-primary-button" href="/catalog">Перейти в каталог</a></div>;
