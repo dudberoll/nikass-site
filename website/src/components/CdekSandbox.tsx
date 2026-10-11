@@ -557,10 +557,10 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       <p className="cdek-sandbox-step-description">Выберите, как хотите получить заказ.</p>
       <div className="checkout-delivery-options" role="group" aria-label="Способ получения">
         <button className={`checkout-delivery-option${deliveryMode === "office" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMode === "office"} onClick={() => chooseDeliveryMode("office")}>
-          <strong>Пункт выдачи (ПВЗ)</strong><span>СДЭК</span><small>Заберите заказ в удобном пункте</small>
+          <strong>СДЭК</strong><span>Пункт выдачи (ПВЗ)</span><small>Заберите заказ в удобном пункте</small>
         </button>
         <button className={`checkout-delivery-option${deliveryMode === "courier" ? " is-selected" : ""}`} type="button" aria-pressed={deliveryMode === "courier"} onClick={() => chooseDeliveryMode("courier")}>
-          <strong>Курьер</strong><span>СДЭК</span><small>Доставка по адресу</small>
+          <strong>СДЭК</strong><span>Курьер</span><small>Доставка по адресу</small>
         </button>
       </div>
     </section>
