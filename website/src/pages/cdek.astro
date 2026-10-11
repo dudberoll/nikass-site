@@ -1,0 +1,30 @@
+---
+import CdekSandbox from "../components/CdekSandbox";
+import StoreFooter from "../components/StoreFooter.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import "../styles/global.css";
+
+const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const cdekYandexApiKey = import.meta.env.PUBLIC_CDEK_SANDBOX_YANDEX_API_KEY ?? "";
+const yandexGeocoderApiKey = import.meta.env.PUBLIC_CDEK_SANDBOX_GEOCODER_API_KEY ?? "";
+const yandexSuggestApiKey = import.meta.env.PUBLIC_YANDEX_SUGGEST_API_KEY ?? "";
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Локальная тестовая страница интеграции СДЭК." />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
+    <link rel="apple-touch-icon" href="/favicon.png" sizes="120x120" />
+    <title>СДЭК — локальный прототип NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main cdek-sandbox-page" id="main-content">
+      <CdekSandbox {apiBase} {cdekYandexApiKey} {yandexGeocoderApiKey} {yandexSuggestApiKey} client:load />
+    </main>
+    <StoreFooter />
+  </body>
+</html>

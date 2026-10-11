@@ -9,6 +9,8 @@ const meta = {
     privacyUrl: '/privacy',
     termsUrl: '/payment-and-delivery',
     yandexSuggestApiKey: '',
+    cdekYandexApiKey: '',
+    yandexGeocoderApiKey: '',
   },
 } satisfies Meta<typeof Checkout>
 

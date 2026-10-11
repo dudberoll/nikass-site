@@ -1,11 +1,12 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { apiErrorSchema, orderQuoteRequestSchema, orderQuoteResponseSchema, orderTokenRequestSchema, orderResultSchema, paymentStartResponseSchema, paymentStatusRequestSchema, paymentStatusResponseSchema } from '@web-app-demo/contracts'
+import { z } from 'zod'
+import { apiErrorSchema, cartReviewRequestSchema, cdekParcelsResponseSchema, orderQuoteRequestSchema, orderQuoteResponseSchema, orderTokenRequestSchema, orderResultSchema, paymentStartResponseSchema, paymentStatusRequestSchema, paymentStatusResponseSchema } from '@web-app-demo/contracts'
 import { AppError, validationErrorHook } from '../../../http/errors'
 import { OrderFailure, PaymentFailure } from '../application/ports'
 import type { OrdersService } from '../application/orders-service'
 import type { PaymentsService } from '../application/payments-service'
 
-export function createOrderRoutes(service: OrdersService, payments?: PaymentsService) {
+export function createOrderRoutes(service: OrdersService, payments?: PaymentsService, cdekWidget?: { proxy(request: Request): Promise<Response> }) {
   const routes = new OpenAPIHono({ defaultHook: validationErrorHook })
   const errors = Object.fromEntries([400, 404, 409, 503].map((status) => [status, { description: 'Order error', content: { 'application/json': { schema: apiErrorSchema } } }]))
   const execute = async <T,>(operation: () => Promise<T>) => {
@@ -19,6 +20,9 @@ export function createOrderRoutes(service: OrdersService, payments?: PaymentsSer
     }
   }
   routes.use('*', async (c, next) => { c.header('Cache-Control', 'no-store'); await next() })
+  routes.openapi(createRoute({ method: 'post', path: '/cdek-parcels', request: { body: { required: true, content: { 'application/json': { schema: z.object({ cart: cartReviewRequestSchema }).strict() } } } }, responses: { 200: { description: 'WooCommerce parcel measurements, when complete', content: { 'application/json': { schema: cdekParcelsResponseSchema } } }, ...errors } }), async (c) => c.json(await execute(() => service.shippingParcels(c.req.valid('json').cart)), 200))
+  routes.get('/cdek-widget/config', (c) => c.json({ enabled: Boolean(cdekWidget) }))
+  routes.on(['GET', 'POST'], '/cdek-widget', (c) => cdekWidget ? cdekWidget.proxy(c.req.raw.clone()) : c.json({ message: 'Виджет СДЭК не настроен.' }, 503))
   routes.openapi(createRoute({ method: 'post', path: '/quote', request: { body: { required: true, content: { 'application/json': { schema: orderQuoteRequestSchema } } } }, responses: { 200: { description: 'Fresh quote, no order yet', content: { 'application/json': { schema: orderQuoteResponseSchema } } }, ...errors } }), async (c) => c.json(await execute(() => service.quote(c.req.valid('json'))), 200))
   routes.openapi(createRoute({ method: 'post', path: '/', request: { body: { required: true, content: { 'application/json': { schema: orderTokenRequestSchema } } } }, responses: { 200: { description: 'Order submission state', content: { 'application/json': { schema: orderResultSchema } } }, ...errors } }), async (c) => c.json(await execute(() => service.submit(c.req.valid('json').checkoutToken)), 200))
   routes.openapi(createRoute({ method: 'post', path: '/status', request: { body: { required: true, content: { 'application/json': { schema: orderTokenRequestSchema } } } }, responses: { 200: { description: 'Private order status; token is never in a URL', content: { 'application/json': { schema: orderResultSchema } } }, ...errors } }), async (c) => c.json(await execute(() => service.status(c.req.valid('json').checkoutToken)), 200))

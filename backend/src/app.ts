@@ -123,6 +123,16 @@ export function createApp({
     app.use('/api/orders', middleware)
     app.use('/api/orders/*', middleware)
   }
+  app.use('/api/orders/cdek-widget', createFixedWindowRateLimit({
+    errorMessage: 'Too many CDEK widget requests',
+    key: (c) => clientAddress(c, {
+      trustProxy: env.TRUST_PROXY,
+      trustedProxyClientIpHeader: env.TRUSTED_PROXY_CLIENT_IP_HEADER,
+      trustedProxyClientIpPosition: env.TRUSTED_PROXY_CLIENT_IP_POSITION,
+    }),
+    max: 180,
+    windowSeconds: 60,
+  }))
   for (const middleware of createChatSecurity({
     bodyLimitBytes: 8_192, rateLimitMax: 5, rateLimitWindowSeconds: 60,
     trustProxy: env.TRUST_PROXY,

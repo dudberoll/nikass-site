@@ -1,10 +1,11 @@
-import type { OrderQuoteRequest, OrderResult, OrderTotals } from '@web-app-demo/contracts'
+import type { CartReviewRequest, OrderQuoteRequest, OrderResult, OrderTotals } from '@web-app-demo/contracts'
 
 export class OrderFailure extends Error {
   constructor(readonly kind: 'invalid' | 'unavailable' | 'conflict' | 'not_found', message: string) { super(message) }
 }
 export type OrderProvider = {
   assertInStock(input: OrderQuoteRequest): Promise<void>
+  shippingParcels?(cart: CartReviewRequest): Promise<{ canCalculate: boolean; parcels: Array<{ length: number; width: number; height: number; weight: number }>; missingItems: number }>
   quote(input: OrderQuoteRequest): Promise<{ cartToken: string; totals: OrderTotals }>
   submit(cartToken: string, input: OrderQuoteRequest, totals: OrderTotals): Promise<string>
 }
