@@ -11,7 +11,7 @@ export type DeliveryAddressFields = Partial<Record<"region" | "city" | "street" 
 
 export function yandexSuggestType(query: string) {
   const lastToken = query.trim().split(/\s+/).at(-1) ?? "";
-  return /\d/.test(lastToken) ? "house" : "street";
+  return /\d/.test(lastToken) ? "house" : "locality,street";
 }
 
 export function formatYandexSuggestion(result: YandexSuggestResult) {

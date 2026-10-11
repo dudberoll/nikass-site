@@ -138,9 +138,11 @@ The checkout loads the official CDEK 3.11.1 widget and sends its requests throug
 the backend proxy, which keeps the CDEK account and password off the browser.
 When the customer chooses CDEK in checkout, the integrated form has three steps:
 choose a pickup point or courier, choose a point or enter the courier address, then
-choose from CDEK's calculated tariffs. For pickup points,
-the address search sits above the map and the nearby point list appears alongside
-it. Courier mode replaces the map with editable city, street and house fields.
+choose from CDEK's calculated tariffs. For pickup points, the map opens centered on
+Moscow with Russian pickup points across the country; zooming out and panning keep
+the full point set available. Address search accepts cities as well as streets and
+recenters the map while retaining the full map. The nearby point list appears
+alongside it. Courier mode replaces the map with editable city, street and house fields.
 Both delivery modes calculate available tariffs, including express options when
 CDEK returns them, using parcel sizes from the current WooCommerce cart. The
 selected tariff and estimate are informational; CDEK delivery is paid on receipt

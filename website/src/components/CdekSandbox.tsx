@@ -22,6 +22,7 @@ type CdekPoint = {
 type Props = { apiBase: string; cdekYandexApiKey: string; yandexGeocoderApiKey: string; yandexSuggestApiKey: string; checkoutCart?: CartReviewRequest; onContinue?: (delivery: CdekOrderDelivery) => void };
 const courierAddressFields = [["house", "Дом / корпус", "text", "address-line2", 30], ["apartment", "Квартира / офис (необязательно)", "text", "address-line3", 30], ["postcode", "Почтовый индекс", "text", "postal-code", 6]] as const;
 const manualCourierAddressFields = [["region", "Регион / область", "text", "address-level1", 100], ["city", "Город", "text", "address-level2", 100], ["street", "Улица", "text", "address-line1", 150]] as const;
+const MOSCOW_MAP_CENTER: [number, number] = [37.6173, 55.7558];
 
 function records<T>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -72,6 +73,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [apiEnabled, setApiEnabled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [offices, setOffices] = useState<CdekPoint[]>([]);
+  const [allOffices, setAllOffices] = useState<CdekPoint[]>([]);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("office");
   const [manualCourierAddress, setManualCourierAddress] = useState(false);
   const [selectedCode, setSelectedCode] = useState("");
@@ -79,8 +81,8 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [selectedPoint, setSelectedPoint] = useState<CdekPoint | null>(null);
   const [error, setError] = useState("");
   const [apiMessage, setApiMessage] = useState("");
-  const [mapLocation, setMapLocation] = useState("");
   const [mapCoordinates, setMapCoordinates] = useState<[number, number] | null>(null);
+  const [isNationalMapView, setIsNationalMapView] = useState(true);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState("");
   const [cart, setCart] = useState<CartReviewRequest | null>(checkoutCart ?? null);
@@ -215,28 +217,22 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   }, [addressQuery, selectedAddressText, yandexSuggestApiKey]);
 
   useEffect(() => {
-    if (!apiEnabled || deliveryMode !== "office" || !cdekYandexApiKey || !mapLocation) return;
+    if (!apiEnabled || deliveryMode !== "office" || !cdekYandexApiKey || !allOffices.length) return;
     let active = true;
-    let positioned = false;
     setMapReady(false);
     setMapError("");
-    const firstPoint = offices.find((point) => typeof point.location?.longitude === "number" && typeof point.location?.latitude === "number");
-    const center = mapCoordinates ?? (firstPoint ? [firstPoint.location!.longitude!, firstPoint.location!.latitude!] as [number, number] : mapLocation);
     void loadCdekWidget().then(() => {
       if (!active || !window.CDEKWidget) return;
       widget.current = new window.CDEKWidget({
         // The map chooses the point; delivery prices are calculated in step 3.
         from: null, root: "cdek-sandbox-map-widget", apiKey: cdekYandexApiKey,
         servicePath, canChoose: true, popup: false,
-        hideDeliveryOptions: { office: false, door: true }, goods: parcels?.canCalculate ? parcels.parcels : [], officesRaw: offices,
-        defaultLocation: center, lang: "rus", currency: "RUB",
+        hideDeliveryOptions: { office: false, door: true }, goods: [], officesRaw: allOffices,
+        defaultLocation: MOSCOW_MAP_CENTER, lang: "rus", currency: "RUB",
         onReady: () => {
           if (!active) return;
           setMapReady(true);
-          if (mapCoordinates && !positioned) {
-            positioned = true;
-            void widget.current?.updateLocation(mapCoordinates, 13);
-          }
+          void widget.current?.updateLocation(MOSCOW_MAP_CENTER, 10);
         },
         onChoose: (type, _tariff, target) => {
           if (type === "office" && "city_code" in target) {
@@ -252,7 +248,11 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       if (active) setMapError(cause instanceof Error ? cause.message : "Карта СДЭК не загрузилась.");
     });
     return () => { active = false; widget.current?.destroy(); widget.current = null; };
-  }, [apiEnabled, cdekYandexApiKey, deliveryMode, mapCoordinates, mapLocation, offices, parcels, servicePath, yandexGeocoderApiKey]);
+  }, [allOffices, apiEnabled, cdekYandexApiKey, deliveryMode, servicePath]);
+
+  useEffect(() => {
+    if (mapReady && !isNationalMapView && mapCoordinates) void widget.current?.updateLocation(mapCoordinates, 13);
+  }, [isNationalMapView, mapCoordinates, mapReady]);
 
   useEffect(() => {
     if (mapReady && selectedCode) widget.current?.selectOffice(selectedCode);
@@ -407,7 +407,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
 
   async function findOffices(searchAddress: Address, displayAddress: string, initial = false) {
     const cityName = searchAddress.city?.trim();
-    if (!cityName) { setError("Выберите адрес с указанным городом."); return; }
+    if (!initial && !cityName) { setError("Выберите адрес с указанным городом."); return; }
     if (!apiEnabled) { setError("Проверьте настройки тестового API СДЭК в backend/.env."); return; }
     officeSearchController.current?.abort();
     const controller = new AbortController();
@@ -419,28 +419,32 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setSelectedPoint(null);
     setResultsAddress("");
     try {
-      const cityUrl = new URL(servicePath);
-      cityUrl.search = new URLSearchParams({ action: "cities", name: cityName, country_code: "RU" }).toString();
-      const cityResponse = await fetch(cityUrl, { signal: controller.signal });
-      if (!cityResponse.ok) throw new Error(`СДЭК не нашёл город (HTTP ${cityResponse.status}).`);
-      const cityCandidates = records<CdekCity>(await cityResponse.json());
-      const requestedCity = normalizeCityName(cityName);
-      const city = cityCandidates.find((item) => normalizeCityName(item.city) === requestedCity
-        || normalizeCityName(item.full_name) === requestedCity
-        || normalizeCityName(item.full_name).startsWith(`${requestedCity},`));
-      const cityCode = Number(city?.code);
-      if (!city || !Number.isInteger(cityCode) || cityCode <= 0) throw new Error(`СДЭК не подтвердил город «${cityName}». Уточните его название.`);
+      let city: CdekCity | undefined;
+      let cityCode = Number.NaN;
+      if (!initial) {
+        const cityUrl = new URL(servicePath);
+        cityUrl.search = new URLSearchParams({ action: "cities", name: cityName!, country_code: "RU" }).toString();
+        const cityResponse = await fetch(cityUrl, { signal: controller.signal });
+        if (!cityResponse.ok) throw new Error(`СДЭК не нашёл город (HTTP ${cityResponse.status}).`);
+        const cityCandidates = records<CdekCity>(await cityResponse.json());
+        const requestedCity = normalizeCityName(cityName);
+        city = cityCandidates.find((item) => normalizeCityName(item.city) === requestedCity
+          || normalizeCityName(item.full_name) === requestedCity
+          || normalizeCityName(item.full_name).startsWith(`${requestedCity},`));
+        cityCode = Number(city?.code);
+        if (!city || !Number.isInteger(cityCode) || cityCode <= 0) throw new Error(`СДЭК не подтвердил город «${cityName}». Уточните его название.`);
+      }
 
       const officesUrl = new URL(servicePath);
-      const params = new URLSearchParams({ action: "offices", city_code: String(cityCode), type: "PVZ", lang: "rus" });
+      const params = new URLSearchParams({ action: "offices", ...(initial ? { country_code: "RU" } : { city_code: String(cityCode) }), type: "PVZ", lang: "rus" });
       officesUrl.search = params.toString();
       const officeResponse = await fetch(officesUrl, { signal: controller.signal });
       if (!officeResponse.ok) throw new Error(`СДЭК не вернул пункты выдачи (HTTP ${officeResponse.status}).`);
       const points = records<CdekPoint>(await officeResponse.json());
       let geocodeNote = "";
       let coordinates: [number, number] | null = null;
-      let resolvedLocation = displayAddress || [city.full_name || city.city || cityName, searchAddress.street, searchAddress.house].filter(Boolean).join(", ");
-      if (yandexGeocoderApiKey) {
+      let resolvedLocation = initial ? "Россия" : displayAddress || [city?.full_name || city?.city || cityName, searchAddress.street, searchAddress.house].filter(Boolean).join(", ");
+      if (yandexGeocoderApiKey && !initial) {
         try {
           const geocoderUrl = new URL("https://geocode-maps.yandex.ru/v1/");
           geocoderUrl.search = new URLSearchParams({ apikey: yandexGeocoderApiKey, geocode: resolvedLocation, format: "json", results: "1" }).toString();
@@ -466,10 +470,11 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       }
       if (controller.signal.aborted) return;
       setOffices(points);
+      if (initial) setAllOffices(points);
       setMapCoordinates(coordinates);
+      setIsNationalMapView(initial);
       setResultsAddress(initial ? "" : displayAddress);
       setApiMessage(initial ? "" : `Найдено ПВЗ: ${points.length}.${geocodeNote}`);
-      setMapLocation(resolvedLocation);
     } catch (cause) {
       if (controller.signal.aborted) return;
       setError(cause instanceof Error ? cause.message : "Не удалось получить пункты выдачи СДЭК.");

@@ -3,10 +3,11 @@ import test from "node:test";
 
 import { formatYandexSuggestion, parseYandexAddress, yandexSuggestType } from "../src/lib/yandex-address";
 
-test("switches from street to house suggestions after a house number", () => {
-  assert.equal(yandexSuggestType("Москва, Лесная улица"), "street");
+test("includes city and street suggestions until a house number is entered", () => {
+  assert.equal(yandexSuggestType("Казань"), "locality,street");
+  assert.equal(yandexSuggestType("Москва, Лесная улица"), "locality,street");
   assert.equal(yandexSuggestType("Москва, Лесная улица, 3"), "house");
-  assert.equal(yandexSuggestType("Москва, улица 1905 года"), "street");
+  assert.equal(yandexSuggestType("Москва, улица 1905 года"), "locality,street");
 });
 
 test("maps a Yandex house suggestion to checkout address fields", () => {
