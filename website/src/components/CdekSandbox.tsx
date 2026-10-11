@@ -92,12 +92,23 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   const [selectedTariffCode, setSelectedTariffCode] = useState<number | null>(null);
   const [tariffsLoading, setTariffsLoading] = useState(false);
   const [tariffsError, setTariffsError] = useState("");
+  const addressStep = useRef<HTMLElement | null>(null);
+  const tariffStep = useRef<HTMLElement | null>(null);
   const widget = useRef<CdekWidgetInstance | null>(null);
   const officeSearchController = useRef<AbortController | null>(null);
   const initialSearchStarted = useRef(false);
   const servicePath = `${apiBase}/api/orders/cdek-widget`;
   const rankedOffices = offices.map((point) => ({ ...point, distance: distanceToOffice(point, mapCoordinates) }))
     .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+
+  function scrollToStep(section: HTMLElement | null) {
+    if (!section) return;
+    const previousStepSpace = Math.min(window.innerHeight * 0.44, 360);
+    window.scrollTo({
+      top: Math.max(0, window.scrollY + section.getBoundingClientRect().top - previousStepSpace),
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  }
 
   useEffect(() => {
     if (checkoutCart) {
@@ -233,6 +244,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
             setSelectedCode(target.code);
             setSelectedCityCode(target.city_code);
             setSelectedPoint({ code: target.code, name: target.name, address: target.address, city: target.city, type: target.type, postal_code: target.postal_code, location: { city_code: target.city_code, city: target.city, address: target.address } });
+            scrollToStep(tariffStep.current);
           }
         },
       });
@@ -315,7 +327,10 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
   }
 
   function chooseDeliveryMode(mode: DeliveryMode) {
-    if (mode === deliveryMode) return;
+    if (mode === deliveryMode) {
+      scrollToStep(addressStep.current);
+      return;
+    }
     cancelOfficeSearch();
     setDeliveryMode(mode);
     setSelectedCode("");
@@ -323,6 +338,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setSelectedPoint(null);
     setError("");
     setApiMessage("");
+    scrollToStep(addressStep.current);
   }
 
   function selectAddress(suggestion: YandexSuggestResult) {
@@ -345,11 +361,17 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
     setError("");
     setApiMessage("");
     if (deliveryMode === "office") void findOffices(nextAddress, displayAddress);
-    else setResultsAddress("");
+    else {
+      setResultsAddress("");
+      if (nextAddress.city?.trim() && nextAddress.street?.trim() && nextAddress.house?.trim()) scrollToStep(tariffStep.current);
+    }
   }
 
   function updateCourierAddress(field: keyof Address, value: string) {
-    setAddress((current) => ({ ...current, [field]: value }));
+    const wasReady = Boolean(address?.city?.trim() && address.street?.trim() && address.house?.trim());
+    const nextAddress = { ...address, [field]: value };
+    setAddress(nextAddress);
+    if (deliveryMode === "courier" && !wasReady && nextAddress.city?.trim() && nextAddress.street?.trim() && nextAddress.house?.trim()) scrollToStep(tariffStep.current);
     if (["region", "city", "street", "house"].includes(field)) {
       setAddressQuery("");
       setSelectedAddressText("");
@@ -543,7 +565,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       </div>
     </section>
 
-    <section className="cdek-sandbox-panel" aria-labelledby="cdek-address-title">
+    <section className="cdek-sandbox-panel" aria-labelledby="cdek-address-title" ref={addressStep}>
       <h2 id="cdek-address-title">2. Адрес</h2>
       <p className="cdek-sandbox-step-description">{deliveryMode === "office" ? "Выберите пункт выдачи на карте или найдите ближайшие по адресу." : "Введите адрес, куда привезёт курьер."}</p>
       <form className="cdek-sandbox-form" onSubmit={submitAddress}>
@@ -598,7 +620,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
             <h3>{mapCoordinates ? "Ближайшие пункты выдачи" : "Пункты выдачи"}</h3>
             <p className="checkout-hint">{mapCoordinates ? `Показаны ${visibleOffices.length} ближайших из ${offices.length}; расстояние по прямой.` : "Не удалось определить расстояние; показаны пункты города."}</p>
             <ul>{visibleOffices.map((point) => <li key={point.code}>
-              <button className={`cdek-sandbox-point${selectedCode === point.code ? " is-selected" : ""}`} type="button" aria-pressed={selectedCode === point.code} onClick={() => { setSelectedCode(point.code); setSelectedCityCode(point.location?.city_code ?? null); setSelectedPoint(point); }}>
+              <button className={`cdek-sandbox-point${selectedCode === point.code ? " is-selected" : ""}`} type="button" aria-pressed={selectedCode === point.code} onClick={() => { setSelectedCode(point.code); setSelectedCityCode(point.location?.city_code ?? null); setSelectedPoint(point); scrollToStep(tariffStep.current); }}>
                 <strong>{point.location?.city || point.city || address?.city || "Москва"}, {officeAddress(point)}</strong>
                 <small>{point.code}{point.distance !== null ? ` · ${point.distance < 1000 ? `${Math.round(point.distance)} м` : `${(point.distance / 1000).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} км`} от адреса` : ""}</small>
                 {point.work_time && <small>{point.work_time}</small>}
@@ -609,7 +631,7 @@ export default function CdekSandbox({ apiBase, cdekYandexApiKey, yandexGeocoderA
       </div> : null}
     </section>
 
-    <section className="cdek-sandbox-panel" aria-labelledby="cdek-tariff-title">
+    <section className="cdek-sandbox-panel" aria-labelledby="cdek-tariff-title" ref={tariffStep}>
       <h2 id="cdek-tariff-title">3. Тариф</h2>
       <p className="cdek-sandbox-step-description">Выберите удобный вариант доставки. Стоимость рассчитывается по корзине.</p>
       {renderTariffState()}

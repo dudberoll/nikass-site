@@ -61,9 +61,12 @@ function CdekDeliveryTariffLine({ mode, tariff }: { mode: "office" | "courier"; 
 
 function CdekDeliveryDetails({ point, delivery, address }: { point: CdekDeliveryPoint | undefined; delivery?: CdekDeliverySummary; address?: CourierAddress }) {
   if (delivery) {
+    const location = address ? [...new Set([address.postcode, address.region, address.city].map((part) => part.trim()).filter(Boolean))].join(", ") : "";
     const route = delivery.mode === "office"
       ? `ПВЗ СДЭК ${delivery.point.code} — ${delivery.point.city}, ${delivery.point.address}`
-      : `Курьер${address ? ` — ${address.postcode}, ${address.region}, ${address.city}, ${address.street}, д. ${address.house}${address.apartment ? `, кв. ${address.apartment}` : ""}` : ""}`;
+      : address
+        ? <>Курьер — {location && `${location}, `}<span className="checkout-cdek-street-house">{address.street}, д. {address.house}{address.apartment ? `, кв. ${address.apartment}` : ""}</span></>
+        : "Курьер";
     const tariff = delivery.tariff;
     return <section className="checkout-cdek-summary" aria-label="Отдельная оплата доставки СДЭК">
       <CdekDeliveryTariffLine mode={delivery.mode} tariff={tariff} />

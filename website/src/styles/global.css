@@ -746,6 +746,7 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .checkout-cdek-delivery-label { grid-column: 1; grid-row: 1; color: #555; font-size: 18px; line-height: 1.45; }
 .checkout-cdek-delivery-price { grid-column: 2; grid-row: 1 / span 2; align-self: center; white-space: nowrap; }
 .checkout-cdek-summary > p { grid-column: 1; grid-row: 2; margin: 0; color: #555; font-size: 14px; line-height: 1.45; }
+.checkout-cdek-street-house { white-space: nowrap; }
 .checkout-cdek-delivery-period { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; white-space: nowrap; }
 .checkout-cdek-clock { flex: 0 0 16px; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 @media (max-width: 600px) { .checkout-cdek { padding: 14px; } .checkout-cdek-map { height: min(70svh, 600px); min-height: 520px; } }
