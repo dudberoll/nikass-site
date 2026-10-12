@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent } from "react";
 
 import { AVAILABILITY_LABELS, displayProductSku, formatPrice, formatVariantPrice, getSelectedVariant, isVariantAddable, type Product } from "../data/catalog";
 import { addCartItem, readCart, saveCart } from "../lib/cart";
+import { productVariantUrl, selectedVariantSku } from "../lib/product-variant-url";
 import RestockRequest from "./RestockRequest";
 import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
 
 const MAX_QUANTITY = 99;
+const useBrowserLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 export default function ProductVariantSelector({ product: cachedProduct }: { product: Product }) {
   const { stock, failed } = useCatalogAvailability();
@@ -14,9 +16,15 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
   const variant = getSelectedVariant(product, sku);
-  useEffect(() => {
-    const requestedSku = new URLSearchParams(window.location.search).get("variant");
-    if (requestedSku && cachedProduct.variants.some((item) => item.sku === requestedSku)) setSku(requestedSku);
+  useBrowserLayoutEffect(() => {
+    const syncVariantFromUrl = () => {
+      setSku(selectedVariantSku(window.location.search, cachedProduct.variants));
+      setQuantity(1);
+      setMessage("");
+    };
+    syncVariantFromUrl();
+    window.addEventListener("popstate", syncVariantFromUrl);
+    return () => window.removeEventListener("popstate", syncVariantFromUrl);
   }, [cachedProduct]);
   useEffect(() => {
     if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku, displaySku: displayProductSku(product, variant.sku), image: variant.image ?? product.image, imageSrcSet: variant.imageSrcSet ?? product.imageSrcSet } }));
@@ -33,7 +41,7 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
 
   return <section className="product-variant-selector" aria-labelledby="variant-title">
     <h2 id="variant-title">Вариант</h2>
-    {product.variants.length > 1 && <div className="product-variant-options">{product.variants.map((item) => <button type="button" className={item.sku === variant.sku ? "is-selected" : ""} aria-pressed={item.sku === variant.sku} onClick={() => { setSku(item.sku); setQuantity(1); setMessage(""); }} key={item.sku}><span>{item.label}</span><small>{displayProductSku(product, item.sku)}</small><strong>{formatVariantPrice(item)}</strong></button>)}</div>}
+    {product.variants.length > 1 && <div className="product-variant-options">{product.variants.map((item) => <button type="button" className={item.sku === variant.sku ? "is-selected" : ""} aria-pressed={item.sku === variant.sku} onClick={() => { if (item.sku !== sku) window.history.pushState(window.history.state, "", productVariantUrl(window.location.href, item.sku)); setSku(item.sku); setQuantity(1); setMessage(""); }} key={item.sku}><span>{item.label}</span><small>{displayProductSku(product, item.sku)}</small><strong>{formatVariantPrice(item)}</strong></button>)}</div>}
     <div className="product-variant-summary">
       <span>{variant.label} · SKU {displayProductSku(product, variant.sku)}</span>
       <strong>{formatVariantPrice(variant)}</strong>

@@ -155,10 +155,24 @@ test("NS-31 characteristics follow the selected variant", async ({ page }) => {
   await expect(visibleSpecs).not.toContainText("Комплектация");
 
   await page.getByRole("button", { name: /300 Вт/ }).click();
+  await expect(page).toHaveURL(/variant=NS-31-300/);
   await expect(visibleSpecs).toContainText("300 Вт");
   await expect(visibleSpecs).toContainText("23 × 13 × 22 см");
   await expect(visibleSpecs).toContainText("307,2 Вт·ч");
   await expect(visibleSpecs).not.toContainText("153,6 Вт·ч");
+  const quantity = page.getByRole("group", { name: /Количество/ });
+  await quantity.getByRole("button", { name: "Увеличить количество" }).click();
+  await quantity.getByRole("button", { name: "Увеличить количество" }).click();
+  await expect(quantity.locator("span")).toHaveText("3");
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/catalog\/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2$/);
+  await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-31-150");
+  await expect(quantity.locator("span")).toHaveText("1");
+  await page.goForward();
+  await expect(page).toHaveURL(/variant=NS-31-300/);
+  await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-31-300");
+
   const kit = page.locator("details").filter({ has: page.locator("summary", { hasText: /^Комплектация$/ }) });
   await kit.locator("summary").click();
   await expect(kit.locator('[data-product-detail-sku="NS-31-300"]')).toBeVisible();
