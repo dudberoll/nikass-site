@@ -3,6 +3,7 @@ import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
 import { blogEntries, type BlogEntry } from "../../data/blog";
 import { getProductPrice, HERO_CATEGORIES, loadCatalogProducts } from "../../data/catalog";
+import { optimizeCatalogImages } from "../../data/catalog-images";
 import "../../styles/global.css";
 
 type Props = { entry: BlogEntry };
@@ -13,7 +14,7 @@ export function getStaticPaths() {
 
 const { entry } = Astro.props;
 const catalogProducts = entry.slug === "energy-at-dacha" || entry.recommendedProductSlugs?.length
-  ? await loadCatalogProducts()
+  ? await optimizeCatalogImages(await loadCatalogProducts())
   : [];
 const recommendedProducts = entry.recommendedProductSlugs
   ? entry.recommendedProductSlugs.map((slug) => {
@@ -91,7 +92,7 @@ const allowedCatalogCategories = HERO_CATEGORIES.flatMap(({ title, label, catego
           <div class="orbea-bestsellers-grid">
             {recommendedProducts.map((product) => (
               <a class="orbea-bestseller-card" href={`/catalog/${product.slug}`}>
-                <div class="orbea-bestseller-image"><img src={product.image} alt={product.name} loading="lazy" /></div>
+                <div class="orbea-bestseller-image"><img src={product.image} srcset={product.imageSrcSet} sizes="(max-width: 600px) 220px, 240px" alt={product.name} loading="lazy" /></div>
                 <div class="orbea-bestseller-copy">
                   <p>{product.category}</p>
                   <h3>{product.name}</h3>

@@ -19,6 +19,8 @@ export type Product = {
   variantPackageContents?: Record<string, string>;
   variantWarranties?: Record<string, string>;
   image: string;
+  imageSrcSet?: string;
+  galleryImages?: Array<{ src: string; srcSet?: string }>;
   variants: ProductVariant[];
 };
 
@@ -53,6 +55,7 @@ export function displayProductSku(product: Product, sku = product.sku) {
 export type ProductVariant = {
   sku: string;
   image?: string;
+  imageSrcSet?: string;
   label: string;
   price: number;
   oldPrice?: number;
@@ -61,14 +64,14 @@ export type ProductVariant = {
 };
 
 export const HERO_CATEGORIES = [
-  { title: "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ", label: "Портативные зарядные станции", category: "Портативные зарядные станции", image: "/assets/images/category-portable-charging-stations.webp", icon: "/assets/images/category-icons/portable-charging-station.png" },
-  { title: "AGM АККУМУЛЯТОРЫ", label: "AGM аккумуляторы", category: "AGM аккумуляторы", image: "/assets/images/category-agm-batteries.webp", icon: "/assets/images/category-icons/agm-battery.png" },
-  { title: "LiFePO4 АККУМУЛЯТОРЫ", label: LIFEPO4_CATEGORY, category: LIFEPO4_CATEGORY, image: "/assets/images/category-lifepo4-batteries.webp", icon: "/assets/images/category-icons/lifepo4-battery.png" },
-  { title: "ИНВЕРТОРЫ НАПРЯЖЕНИЯ", label: VOLTAGE_INVERTER_CATEGORY, category: VOLTAGE_INVERTER_CATEGORY, image: "/assets/images/category-automotive-inverters.webp", icon: "/assets/images/category-icons/automotive-inverter.png" },
-  { title: "ГИБРИДНЫЕ ИНВЕРТОРЫ", label: "Гибридные инверторы", category: "Гибридные инверторы", image: "/assets/images/category-hybrid-inverters.webp", icon: "/assets/images/category-icons/hybrid-inverter.png" },
-  { title: "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ", label: "Системы хранения энергии", category: "Системы хранения энергии", image: "/assets/images/category-energy-storage-ess.webp", icon: "/assets/images/category-icons/energy-storage-ess.png" },
-  { title: "СОЛНЕЧНЫЕ ПАНЕЛИ", label: "Солнечные панели", category: "Солнечные панели", image: "/assets/images/category-solar-panels.webp", icon: "/assets/images/category-icons/solar-panel.png" },
-  { title: "POWERBANK", label: "POWERBANK", category: "POWERBANK", image: "/assets/images/category-powerbanks.webp", icon: "/assets/images/category-icons/powerbank.png" },
+  { title: "ПОРТАТИВНЫЕ ЗАРЯДНЫЕ СТАНЦИИ", label: "Портативные зарядные станции", category: "Портативные зарядные станции", image: "/assets/images/category-portable-charging-stations.webp", icon: "/assets/images/category-icons/portable-charging-station.webp" },
+  { title: "AGM АККУМУЛЯТОРЫ", label: "AGM аккумуляторы", category: "AGM аккумуляторы", image: "/assets/images/category-agm-batteries.webp", icon: "/assets/images/category-icons/agm-battery.webp" },
+  { title: "LiFePO4 АККУМУЛЯТОРЫ", label: LIFEPO4_CATEGORY, category: LIFEPO4_CATEGORY, image: "/assets/images/category-lifepo4-batteries.webp", icon: "/assets/images/category-icons/lifepo4-battery.webp" },
+  { title: "ИНВЕРТОРЫ НАПРЯЖЕНИЯ", label: VOLTAGE_INVERTER_CATEGORY, category: VOLTAGE_INVERTER_CATEGORY, image: "/assets/images/category-automotive-inverters.webp", icon: "/assets/images/category-icons/automotive-inverter.webp" },
+  { title: "ГИБРИДНЫЕ ИНВЕРТОРЫ", label: "Гибридные инверторы", category: "Гибридные инверторы", image: "/assets/images/category-hybrid-inverters.webp", icon: "/assets/images/category-icons/hybrid-inverter.webp" },
+  { title: "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ", label: "Системы хранения энергии", category: "Системы хранения энергии", image: "/assets/images/category-energy-storage-ess.webp", icon: "/assets/images/category-icons/energy-storage-ess.webp" },
+  { title: "СОЛНЕЧНЫЕ ПАНЕЛИ", label: "Солнечные панели", category: "Солнечные панели", image: "/assets/images/category-solar-panels.webp", icon: "/assets/images/category-icons/solar-panel.webp" },
+  { title: "POWERBANK", label: "POWERBANK", category: "POWERBANK", image: "/assets/images/category-powerbanks.webp", icon: "/assets/images/category-icons/powerbank.webp" },
 ] as const;
 
 export type CatalogApiProduct = {

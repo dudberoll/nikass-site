@@ -1,14 +1,16 @@
 ---
 import AiComponentsDemo from "../components/AiComponentsDemo";
 import { getProductPrice, loadCatalogProducts } from "../data/catalog";
+import { optimizeCatalogImages } from "../data/catalog-images";
 import "../styles/global.css";
 
 const apiBase = (import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
-const chatProducts = (await loadCatalogProducts()).map((product) => ({
+const chatProducts = (await optimizeCatalogImages(await loadCatalogProducts())).map((product) => ({
   slug: product.slug,
   name: product.name,
   category: product.category,
   image: product.image,
+  imageSrcSet: product.imageSrcSet,
   priceLabel: getProductPrice(product).label,
   oldPriceLabel: getProductPrice(product).oldPriceLabel,
 }));
@@ -26,6 +28,7 @@ const chatProducts = (await loadCatalogProducts()).map((product) => ({
   </head>
   <body class="ai-components-page">
     <main class="ai-components-main">
+      <h1 class="sr-only">Чат с консультантом NIKASS</h1>
       <AiComponentsDemo {apiBase} products={chatProducts} client:load />
     </main>
   </body>

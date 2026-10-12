@@ -3,9 +3,10 @@ import CatalogExplorer from "../components/CatalogExplorer";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import { DISCOUNTED_PRODUCTS_LABEL, HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
+import { optimizeCatalogImages } from "../data/catalog-images";
 import "../styles/global.css";
 
-const products = await loadCatalogProducts("discounted");
+const products = await optimizeCatalogImages(await loadCatalogProducts("discounted"));
 ---
 <!doctype html>
 <html lang="ru">

@@ -119,7 +119,7 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
     {paymentError && <p className="cart-checkout-note" role="status">{paymentError}</p>}
     <div className="cart-layout">
     <div className="cart-lines" aria-label="Товары в корзине">{lines.map(({ line, product, variant }) => <article className="cart-line" key={`${line.productSlug}:${line.variantSku}`}>
-      <a className="cart-line-image" href={`/catalog/${product.slug}?variant=${encodeURIComponent(variant.sku)}`}><img src={variant.image ?? product.image} alt="" /></a>
+      <a className="cart-line-image" href={`/catalog/${product.slug}?variant=${encodeURIComponent(variant.sku)}`}><img src={variant.image ?? product.image} srcSet={variant.imageSrcSet ?? product.imageSrcSet} sizes="80px" alt={`${product.name} — ${variant.label}`} /></a>
       <div className="cart-line-info">
         <p className="store-product-category">{product.category}</p><h2><a href={`/catalog/${product.slug}`}>{product.name}</a></h2>
         {product.demo && <p className="store-product-card-description">Тестовый экземпляр — не продаётся</p>}

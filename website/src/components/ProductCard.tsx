@@ -19,7 +19,7 @@ export default function ProductCard({ product: cachedProduct, appearance = "cata
   const moreVariantsOnPhone = product.variants.length > 2;
   const restock = variant?.availability === "preorder" && (product.variants.length === 1 || Boolean(selectedSku));
   return <article className={bestseller ? "orbea-bestseller-card" : "store-product-card"} data-product-card data-variant-count={product.variants.length}>
-    <a className={bestseller ? "orbea-bestseller-image" : "store-product-image"} href={productHref}><img src={variant?.image ?? product.image} alt={product.name} loading="lazy" /></a>
+    <a className={bestseller ? "orbea-bestseller-image" : "store-product-image"} href={productHref}><img src={variant?.image ?? product.image} srcSet={variant?.imageSrcSet ?? product.imageSrcSet} sizes={bestseller ? "(max-width: 900px) 45vw, 260px" : "(max-width: 900px) calc((100vw - 56px) / 2), (max-width: 1200px) 24vw, 300px"} alt={product.name} loading="lazy" /></a>
     <div className={bestseller ? "orbea-bestseller-copy" : "store-product-card-body"}>
       <p className="store-product-category">{product.category}</p>
       {product.demo && <p className="store-product-card-description">Тестовый экземпляр</p>}
@@ -29,7 +29,7 @@ export default function ProductCard({ product: cachedProduct, appearance = "cata
         <p className="store-product-variant-label">Выберите вариант</p>
         <div id={`product-variants-${product.slug}`} className={`store-product-variant-options${variantsExpanded ? "" : " is-collapsed"}`} role="group" aria-label={`Варианты товара ${product.name}`}>
           {product.variants.map((item) => <button type="button" className={`store-product-variant-choice${item.sku === selectedSku ? " is-selected" : ""}`} aria-label={`${item.label}, ${formatVariantPrice(item)}`} aria-pressed={item.sku === selectedSku} onClick={() => setSelectedSku(item.sku)} key={item.sku}>
-            <img src={item.image ?? product.image} alt="" loading="lazy" />
+            <img src={item.image ?? product.image} srcSet={item.imageSrcSet ?? product.imageSrcSet} sizes="90px" alt="" loading="lazy" />
             <span>{item.label}</span>
           </button>)}
           {moreVariantsOnPhone && <button type="button" className={`store-product-variant-more${moreVariantsOnDesktop ? " is-visible-desktop" : ""} is-visible-phone`} aria-label={variantsExpanded ? "Свернуть варианты" : "Показать ещё варианты"} aria-controls={`product-variants-${product.slug}`} aria-expanded={variantsExpanded} onClick={() => setExpanded(!variantsExpanded)}>

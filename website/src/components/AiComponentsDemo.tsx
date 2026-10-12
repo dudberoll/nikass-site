@@ -12,6 +12,7 @@ export type ChatProduct = {
   name: string;
   category: string;
   image: string;
+  imageSrcSet?: string;
   priceLabel: string;
   oldPriceLabel?: string;
 };
@@ -68,7 +69,7 @@ function ProductRecommendations({ text, products }: { text: string; products: re
 
   return <div className="ai-recommended-products" aria-label="Рекомендованные товары">
     {recommended.map((product) => <a className="orbea-bestseller-card ai-recommended-product" href={`/catalog/${product.slug}`} key={product.slug}>
-      <div className="orbea-bestseller-image"><img src={product.image} alt={product.name} loading="lazy" /></div>
+      <div className="orbea-bestseller-image"><img src={product.image} srcSet={product.imageSrcSet} sizes="220px" alt={product.name} loading="lazy" /></div>
       <div className="orbea-bestseller-copy">
         <p>{product.category}</p>
         <h3>{product.name}</h3>
@@ -255,9 +256,9 @@ export function AssistantCard({ apiBase, products, persistSession = false }: { a
 
   return <section className="ai-assistant-card" aria-label="Диалог с консультантом NIKASS" data-chat-hydrated={sessionReady}>
     {messages.length === 0 ? <div className="ai-assistant-card-content">
-      <div className="ai-assistant-card-mark"><img className="ai-assistant-card-logo" src="/assets/images/nikass-smart-selection-logo.png" alt="NIKASS smart selection" /></div>
+      <div className="ai-assistant-card-mark"><img className="ai-assistant-card-logo" src="/assets/images/nikass-smart-selection-logo.webp" alt="NIKASS smart selection" /></div>
       <p className="ai-assistant-card-greeting">Здравствуйте! Я консультант NIKASS</p>
-      <h1 id="ai-assistant-card-title">Помогу подобрать оборудование под Вашу задачу</h1>
+      <p id="ai-assistant-card-title">Помогу подобрать оборудование под Вашу задачу</p>
       <p className="ai-assistant-card-description">Расскажите, что нужно запитать: дом, технику или автомобиль. Отвечу на вопросы по оборудованию, доставке и возврату.</p>
       <div className="ai-assistant-card-actions">
         {actions.map((action) => <button key={action.label} type="button" disabled={!sessionReady || streaming || transcribing} onClick={() => void sendPrompt(action.prompt)}><Icon name={action.icon} />{action.label}</button>)}

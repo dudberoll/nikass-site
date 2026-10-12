@@ -19,7 +19,7 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
     if (requestedSku && cachedProduct.variants.some((item) => item.sku === requestedSku)) setSku(requestedSku);
   }, [cachedProduct]);
   useEffect(() => {
-    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku, displaySku: displayProductSku(product, variant.sku), image: variant.image ?? product.image } }));
+    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku, displaySku: displayProductSku(product, variant.sku), image: variant.image ?? product.image, imageSrcSet: variant.imageSrcSet ?? product.imageSrcSet } }));
   }, [variant?.sku]);
   if (!variant) return <p>Варианты пока не добавлены.</p>;
 

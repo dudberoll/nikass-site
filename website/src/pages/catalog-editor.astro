@@ -7,10 +7,11 @@ import CatalogEditor from "../components/CatalogEditor";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import { loadCatalogProducts } from "../data/catalog";
+import { optimizeCatalogImages } from "../data/catalog-images";
 import "../styles/global.css";
 
 const publicDirectory = fileURLToPath(new URL("../../public/", import.meta.url));
-const products = (await loadCatalogProducts()).map((product) => {
+const products = await optimizeCatalogImages((await loadCatalogProducts()).map((product) => {
   const sku = /^[a-z\d_-]+$/i.test(product.sku) ? product.sku : "";
   const candidates = sku
     ? [
@@ -21,8 +22,8 @@ const products = (await loadCatalogProducts()).map((product) => {
     ]
     : [];
   const localImage = candidates.find((parts) => existsSync(join(publicDirectory, ...parts)));
-  return localImage ? { ...product, image: `/${localImage.join("/")}` } : product;
-});
+  return localImage ? { ...product, image: `/${localImage.join("/")}`, imageSrcSet: undefined } : product;
+}));
 ---
 
 <!doctype html>

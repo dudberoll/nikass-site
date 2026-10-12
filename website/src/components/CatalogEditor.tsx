@@ -201,7 +201,7 @@ export default function CatalogEditor({ products }: { products: Product[] }) {
         <aside className="catalog-editor-preview" aria-label="Предпросмотр карточки и характеристик">
           <p className="catalog-editor-preview-heading">Предпросмотр</p>
           <article className="store-product-card catalog-editor-preview-card">
-            <div className="store-product-image"><img src={product.image} alt={product.name} /></div>
+            <div className="store-product-image"><img src={product.image} srcSet={product.imageSrcSet} sizes="300px" alt={product.name} /></div>
             <div className="store-product-card-body">
               <p className="store-product-category">{product.category}</p>
               <h3>{product.name}</h3>

@@ -3,9 +3,10 @@ import CartView from "../components/CartView";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import { loadCatalogProducts } from "../data/catalog";
+import { optimizeCatalogImages } from "../data/catalog-images";
 import "../styles/global.css";
 
-const products = await loadCatalogProducts("all");
+const products = await optimizeCatalogImages(await loadCatalogProducts("all"));
 const apiUrl = new URL(import.meta.env.PUBLIC_API_URL ?? "http://localhost:3000");
 const localApi = ["localhost", "127.0.0.1", "[::1]"].includes(apiUrl.hostname);
 if (apiUrl.username || apiUrl.password || (apiUrl.protocol !== "https:" && (apiUrl.protocol !== "http:" || !localApi))) throw new Error("Для оформления нужен HTTPS; HTTP разрешён только на локальном компьютере.");

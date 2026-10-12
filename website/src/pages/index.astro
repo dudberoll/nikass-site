@@ -7,9 +7,10 @@ import StoreHeader from "../components/StoreHeader.astro";
 import CookieNotice from "../components/CookieNotice.astro";
 import StoreChat from "../components/StoreChat.astro";
 import { HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
+import { optimizeCatalogImages } from "../data/catalog-images";
 import { storyEntries } from "../data/blog";
 
-const products = await loadCatalogProducts();
+const products = await optimizeCatalogImages(await loadCatalogProducts());
 
 const bikes = [
   { id: "stations", category: "Портативные зарядные станции", title: "Зарядные станции", body: "Энергия в пути", cta: "Смотреть решения", image: "energy-stations.webp" },
@@ -49,7 +50,7 @@ const heroPosition = (index: number) => {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="NIKASS — автономная энергия для дома, дороги и работы." />
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"NIKASS","url":"https://nikass.ru","logo":"https://nikass.ru/assets/images/nikass-smart-selection-logo.png"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"NIKASS","url":"https://nikass.ru","logo":"https://nikass.ru/assets/images/nikass-smart-selection-logo.webp"}</script>
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <title>NIKASS | Автономная энергия</title>
@@ -131,7 +132,7 @@ const heroPosition = (index: number) => {
         </section>
 
         <section class="orbea-video-section orbea-custom-video" id="custom">
-          <img class="orbea-video" src="/assets/images/autonomy-system.png" alt="Зарядные станции, аккумуляторы и солнечные панели NIKASS на природе" />
+          <img class="orbea-video" src="/assets/images/autonomy-system.webp" alt="Зарядные станции, аккумуляторы и солнечные панели NIKASS на природе" />
           <div class="orbea-video-overlay"></div>
           <div class="orbea-video-copy">
             <h2>Соберите свою систему автономности</h2>
