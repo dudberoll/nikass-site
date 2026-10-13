@@ -1,8 +1,12 @@
 ---
 import StoreFooter from "../components/StoreFooter.astro";
+import BreadcrumbStructuredData from "../components/BreadcrumbStructuredData.astro";
 import CanonicalLink from "../components/CanonicalLink.astro";
+import OpenGraphMeta from "../components/OpenGraphMeta.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import "../styles/global.css";
+
+const breadcrumbItems = [{ name: "Главная", url: "/" }, { name: "Оплата и доставка" }];
 ---
 <!doctype html>
 <html lang="ru">
@@ -11,6 +15,8 @@ import "../styles/global.css";
     <CanonicalLink />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content="Способы оплаты и доставки заказов NIKASS по России." />
+    <OpenGraphMeta title="Оплата и доставка — NIKASS" description="Способы оплаты и доставки заказов NIKASS по России." />
+    <BreadcrumbStructuredData items={breadcrumbItems} />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <title>Оплата и доставка — NIKASS</title>

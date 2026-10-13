@@ -1,0 +1,27 @@
+---
+import { absoluteUrl, canonicalUrl } from "../lib/seo";
+
+type Props = {
+  title: string;
+  description: string;
+  image?: string;
+  imageAlt?: string;
+  type?: "website" | "article";
+};
+
+const {
+  title,
+  description,
+  image = "/assets/images/category-portable-charging-stations.webp",
+  imageAlt = title,
+  type = "website",
+} = Astro.props;
+---
+
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={absoluteUrl(image)} />
+<meta property="og:image:alt" content={imageAlt} />
+<meta property="og:url" content={canonicalUrl(Astro.url)} />
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content="NIKASS" />

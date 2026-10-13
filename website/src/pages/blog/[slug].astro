@@ -1,7 +1,9 @@
 ---
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
+import BreadcrumbStructuredData from "../../components/BreadcrumbStructuredData.astro";
 import CanonicalLink from "../../components/CanonicalLink.astro";
+import OpenGraphMeta from "../../components/OpenGraphMeta.astro";
 import { blogEntries, type BlogEntry } from "../../data/blog";
 import { getCatalogCategoryPath, getProductPrice, HERO_CATEGORIES, loadCatalogProducts } from "../../data/catalog";
 import { optimizeCatalogImages } from "../../data/catalog-images";
@@ -14,6 +16,13 @@ export function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
+const articleTitle = `${entry.title} — Блог NIKASS`;
+const articleImage = `/assets/images/${entry.image}`;
+const breadcrumbItems = [
+  { name: "Главная", url: "/" },
+  { name: "Блог", url: "/blog" },
+  { name: entry.title },
+];
 const catalogProducts = entry.slug === "energy-at-dacha" || entry.recommendedProductSlugs?.length
   ? await optimizeCatalogImages(await loadCatalogProducts())
   : [];
@@ -49,9 +58,11 @@ const knownCategoryPaths = [...new Set(Object.values(catalogCategoryPaths))];
     <CanonicalLink />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={entry.summary} />
+    <OpenGraphMeta title={articleTitle} description={entry.summary} image={articleImage} imageAlt={entry.title} type="article" />
+    <BreadcrumbStructuredData items={breadcrumbItems} />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-    <title>{entry.title} — Блог NIKASS</title>
+    <title>{articleTitle}</title>
   </head>
   <body class="store-page">
     <StoreHeader />
@@ -63,7 +74,7 @@ const knownCategoryPaths = [...new Set(Object.values(catalogCategoryPaths))];
           <h1>{entry.title}</h1>
           <p>{entry.summary}</p>
         </header>
-        {!entry.hideImage && <figure class="blog-article-image"><img src={`/assets/images/${entry.image}`} alt={entry.title} /></figure>}
+        {!entry.hideImage && <figure class="blog-article-image"><img src={articleImage} alt={entry.title} /></figure>}
         <div class="blog-article-body">
           {entry.blocks
             ? entry.blocks.map((block) => {

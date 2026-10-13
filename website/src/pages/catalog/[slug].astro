@@ -1,7 +1,9 @@
 ---
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
+import BreadcrumbStructuredData from "../../components/BreadcrumbStructuredData.astro";
 import CanonicalLink from "../../components/CanonicalLink.astro";
+import OpenGraphMeta from "../../components/OpenGraphMeta.astro";
 import ProductStructuredData from "../../components/ProductStructuredData.astro";
 import ProductVariantSelector from "../../components/ProductVariantSelector";
 import { blogEntries } from "../../data/blog";
@@ -30,6 +32,15 @@ const warrantySets = product.variantWarranties
 const related = relatedProducts(product, await optimizeCatalogImages(await loadCatalogProducts("all")));
 const catalogPath = product.discounted ? DISCOUNTED_PRODUCTS_PATH : getCatalogCategoryPath(product.category) ?? "/catalog";
 const catalogLabel = product.discounted ? DISCOUNTED_PRODUCTS_LABEL : product.category;
+const productTitle = `${product.name} — NIKASS`;
+const productDescription = product.description || product.name;
+const breadcrumbItems = [
+  { name: "Главная", url: "/" },
+  ...(product.discounted
+    ? [{ name: DISCOUNTED_PRODUCTS_LABEL, url: DISCOUNTED_PRODUCTS_PATH }]
+    : [{ name: "Каталог", url: "/catalog" }, { name: product.category, url: catalogPath }]),
+  { name: product.name },
+];
 const articleSlugByCategory: Record<string, string> = {
   "Портативные зарядные станции": "energy-at-dacha",
   "Солнечные панели": "sun-in-the-system",
@@ -51,16 +62,22 @@ const articleLink = article && `/blog/${article.slug}?from=${encodeURIComponent(
     {indexableProduct && <CanonicalLink />}
     <meta name="viewport" content="width=device-width" />
     {(product.demo || product.slug === "test") && <meta name="robots" content="noindex,follow" />}
-    <meta name="description" content={product.description || product.name} />
+    <meta name="description" content={productDescription} />
+    {indexableProduct && <OpenGraphMeta title={productTitle} description={productDescription} image={product.variants[0]?.image ?? product.image} imageAlt={product.name} />}
+    {indexableProduct && <BreadcrumbStructuredData items={breadcrumbItems} />}
     {indexableProduct && <ProductStructuredData product={product} />}
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-    <title>{product.name} — NIKASS</title>
+    <title>{productTitle}</title>
   </head>
   <body class="store-page">
     <StoreHeader />
     <main class="store-main product-page" id="main-content" data-product-slug={product.slug}>
-      <p class="store-breadcrumb"><a href={catalogPath} data-catalog-back>← {product.discounted ? "Вернуться к уценённым товарам" : "Вернуться в каталог"}</a></p>
+      <nav class="store-breadcrumb" aria-label="Хлебные крошки">
+        <a href="/">Главная</a> / {product.discounted
+          ? <a href={catalogPath} data-catalog-back>{DISCOUNTED_PRODUCTS_LABEL}</a>
+          : <><a href="/catalog">Каталог</a> / <a href={catalogPath} data-catalog-back>{product.category}</a></>} / <span>{product.name}</span>
+      </nav>
       <section class="product-layout">
         <div class="product-gallery-wrap"><div class="product-gallery">{product.discounted && product.images?.[0] ? <a class="product-gallery-original" href={product.images[0]} target="_blank" rel="noreferrer" aria-label={`Открыть полноразмерное фото товара ${product.name}`}><img src={product.variants[0]?.image ?? product.image} srcset={product.variants[0]?.imageSrcSet ?? product.imageSrcSet} sizes="(max-width: 900px) calc(100vw - 40px), (max-width: 1200px) 55vw, 600px" alt={product.name} data-product-image /></a> : <img src={product.variants[0]?.image ?? product.image} srcset={product.variants[0]?.imageSrcSet ?? product.imageSrcSet} sizes="(max-width: 900px) calc(100vw - 40px), (max-width: 1200px) 55vw, 600px" alt={product.name} data-product-image />}</div>{product.discounted && product.images && product.images.length > 1 && <div class="product-defect-images">{product.images.slice(1).map((image, index) => { const optimizedImage = product.galleryImages?.[index]; return <a href={image} target="_blank" rel="noreferrer" aria-label={`Открыть полноразмерное фото товара ${index + 2}`}><img src={optimizedImage?.src ?? image} srcset={optimizedImage?.srcSet} sizes="(max-width: 900px) calc((100vw - 64px) / 3), 190px" alt={`${product.name} — фото ${index + 2}`} loading="lazy" /></a>; })}</div>}</div>
         <div class="product-info">

@@ -2,6 +2,7 @@
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
 import CanonicalLink from "../../components/CanonicalLink.astro";
+import OpenGraphMeta from "../../components/OpenGraphMeta.astro";
 import { blogEntries } from "../../data/blog";
 import "../../styles/global.css";
 ---
@@ -12,6 +13,7 @@ import "../../styles/global.css";
     <CanonicalLink />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content="Блог NIKASS о резервной энергии для дома, дороги и работы." />
+    <OpenGraphMeta title="Блог NIKASS — практика автономной жизни" description="Блог NIKASS о резервной энергии для дома, дороги и работы." image={`/assets/images/${blogEntries[0]?.image ?? "story-dacha.webp"}`} imageAlt="Статьи о резервной энергии NIKASS" />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <title>Блог NIKASS — практика автономной жизни</title>

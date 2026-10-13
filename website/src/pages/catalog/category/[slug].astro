@@ -1,6 +1,8 @@
 ---
 import CatalogExplorer from "../../../components/CatalogExplorer";
+import BreadcrumbStructuredData from "../../../components/BreadcrumbStructuredData.astro";
 import CanonicalLink from "../../../components/CanonicalLink.astro";
+import OpenGraphMeta from "../../../components/OpenGraphMeta.astro";
 import StoreFooter from "../../../components/StoreFooter.astro";
 import StoreHeader from "../../../components/StoreHeader.astro";
 import { HERO_CATEGORIES, loadCatalogProducts, type Product } from "../../../data/catalog";
@@ -20,6 +22,11 @@ const { category, products } = Astro.props as {
   category: (typeof HERO_CATEGORIES)[number];
   products: Product[];
 };
+const breadcrumbItems = [
+  { name: "Главная", url: "/" },
+  { name: "Каталог", url: "/catalog" },
+  { name: category.label },
+];
 ---
 <!doctype html>
 <html lang="ru">
@@ -28,6 +35,8 @@ const { category, products } = Astro.props as {
     <CanonicalLink />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={category.description} />
+    <OpenGraphMeta title={category.seoTitle} description={category.description} image={category.image} imageAlt={category.label} />
+    <BreadcrumbStructuredData items={breadcrumbItems} />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <title>{category.seoTitle}</title>

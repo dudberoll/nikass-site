@@ -1,0 +1,7 @@
+---
+import { breadcrumbStructuredData, serializeJsonLd, type BreadcrumbItem } from "../lib/seo";
+
+const { items } = Astro.props as { items: BreadcrumbItem[] };
+---
+
+<script is:inline type="application/ld+json" data-breadcrumb-structured-data set:html={serializeJsonLd(breadcrumbStructuredData(items))}></script>

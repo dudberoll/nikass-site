@@ -2,6 +2,8 @@ import type { Product, ProductVariant } from "../data/catalog";
 
 const SITE_URL = "https://nikass.ru";
 
+export type BreadcrumbItem = { name: string; url?: string };
+
 export function canonicalUrl(input: URL) {
   const pathname = input.pathname.replace(/\/+$/, "") || "/";
   return `${SITE_URL}${pathname}`;
@@ -19,8 +21,21 @@ const availabilityLabels = {
   unavailable: "Недоступен",
 } as const;
 
-function absoluteUrl(path: string) {
+export function absoluteUrl(path: string) {
   return new URL(path, SITE_URL).href;
+}
+
+export function breadcrumbStructuredData(items: BreadcrumbItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map(({ name, url }, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name,
+      ...(url ? { item: absoluteUrl(url) } : {}),
+    })),
+  };
 }
 
 function variantUrl(productPath: string, sku: string) {

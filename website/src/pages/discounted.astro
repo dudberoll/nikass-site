@@ -3,6 +3,7 @@ import CatalogExplorer from "../components/CatalogExplorer";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import CanonicalLink from "../components/CanonicalLink.astro";
+import OpenGraphMeta from "../components/OpenGraphMeta.astro";
 import { DISCOUNTED_PRODUCTS_LABEL, HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
 import { optimizeCatalogImages } from "../data/catalog-images";
 import "../styles/global.css";
@@ -16,6 +17,7 @@ const products = await optimizeCatalogImages(await loadCatalogProducts("discount
     <CanonicalLink />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content="Уценённые товары NIKASS с незначительными дефектами по сниженной цене." />
+    <OpenGraphMeta title={`${DISCOUNTED_PRODUCTS_LABEL} — NIKASS`} description="Уценённые товары NIKASS с незначительными дефектами по сниженной цене." image={products[0]?.image} imageAlt={products[0]?.name ?? "Уценённые товары NIKASS"} />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <title>{DISCOUNTED_PRODUCTS_LABEL} — NIKASS</title>

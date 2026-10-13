@@ -3,6 +3,7 @@ import CatalogExplorer from "../components/CatalogExplorer";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import CanonicalLink from "../components/CanonicalLink.astro";
+import OpenGraphMeta from "../components/OpenGraphMeta.astro";
 import { HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
 import { optimizeCatalogImages } from "../data/catalog-images";
 import "../styles/global.css";
@@ -17,6 +18,7 @@ const categories = HERO_CATEGORIES;
     <CanonicalLink />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content="Каталог NIKASS: зарядные станции, солнечные панели, инверторы и аккумуляторы." />
+    <OpenGraphMeta title="Каталог NIKASS — автономная энергия" description="Каталог NIKASS: зарядные станции, солнечные панели, инверторы и аккумуляторы." image={categories[0].image} imageAlt="Каталог товаров NIKASS" />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <title>Каталог NIKASS — автономная энергия</title>
