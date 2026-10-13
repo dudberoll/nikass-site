@@ -2,7 +2,7 @@
 
 Единый активный storefront: главная и визуальный язык Astra объединены с проверенной логикой вариантов, наличия, предзаказа, корзины и guest checkout. Каталог при сборке берётся из `GET /api/catalog` backend, а backend получает его из WooCommerce REST API. Обычный каталог ограничен выбранными товарными строками CSV, а совпадающие модельные семейства сворачиваются в публичные карточки с вариантами мощности и ёмкости. Опубликованные в WooCommerce, но не входящие в этот CSV старые и тестовые товары в витрину не попадают, кроме явно добавленного для проверки оплаты товара `test` (slug и SKU `test`, карточка `/catalog/test`). Его цена и наличие также берутся из WooCommerce. После проверки удалите `test` из списка в `src/data/catalog.ts` и пересоберите сайт.
 
-Маршруты: `/`, `/catalog`, `/discounted`, `/catalog/[slug]`, `/catalog-editor`, `/blog`, `/blog/[slug]`, `/cart`, `/checkout`, `/payment-and-delivery`, `/return-policy`, `/service-center`, `/message-scroller`.
+Маршруты: `/`, `/catalog`, `/catalog/category/[slug]`, `/discounted`, `/catalog/[slug]`, `/catalog-editor`, `/blog`, `/blog/[slug]`, `/cart`, `/checkout`, `/payment-and-delivery`, `/return-policy`, `/service-center`, `/message-scroller`.
 
 `/robots.txt` points to the generated `/sitemap.xml`. The sitemap is rebuilt with the storefront from its public pages, blog entries, and catalog; checkout, cart, internal demos, and test products are excluded from search indexing.
 
@@ -19,7 +19,7 @@
 этим endpoint: окончательный расчёт перед оплатой остаётся отдельной свежей проверкой.
 Автоматическая пересборка, webhooks остатков и резерв до оплаты не включены.
 
-При выборе категории на `/catalog` показываются четыре короткие подсказки по её основным параметрам выбора.
+Каждая из восьми категорий каталога имеет отдельный статический адрес `/catalog/category/[slug]`, собственные title, description, canonical и H1. Товары и краткое руководство выбора присутствуют в исходном HTML; ссылки на категории в каталоге, меню и главной ведут на эти страницы.
 
 Каталог и «Хиты продаж» на главной используют общую карточку с выбором варианта:
 выбор меняет фото, цену, наличие и ссылку на конкретный SKU. Для статуса `preorder`

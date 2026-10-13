@@ -1,5 +1,5 @@
 import { blogEntries } from "../data/blog";
-import { loadCatalogProducts } from "../data/catalog";
+import { HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
 
 export const prerender = true;
 
@@ -22,6 +22,7 @@ export async function GET() {
   const products = await loadCatalogProducts("all");
   const paths = [
     ...staticPaths,
+    ...HERO_CATEGORIES.map(({ slug }) => `/catalog/category/${slug}`),
     ...blogEntries.map((entry) => `/blog/${entry.slug}`),
     ...products
       .filter((product) => !product.demo && product.slug !== "test")

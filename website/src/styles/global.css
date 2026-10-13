@@ -40,6 +40,12 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .orbea-logo-image { display: block; width: 132px; height: auto; outline: 0; }
 .orbea-wordmark { display: inline-block; font-size: 28px; font-style: italic; font-weight: 900; letter-spacing: -.18em; line-height: 1; text-indent: -.13em; transform: skewX(-10deg) scaleX(1.18); }
 .orbea-actions { display: flex; justify-content: flex-end; align-items: center; gap: 20px; }
+.orbea-header-contacts { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.orbea-header-phone { color: inherit; font-size: 17px; font-weight: 400; }
+.orbea-header-contact-messengers, .orbea-menu-contact-messengers { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.orbea-header-contact-icon { display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; color: inherit; transition: opacity .15s ease; }
+.orbea-header-contact-icon:hover { opacity: .62; }
+.orbea-header-contact-icon img { width: 20px; height: 20px; flex: 0 0 auto; outline: 0; }
 .orbea-icon-button, .orbea-mobile-menu-button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 10px; background: transparent; color: inherit; transition: opacity .15s ease, transform .15s ease; }
 .orbea-mobile-menu-button { display: none; }
 .orbea-search-panel { position: fixed; inset: 68px 0 auto; padding: 24px 64px 32px; background: rgba(255,255,255,.98); color: #111; box-shadow: 0 12px 25px rgba(0,0,0,.08); }
@@ -52,7 +58,7 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .orbea-search-panel [data-search-close] { width: 40px; padding: 0; font-size: 28px; }
 
 .orbea-menu-backdrop { position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.34); }
-.orbea-menu-panel { width: 520px; min-height: 100dvh; padding: 24px 64px; background: #fff; color: #111; box-shadow: 12px 0 30px rgba(0,0,0,.08); }
+.orbea-menu-panel { display: flex; width: 520px; min-height: 100dvh; flex-direction: column; padding: 24px 64px; background: #fff; color: #111; box-shadow: 12px 0 30px rgba(0,0,0,.08); }
 .orbea-menu-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 50px; }
 .orbea-menu-brand { grid-column: 2; display: inline-flex; justify-self: center; }
 .orbea-menu-brand img { display: block; width: 132px; height: auto; outline: 0; }
@@ -70,6 +76,9 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .orbea-menu-promo span { font-size: 13px; }
 .orbea-menu-promo strong { font-size: 20px; line-height: 1.08; }
 .orbea-menu-promo a { width: fit-content; font-size: 14px; text-decoration: underline; }
+.orbea-menu-contacts { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.orbea-menu-contacts .orbea-header-phone { font-size: 20px; font-weight: 400; line-height: 28px; }
+.orbea-menu-contact-messengers .orbea-header-contact-icon img { width: 24px; height: 24px; }
 
 .orbea-hero { position: relative; height: 100svh; min-height: 720px; overflow: hidden; background: #111; color: #fff; }
 .orbea-hero-copy { position: absolute; right: 64px; bottom: 144px; left: 64px; max-width: 680px; }
@@ -242,6 +251,7 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
   .orbea-header-inner { grid-template-columns: auto 1fr auto; }
   .orbea-desktop-nav { display: none; }
   .orbea-mobile-menu-button { display: inline-flex; }
+  .orbea-header-contacts { display: none; }
   .orbea-actions { gap: 15px; }
   .orbea-logo-image { width: 121px; }
   .orbea-menu-brand img { width: 121px; }
@@ -465,16 +475,16 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .catalog-guide-cta { margin-top: 18px; }
 @media (min-width: 901px) {
   .catalog-category-buttons { grid-template-columns: repeat(24, minmax(0, 1fr)); }
-  .catalog-category-buttons button:nth-child(1) { grid-column: span 4; }
-  .catalog-category-buttons button:nth-child(2) { grid-column: span 8; }
-  .catalog-category-buttons button:nth-child(3) { grid-column: span 8; }
-  .catalog-category-buttons button:nth-child(4) { grid-column: span 4; }
-  .catalog-category-buttons button:nth-child(5) { grid-column: span 4; }
-  .catalog-category-buttons button:nth-child(6) { grid-column: span 4; }
-  .catalog-category-buttons button:nth-child(7) { grid-column: span 5; }
-  .catalog-category-buttons button:nth-child(8) { grid-column: span 4; }
-  .catalog-category-buttons button:nth-child(9) { grid-column: span 3; }
-  .catalog-category-buttons a { grid-column: span 4; }
+  .catalog-category-buttons a:nth-child(1) { grid-column: span 4; }
+  .catalog-category-buttons a:nth-child(2) { grid-column: span 8; }
+  .catalog-category-buttons a:nth-child(3) { grid-column: span 8; }
+  .catalog-category-buttons a:nth-child(4) { grid-column: span 4; }
+  .catalog-category-buttons a:nth-child(5) { grid-column: span 4; }
+  .catalog-category-buttons a:nth-child(6) { grid-column: span 4; }
+  .catalog-category-buttons a:nth-child(7) { grid-column: span 5; }
+  .catalog-category-buttons a:nth-child(8) { grid-column: span 4; }
+  .catalog-category-buttons a:nth-child(9) { grid-column: span 3; }
+  .catalog-category-buttons a:nth-child(10) { grid-column: span 4; }
 }
 .catalog-toolbar { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 28px; padding: 14px 0; border-top: 1px solid #d8d8d3; border-bottom: 1px solid #d8d8d3; }
 .catalog-toolbar label { display: grid; gap: 7px; min-width: 190px; color: #666; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }

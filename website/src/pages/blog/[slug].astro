@@ -3,7 +3,7 @@ import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
 import CanonicalLink from "../../components/CanonicalLink.astro";
 import { blogEntries, type BlogEntry } from "../../data/blog";
-import { getProductPrice, HERO_CATEGORIES, loadCatalogProducts } from "../../data/catalog";
+import { getCatalogCategoryPath, getProductPrice, HERO_CATEGORIES, loadCatalogProducts } from "../../data/catalog";
 import { optimizeCatalogImages } from "../../data/catalog-images";
 import "../../styles/global.css";
 
@@ -34,9 +34,13 @@ const returnCategoryByArticle: Record<string, string> = {
 };
 const defaultReturnCategory = returnCategoryByArticle[entry.slug];
 const defaultReturnPath = defaultReturnCategory
-  ? `/catalog?category=${encodeURIComponent(defaultReturnCategory)}`
+  ? getCatalogCategoryPath(defaultReturnCategory) ?? "/catalog"
   : "/catalog";
-const allowedCatalogCategories = HERO_CATEGORIES.flatMap(({ title, label, category }) => [title, label, category]);
+const catalogCategoryPaths = Object.fromEntries(HERO_CATEGORIES.flatMap(({ title, label, category }) => {
+  const path = getCatalogCategoryPath(category)!;
+  return [[title, path], [label, path], [category, path]];
+}));
+const knownCategoryPaths = [...new Set(Object.values(catalogCategoryPaths))];
 ---
 <!doctype html>
 <html lang="ru">
@@ -52,7 +56,7 @@ const allowedCatalogCategories = HERO_CATEGORIES.flatMap(({ title, label, catego
   <body class="store-page">
     <StoreHeader />
     <main class="store-main blog-article-page" id="main-content">
-      <a class="store-primary-button blog-return-button" href={defaultReturnPath} data-return-to-catalog data-default-href={defaultReturnPath} data-catalog-categories={JSON.stringify(allowedCatalogCategories)}>Вернуться в каталог</a>
+      <a class="store-primary-button blog-return-button" href={defaultReturnPath} data-return-to-catalog data-default-href={defaultReturnPath} data-catalog-category-paths={JSON.stringify(catalogCategoryPaths)} data-known-category-paths={JSON.stringify(knownCategoryPaths)}>Вернуться в каталог</a>
       <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <a href="/blog">Блог</a> / <span>{entry.title}</span></nav>
       <article class="blog-article">
         <header class="blog-article-header">
@@ -109,7 +113,8 @@ const allowedCatalogCategories = HERO_CATEGORIES.flatMap(({ title, label, catego
     <StoreFooter />
     <script is:inline>
       const returnToCatalog = document.querySelector("[data-return-to-catalog]");
-      const catalogCategories = new Set(JSON.parse(returnToCatalog?.dataset.catalogCategories ?? "[]"));
+      const catalogCategoryPaths = JSON.parse(returnToCatalog?.dataset.catalogCategoryPaths ?? "{}");
+      const knownCategoryPaths = new Set(JSON.parse(returnToCatalog?.dataset.knownCategoryPaths ?? "[]"));
       const getCatalogReturnPath = (value) => {
         if (!value) return undefined;
         try {
@@ -117,8 +122,10 @@ const allowedCatalogCategories = HERO_CATEGORIES.flatMap(({ title, label, catego
           if (url.origin !== window.location.origin) return undefined;
           if (url.pathname === "/catalog" || url.pathname === "/catalog/") {
             const category = url.searchParams.get("category");
-            return category && catalogCategories.has(category) ? `/catalog?category=${encodeURIComponent(category)}` : "/catalog";
+            return category ? catalogCategoryPaths[category] ?? "/catalog" : "/catalog";
           }
+          const normalizedPath = url.pathname.replace(/\/$/, "");
+          if (knownCategoryPaths.has(normalizedPath)) return normalizedPath;
           const product = url.pathname.match(/^\/catalog\/([a-z0-9-]+)\/?$/);
           if (!product) return undefined;
           const variant = url.searchParams.get("variant");

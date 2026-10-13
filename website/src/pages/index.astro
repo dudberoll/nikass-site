@@ -7,7 +7,7 @@ import StoreHeader from "../components/StoreHeader.astro";
 import CookieNotice from "../components/CookieNotice.astro";
 import CanonicalLink from "../components/CanonicalLink.astro";
 import StoreChat from "../components/StoreChat.astro";
-import { HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
+import { getCatalogCategoryPath, HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
 import { optimizeCatalogImages } from "../data/catalog-images";
 import { storyEntries } from "../data/blog";
 
@@ -80,7 +80,7 @@ const heroPosition = (index: number) => {
             {heroCategories.map((category, index) => (
               <a
                 class="orbea-hero-product-card"
-                href={`/catalog?category=${encodeURIComponent(category.title)}`}
+                href={getCatalogCategoryPath(category.category)}
                 aria-label={`${index === heroInitialIndex ? "Открыть" : "Показать"} категорию «${formatHeroTitle(category.title)}»`}
                 aria-current={index === heroInitialIndex ? "true" : undefined}
                 aria-hidden={Math.abs(heroPosition(index)) > 1 ? "true" : undefined}
@@ -128,7 +128,7 @@ const heroPosition = (index: number) => {
             <article class="orbea-bike-card" id={bike.id}>
               <img src={`/assets/images/${bike.image}`} alt="" />
               <div class="orbea-bike-shade"></div>
-              <div class="orbea-bike-copy"><h3>{bike.title}</h3><strong>{bike.body}</strong><a class="orbea-button" href={`/catalog?category=${encodeURIComponent(bike.category)}`}>{bike.cta}</a></div>
+              <div class="orbea-bike-copy"><h3>{bike.title}</h3><strong>{bike.body}</strong><a class="orbea-button" href={getCatalogCategoryPath(bike.category)}>{bike.cta}</a></div>
             </article>
           ))}
         </section>

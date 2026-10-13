@@ -1,0 +1,47 @@
+---
+import CatalogExplorer from "../../../components/CatalogExplorer";
+import CanonicalLink from "../../../components/CanonicalLink.astro";
+import StoreFooter from "../../../components/StoreFooter.astro";
+import StoreHeader from "../../../components/StoreHeader.astro";
+import { HERO_CATEGORIES, loadCatalogProducts, type Product } from "../../../data/catalog";
+import { optimizeCatalogImages } from "../../../data/catalog-images";
+import "../../../styles/global.css";
+
+export async function getStaticPaths() {
+  const products = await optimizeCatalogImages(await loadCatalogProducts());
+  return HERO_CATEGORIES.map((category) => {
+    const categoryProducts = products.filter((product) => product.category === category.category);
+    if (categoryProducts.length === 0) throw new Error(`Catalog category has no products: ${category.category}`);
+    return { params: { slug: category.slug }, props: { category, products: categoryProducts } };
+  });
+}
+
+const { category, products } = Astro.props as {
+  category: (typeof HERO_CATEGORIES)[number];
+  products: Product[];
+};
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <CanonicalLink />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={category.description} />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <title>{category.seoTitle}</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main" id="main-content">
+      <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <a href="/catalog">Каталог</a> / <span>{category.label}</span></nav>
+      <section class="store-intro catalog-intro">
+        <h1>{category.label}</h1>
+        <p>{category.description}</p>
+      </section>
+      <CatalogExplorer products={products} categories={HERO_CATEGORIES} initialCategory={category.category} client:load />
+    </main>
+    <StoreFooter />
+  </body>
+</html>

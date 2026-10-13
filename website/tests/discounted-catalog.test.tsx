@@ -55,7 +55,7 @@ test("includes separate discounted stock outside the regular allow-list and pres
   assert.doesNotMatch(markup, /aria-label="Категории товаров"/);
   assert.doesNotMatch(markup, /href="\/discounted"/);
   const regularMarkup = renderToStaticMarkup(<CatalogExplorer products={[products[0]!]} categories={HERO_CATEGORIES} />);
-  assert.match(regularMarkup, />Все товары<\/button>/);
+  assert.match(regularMarkup, />Все товары<\/a>/);
   assert.match(regularMarkup, /href="\/discounted">Уценённые товары<\/a>/);
   assert.match(markup, /<del>10\s000 ₽<\/del>/);
   assert.match(markup, /8\s000 ₽/);

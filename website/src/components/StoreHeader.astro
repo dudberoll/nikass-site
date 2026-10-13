@@ -1,7 +1,12 @@
 ---
-import { ALL_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, HERO_CATEGORIES } from "../data/catalog";
+import { ALL_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, getCatalogCategoryPath, HERO_CATEGORIES } from "../data/catalog";
 
 const isHomePage = Astro.url.pathname === "/";
+const CONTACT_PHONE = "+7 (925) 642-53-15";
+const CONTACT_PHONE_HREF = "tel:+79256425315";
+const TELEGRAM_HREF = "https://t.me/Nikass_energy";
+const WHATSAPP_HREF = "https://wa.me/message/LKDO2UNXC6XIM1";
+const MAX_HREF = "https://max.ru/u/f9LHodD0cOKUlKKjqQo3h1xKeys4xeVBPTG1niW8dBgXHShr8nf6QkokH8g";
 const DISCOUNTED_PRODUCTS_ICON = "/assets/images/category-icons/discounted-products.webp";
 const menuCategoryIcons = Object.fromEntries([
   ...HERO_CATEGORIES.map(({ label, icon }) => [label, icon] as const),
@@ -23,7 +28,7 @@ const menuCategoryIcons = Object.fromEntries([
         <div class="orbea-catalog-dropdown" id="orbea-catalog-dropdown" hidden data-catalog-dropdown>
           <div class="orbea-catalog-dropdown-list">
             <a class="orbea-catalog-dropdown-link orbea-catalog-dropdown-all" href="/catalog" data-catalog-dropdown-link><span>{ALL_PRODUCTS_LABEL}</span>{!isHomePage && <span aria-hidden="true">↗</span>}</a>
-            {HERO_CATEGORIES.map((category) => <a class="orbea-catalog-dropdown-link" href={`/catalog?category=${encodeURIComponent(category.label)}`} data-catalog-dropdown-link><span class="orbea-catalog-dropdown-label"><img src={category.icon} alt="" aria-hidden="true" /><span>{category.label}</span></span><span aria-hidden="true">›</span></a>)}
+            {HERO_CATEGORIES.map((category) => <a class="orbea-catalog-dropdown-link" href={getCatalogCategoryPath(category.category)} data-catalog-dropdown-link><span class="orbea-catalog-dropdown-label"><img src={category.icon} alt="" aria-hidden="true" /><span>{category.label}</span></span><span aria-hidden="true">›</span></a>)}
             <a class="orbea-catalog-dropdown-link" href={DISCOUNTED_PRODUCTS_PATH} data-catalog-dropdown-link><span class="orbea-catalog-dropdown-label"><img src={DISCOUNTED_PRODUCTS_ICON} alt="" aria-hidden="true" /><span>{DISCOUNTED_PRODUCTS_LABEL}</span></span><span aria-hidden="true">›</span></a>
           </div>
         </div>
@@ -34,6 +39,14 @@ const menuCategoryIcons = Object.fromEntries([
     </nav>
     <a class="orbea-logo" href="/" aria-label="NIKASS — главная"><img class="orbea-logo-image" src="/assets/images/nikass-smart-selection-logo.webp" alt="" /></a>
     <div class="orbea-actions">
+      <div class="orbea-header-contacts" role="group" aria-label="Контакты NIKASS">
+        <a class="orbea-header-phone" href={CONTACT_PHONE_HREF}>{CONTACT_PHONE}</a>
+        <div class="orbea-header-contact-messengers" role="group" aria-label="Мессенджеры NIKASS">
+          <a class="orbea-header-contact-icon" href={TELEGRAM_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в Telegram"><img src="/icons/telegram.svg" alt="" aria-hidden="true" /></a>
+          <a class="orbea-header-contact-icon" href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в WhatsApp"><img src="/icons/whatsapp.svg" alt="" aria-hidden="true" /></a>
+          <a class="orbea-header-contact-icon" href={MAX_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в MAX"><img src="/icons/max.svg" alt="" aria-hidden="true" /></a>
+        </div>
+      </div>
       <button class="orbea-icon-button" type="button" aria-label="Поиск" data-search-open>
         <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
       </button>
@@ -60,13 +73,21 @@ const menuCategoryIcons = Object.fromEntries([
       <strong class="orbea-menu-title" hidden>NIKASS</strong>
       <button class="orbea-icon-button" type="button" aria-label="Закрыть" data-menu-close>×</button>
     </div>
-    <div class="orbea-menu-root" data-menu-root data-all-products-label={ALL_PRODUCTS_LABEL} data-discounted-label={DISCOUNTED_PRODUCTS_LABEL} data-discounted-path={DISCOUNTED_PRODUCTS_PATH} data-category-items={JSON.stringify([ALL_PRODUCTS_LABEL, ...HERO_CATEGORIES.map(({ label }) => label), DISCOUNTED_PRODUCTS_LABEL])} data-category-icons={JSON.stringify(menuCategoryIcons)}>
+    <div class="orbea-menu-root" data-menu-root data-all-products-label={ALL_PRODUCTS_LABEL} data-discounted-label={DISCOUNTED_PRODUCTS_LABEL} data-discounted-path={DISCOUNTED_PRODUCTS_PATH} data-category-items={JSON.stringify([ALL_PRODUCTS_LABEL, ...HERO_CATEGORIES.map(({ label }) => label), DISCOUNTED_PRODUCTS_LABEL])} data-category-paths={JSON.stringify(Object.fromEntries(HERO_CATEGORIES.map(({ label, category }) => [label, getCatalogCategoryPath(category)])))} data-category-icons={JSON.stringify(menuCategoryIcons)}>
       <button class="orbea-menu-root-link" type="button" data-menu-section="Gear">Каталог <span>›</span></button>
       <a class="orbea-menu-root-link" href="/blog" data-menu-anchor>Блог</a>
       <a class="orbea-menu-root-link" href="/#custom" data-menu-anchor>Как выбрать</a>
       <button class="orbea-menu-root-link" type="button" data-menu-section="Commitment">О NIKASS <span>›</span></button>
       <a class="orbea-menu-root-link" href="/#contacts" data-menu-anchor>Контакты</a>
       <a class="orbea-menu-root-link" href="/#footer-documents" data-menu-anchor>Документы</a>
+      <div class="orbea-menu-contacts" role="group" aria-label="Контакты NIKASS">
+        <a class="orbea-header-phone" href={CONTACT_PHONE_HREF}>{CONTACT_PHONE}</a>
+        <div class="orbea-menu-contact-messengers" role="group" aria-label="Мессенджеры NIKASS">
+          <a class="orbea-header-contact-icon" href={TELEGRAM_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в Telegram"><img src="/icons/telegram.svg" alt="" aria-hidden="true" /></a>
+          <a class="orbea-header-contact-icon" href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в WhatsApp"><img src="/icons/whatsapp.svg" alt="" aria-hidden="true" /></a>
+          <a class="orbea-header-contact-icon" href={MAX_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в MAX"><img src="/icons/max.svg" alt="" aria-hidden="true" /></a>
+        </div>
+      </div>
     </div>
     <div class="orbea-menu-detail" hidden data-menu-detail>
       <div class="orbea-menu-list" data-menu-list></div>
@@ -90,6 +111,7 @@ const menuCategoryIcons = Object.fromEntries([
   const menuBrand = document.querySelector("[data-menu-brand]");
   const menuTitle = document.querySelector(".orbea-menu-title");
   const allProductsLabel = menuRoot.dataset.allProductsLabel || "";
+  const categoryPaths = JSON.parse(menuRoot.dataset.categoryPaths || "{}");
   const categoryIcons = JSON.parse(menuRoot.dataset.categoryIcons || "{}");
   const menuClose = document.querySelector("[data-menu-close]");
   const mobileMenuButton = document.querySelector(".orbea-mobile-menu-button");
@@ -136,7 +158,7 @@ const menuCategoryIcons = Object.fromEntries([
     menuDetail.hidden = false;
     menuPromo.hidden = section !== "Gear";
     const items = section === "Gear" ? JSON.parse(menuRoot.dataset.categoryItems || "[]") : ["О компании", "Поддержка"];
-    menuList.innerHTML = items.map((item) => `<a class="orbea-menu-detail-link" href="${section === "Commitment" ? (item === "О компании" ? "/about" : "/#footer") : item === allProductsLabel ? "/catalog" : item === menuRoot.dataset.discountedLabel ? menuRoot.dataset.discountedPath : `/catalog?category=${encodeURIComponent(item)}`}" data-menu-anchor><span class="orbea-menu-detail-label">${categoryIcons[item] ? `<img src="${categoryIcons[item]}" alt="" aria-hidden="true">` : ""}<span>${item}</span></span><span>›</span></a>`).join("");
+    menuList.innerHTML = items.map((item) => `<a class="orbea-menu-detail-link" href="${section === "Commitment" ? (item === "О компании" ? "/about" : "/#footer") : item === allProductsLabel ? "/catalog" : item === menuRoot.dataset.discountedLabel ? menuRoot.dataset.discountedPath : categoryPaths[item] || "/catalog"}" data-menu-anchor><span class="orbea-menu-detail-label">${categoryIcons[item] ? `<img src="${categoryIcons[item]}" alt="" aria-hidden="true">` : ""}<span>${item}</span></span><span>›</span></a>`).join("");
     menuList.querySelectorAll("[data-menu-anchor]").forEach((link) => link.addEventListener("click", closeMenu));
   };
   const openMenu = (section) => {

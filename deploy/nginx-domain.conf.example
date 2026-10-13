@@ -24,6 +24,138 @@ server {
     index index.html;
     client_max_body_size 28m;
 
+    # Legacy WordPress URLs; permanent redirects to the closest current storefront page.
+    # Existing page equivalents and the current blog handle the matching content paths.
+    rewrite ^/oplata-i-dostavka/?$ /payment-and-delivery permanent;
+    rewrite ^/refund_returns/?$ /return-policy permanent;
+    rewrite ^/publichnaya-oferta/?$ /payment-and-delivery permanent;
+    rewrite ^/my-account/?$ / permanent;
+    rewrite ^/nikass-sovremennye-resheniya-dlya-avtonomnoy-energii-i-nadezhnogo-elektrosnabzheniya/?$ /blog permanent;
+    # Legacy categories map to their current standalone pages; broad categories use the full catalog.
+    rewrite ^/product-category/power-bank/?$ /catalog/category/powerbank permanent;
+    rewrite ^/product-category/akkumulyatory/?$ /catalog permanent;
+    rewrite ^/product-category/invertory/?$ /catalog permanent;
+    rewrite ^/product-category/modif-sinus/?$ /catalog/category/invertory-napryazheniya permanent;
+    rewrite ^/product-category/portativnye-stantsii/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product-category/seriya-ns-31/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product-category/seriya-ns-63/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product-category/seriya-ns-66/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product-category/seriya-ns-69/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product-category/seriya-ns-85/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product-category/seriya-ns-93/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product-category/sistema-hraneniya-energii-ess/?$ /catalog/category/sistemy-hraneniya-energii permanent;
+    rewrite ^/product-category/solnechnye-paneli/?$ /catalog/category/solnechnye-paneli permanent;
+    rewrite ^/product-category/statsionarnye/?$ /catalog/category/solnechnye-paneli permanent;
+    rewrite ^/product-category/chistyy-sinus/?$ /catalog/category/invertory-napryazheniya permanent;
+    rewrite ^/product-category/gibkie/?$ /catalog/category/solnechnye-paneli permanent;
+    rewrite ^/product-category/gibridnye-invertory/?$ /catalog/category/gibridnye-invertory permanent;
+    # Published products retain their model; grouped models select the matching SKU.
+    rewrite ^/product/invertor-avtomobilnyy-3500/?$ /catalog/invertor-avtomobilnyy-800?variant=WJF-3500GST permanent;
+    rewrite ^/product/invertor-avtomobilnyy-600/?$ /catalog/invertor-avtomobilnyy-600?variant=WJF-600MX permanent;
+    rewrite ^/product/invertor-avtomobilnyy-3000/?$ /catalog/invertor-avtomobilnyy-800?variant=WJF-3000GST permanent;
+    rewrite ^/product/invertor-avtomobilnyy-2500/?$ /catalog/invertor-avtomobilnyy-800?variant=WJF-2500GST permanent;
+    rewrite ^/product/invertor-avtomobilnyy-1800/?$ /catalog/invertor-avtomobilnyy-800?variant=WJF-1800GST permanent;
+    rewrite ^/product/invertor-avtomobilnyy-2300/?$ /catalog/invertor-avtomobilnyy-600?variant=WJF-2300MX permanent;
+    rewrite ^/product/invertor-avtomobilnyy-800/?$ /catalog/invertor-avtomobilnyy-800?variant=WJF-800GST permanent;
+    rewrite ^/product/invertor-avtomobilnyy-1600/?$ /catalog/invertor-avtomobilnyy-600?variant=WJF-1600MX permanent;
+    rewrite ^/product/invertor-avtomobilnyy-1200/?$ /catalog/invertor-avtomobilnyy-600?variant=WJF-1200MX permanent;
+    rewrite ^/product/invertor-avtomobilnyy-1300/?$ /catalog/invertor-avtomobilnyy-800?variant=WJF-1300GST permanent;
+    rewrite ^/product/portativnaya-solnechnaya-panel-30w-18-v/?$ /catalog/portativnaya-solnechnaya-panel-30w-18-v?variant=SP-30 permanent;
+    rewrite ^/product/gibkaya-solnechnaya-panel-210w-33-9v/?$ /catalog/gibkaya-solnechnaya-panel-30w-18v?variant=FSP-210 permanent;
+    rewrite ^/product/portativnaya-solnechnaya-panel-100w-20v/?$ /catalog/portativnaya-solnechnaya-panel-30w-18-v?variant=SP-100 permanent;
+    rewrite ^/product/gibkaya-solnechnaya-panel-30w-18v/?$ /catalog/gibkaya-solnechnaya-panel-30w-18v?variant=FSP-30 permanent;
+    rewrite ^/product/gibkaya-solnechnaya-panel-100w-17v/?$ /catalog/gibkaya-solnechnaya-panel-30w-18v?variant=FSP-100 permanent;
+    rewrite ^/product/gibkaya-solnechnaya-panel-50w-18v/?$ /catalog/gibkaya-solnechnaya-panel-30w-18v?variant=FSP-50 permanent;
+    rewrite ^/product/portativnaya-solnechnaya-panel-50w-18v/?$ /catalog/portativnaya-solnechnaya-panel-30w-18-v?variant=SP-50 permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-500w-160000mah/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah?variant=NS-69-500 permanent;
+    rewrite ^/product/portativnaya-elektrostantsiya-168000-mah-600w/?$ /catalog/portativnaya-elektrostantsiya-168000-mah-600w?variant=NS-63-600 permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-300vt-64000-mah-205wh/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh?variant=NS-93-300 permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah?variant=NS-69-150 permanent;
+    rewrite ^/product/portativnaya-elektrostantsiya-320000-mah-1000w-1024wh/?$ /catalog/portativnaya-elektrostantsiya-320000-mah-1000w-1024wh permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2?variant=NS-31-150 permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh?variant=NS-93-150 permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-300-vt-96000-mah/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2?variant=NS-31-300 permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-300-w-72000-mah/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah?variant=NS-69-300 permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-500-vt-112500-mah-360wh/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh?variant=NS-93-500 permanent;
+    rewrite ^/product/portativnaya-elektrostantsiya-560000-mah-2000w-1792wh/?$ /catalog/portativnaya-elektrostantsiya-560000-mah-2000w-1792wh permanent;
+    rewrite ^/product/portativnaya-elektrostantsiya-240000-mah-800w/?$ /catalog/portativnaya-elektrostantsiya-168000-mah-600w?variant=NS-63-800 permanent;
+    rewrite ^/product/vneshniy-akkumulyator-50000-mah-s-bystroy-zaryadkoy/?$ /catalog/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy?variant=PB-50 permanent;
+    rewrite ^/product/vneshniy-akkumulyator-60000-mah-s-bystroy-zaryadkoy/?$ /catalog/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy?variant=PB-60 permanent;
+    rewrite ^/product/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy/?$ /catalog/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy?variant=PB-20 permanent;
+    rewrite ^/product/svintsovo-kislotnyy-germetichnyy-akkumulyator-200ah-12v/?$ /catalog/svintsovo-kislotnyy-germetichnyy-akkumulyator-65ah-12v?variant=AGM20012 permanent;
+    rewrite ^/product/svintsovo-kislotnyy-germetichnyy-akkumulyator-65ah-12v/?$ /catalog/svintsovo-kislotnyy-germetichnyy-akkumulyator-65ah-12v?variant=AGM65012 permanent;
+    rewrite ^/product/svintsovo-kislotnyy-germetichnyy-akkumulyator-70ah-12v/?$ /catalog/svintsovo-kislotnyy-germetichnyy-akkumulyator-65ah-12v?variant=AGM7012 permanent;
+    rewrite ^/product/svintsovo-kislotnyy-germetichnyy-akkumulyator-90ah-12v-2/?$ /catalog/svintsovo-kislotnyy-germetichnyy-akkumulyator-65ah-12v?variant=AGM9012 permanent;
+    rewrite ^/product/svintsovo-kislotnyy-germetichnyy-akkumulyator-100ah-12v-2/?$ /catalog/svintsovo-kislotnyy-germetichnyy-akkumulyator-65ah-12v?variant=AGM10012 permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-sl-54-s-radio-i-bluetooth-150-vt-153-6-vt-ch/?$ /catalog/portativnaya-zaryadnaya-stantsiya-sl-54-s-radio-i-bluetooth-150-vt-153-6-vt-ch permanent;
+    rewrite ^/product/avtonomnyy-gibridnyy-invertor-ibp-1-2-kvt/?$ /catalog/avtonomnyy-gibridnyy-invertor-ibp-1-2-kvt?variant=NS%2FAPS1200-12 permanent;
+    rewrite ^/product/avtonomnyy-gibridnyy-invertor-ibp-3-6-kvt/?$ /catalog/avtonomnyy-gibridnyy-invertor-ibp-1-2-kvt?variant=NS%2FAPS3600-24 permanent;
+    rewrite ^/product/avtonomnyy-gibridnyy-invertor-ibp-6-5-kvt/?$ /catalog/avtonomnyy-gibridnyy-invertor-ibp-1-2-kvt?variant=NS%2FAPS6500-48 permanent;
+    rewrite ^/product/avtonomnyy-gibridnyy-invertor-ibp-12-kvt/?$ /catalog/avtonomnyy-gibridnyy-invertor-ibp-1-2-kvt?variant=NS%2FAPS12000-48EMI permanent;
+    rewrite ^/product/litiy-zhelezo-fosfatnyy-akkumulyator-nsw-51-2-v-100-a-ch/?$ /catalog/litiy-zhelezo-fosfatnyy-akkumulyator-nsw-51-2-v-100-a-ch permanent;
+    rewrite ^/product/litiy-zhelezo-fosfatnyy-akkumulyator-nsr-51-2-v-100-a-ch/?$ /catalog/litiy-zhelezo-fosfatnyy-akkumulyator-nsr-51-2-v-100-a-ch?variant=NSR51-100 permanent;
+    rewrite ^/product/litiy-zhelezo-fosfatnyy-akkumulyator-nsr-51-2-v-200-a-ch/?$ /catalog/litiy-zhelezo-fosfatnyy-akkumulyator-nsr-51-2-v-100-a-ch?variant=NSR51-200 permanent;
+    rewrite ^/product/litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-100-a-ch/?$ /catalog/litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-100-a-ch?variant=NSLFP12-100 permanent;
+    rewrite ^/product/litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-200-a-ch/?$ /catalog/litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-100-a-ch?variant=NSLFP12-200 permanent;
+    rewrite ^/product/solnechnaya-panel-450-vt-41-v/?$ /catalog/portativnaya-solnechnaya-panel-30w-18-v?variant=SP-450 permanent;
+    rewrite ^/product/sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt/?$ /catalog/sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt?variant=YG1.2-600 permanent;
+    rewrite ^/product/sistema-hraneniya-energii-ess-2-560-vt-ch-1-200-vt/?$ /catalog/sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt?variant=YG2.5-1200 permanent;
+    rewrite ^/product/sistema-hraneniya-energii-ess-2-560-vt-ch-3-5-kvt/?$ /catalog/sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt?variant=YG2.5-3.5 permanent;
+    rewrite ^/product/sistema-hraneniya-energii-ess-5-120-vt-ch-6-2-kvt/?$ /catalog/sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt?variant=YG5-6.2 permanent;
+    rewrite ^/product/sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt/?$ /catalog/sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt?variant=YG10-6.2 permanent;
+    rewrite ^/product/test/?$ /catalog permanent;
+    # Former trash slugs use exact SKU matches where available, then the closest current category.
+    rewrite ^/product/komplekt-portativnaya-solnechnaya-panel-30w-18v-2-sht/?$ /catalog/category/solnechnye-paneli permanent;
+    rewrite ^/product/komplekt-portativnaya-solnechnaya-panel-50w-18v-2-sht/?$ /catalog/category/solnechnye-paneli permanent;
+    rewrite ^/product/komplekt-portativnaya-solnechnaya-panel-100w-20v-2-sht/?$ /catalog/category/solnechnye-paneli permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-300w/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product/rezervnyy-istochnik-pitaniya-500-vt-537-vtch-168000-mah/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product/nikass-portativnaya-solnechnaya-panel-60-vt-1-87-kg/?$ /catalog/category/solnechnye-paneli permanent;
+    rewrite ^/product/nikass-portativnaya-solnechnaya-panel-60-vt-700-g/?$ /catalog/category/solnechnye-paneli permanent;
+    rewrite ^/product/solnechnaya-panel-30-vt-dlya-elektropastuha/?$ /catalog/category/solnechnye-paneli permanent;
+    rewrite ^/product/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy-2/?$ /catalog/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy?variant=PB-20 permanent;
+    rewrite ^/product/istochnik-bespereboynogo-pitaniya-150-vt-48000-mah/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah?variant=NS-69-150 permanent;
+    rewrite ^/product/zaryadnaya-stantsiya-150-vt-s-solnechnoy-panelyu-48000-mah/?$ /catalog/portativnaya-zaryadnaya-stantsiya-sl-54-s-radio-i-bluetooth-150-vt-153-6-vt-ch permanent;
+    rewrite ^/product/istochnik-bespereboynogo-pitaniya-168000-mah-600w/?$ /catalog/portativnaya-elektrostantsiya-168000-mah-600w?variant=NS-63-600 permanent;
+    rewrite ^/product/istochnik-bespereboynogo-pitaniya-240000-mah-800w/?$ /catalog/portativnaya-elektrostantsiya-168000-mah-600w?variant=NS-63-800 permanent;
+    rewrite ^/product/istochnik-bespereboynogo-pitaniya-300w-72000mah/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah?variant=NS-69-300 permanent;
+    rewrite ^/product/istochnik-bespereboynogo-pitaniya-320000-mah-1000w/?$ /catalog/portativnaya-elektrostantsiya-320000-mah-1000w-1024wh permanent;
+    rewrite ^/product/istochnik-bespereboynogo-pitaniya-500-vt-160000-mah/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah?variant=NS-69-500 permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-500-vt-112500-mah-360wh-2/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh?variant=NS-93-500 permanent;
+    rewrite ^/product/portativnaya-elektrostantsiya-560000-mah-2000w-1792wh-2/?$ /catalog/portativnaya-elektrostantsiya-560000-mah-2000w-1792wh permanent;
+    rewrite ^/product/rezervnyy-istochnik-pitaniya-150-vt-48000-mah-153-6wh/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh?variant=NS-93-150 permanent;
+    rewrite ^/product/rezervnyy-istochnik-pitaniya-150-vt-48000-mah-153-6wh-chernyy/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2?variant=NS-31-150 permanent;
+    rewrite ^/product/rezervnyy-istochnik-pitaniya-300-vt-64000-mah-205wh/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-153-6wh?variant=NS-93-300 permanent;
+    rewrite ^/product/rezervnyy-istochnik-pitaniya-300vt-96000mah-307-2wh/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2?variant=NS-31-300 permanent;
+    rewrite ^/product/gibkaya-solnechnaya-panel-50w-18v-2/?$ /catalog/gibkaya-solnechnaya-panel-30w-18v?variant=FSP-50 permanent;
+    rewrite ^/product/portativnaya-solnechnaya-panel-100w-20v-2/?$ /catalog/portativnaya-solnechnaya-panel-30w-18-v?variant=SP-100 permanent;
+    rewrite ^/product/svintsovo-kislotnyy-germetichnyy-akkumulyator-90-ah/?$ /catalog/category/agm-akkumulyatory permanent;
+    rewrite ^/product/portativnaya-elektrostantsiya-120000-mah-400w/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product/portativnaya-zaryadnaya-stantsiya-500-vt-120000-mah/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product/rezervnyy-istochnik-pitaniya-500vt-120000-mah-384wh-chernyy/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product/istochnik-bespereboynogo-pitaniya-120000-mah-400w/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product/glubokorazryadnyy-agm-gel-akkumulyator-12v-65ah-nikass/?$ /catalog/category/agm-akkumulyatory permanent;
+    rewrite ^/product/gibkaya-solnechnaya-panel-210w-33-9v-2/?$ /catalog/gibkaya-solnechnaya-panel-30w-18v?variant=FSP-210 permanent;
+    rewrite ^/product/gibkaya-solnechnaya-panel-100w-17v-2/?$ /catalog/gibkaya-solnechnaya-panel-30w-18v?variant=FSP-100 permanent;
+    rewrite ^/product/gibkaya-solnechnaya-panel-30w-18v-2/?$ /catalog/gibkaya-solnechnaya-panel-30w-18v?variant=FSP-30 permanent;
+    rewrite ^/product/portativnaya-elektrostantsiya-120000-mah-400w-s-solnechnoy-panelyu-100w/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;
+    rewrite ^/product/portativnaya-solnechnaya-panel-30w-18-v-2/?$ /catalog/portativnaya-solnechnaya-panel-30w-18-v?variant=SP-30 permanent;
+    rewrite ^/product/portativnaya-solnechnaya-panel-50w-18v-2/?$ /catalog/portativnaya-solnechnaya-panel-30w-18-v?variant=SP-50 permanent;
+    rewrite ^/product/svintsovo-kislotnyy-germetichnyy-akkumulyator-100-ah/?$ /catalog/category/agm-akkumulyatory permanent;
+    rewrite ^/product/vneshniy-akkumulyator-80000-mah-s-bystroy-zaryadkoy/?$ /catalog/category/powerbank permanent;
+    rewrite ^/product/zaryadnaya-stantsiya-150-vt-s-solnechnoy-panelyu-48000-mah-2/?$ /catalog/portativnaya-zaryadnaya-stantsiya-sl-54-s-radio-i-bluetooth-150-vt-153-6-vt-ch permanent;
+    location ~ ^/contact/?$ {
+        return 301 "https://nikass.ru/#contacts";
+    }
+    # The export lists trashed WooCommerce products as /?post_type=product&p=<id>.
+    # Route those no-longer-public ID URLs to the catalog.
+    location = / {
+        if ($arg_post_type = product) {
+            return 301 /catalog;
+        }
+        try_files $uri $uri/ =404;
+    }
+
     location /api/ {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;

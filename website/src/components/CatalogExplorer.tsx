@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { ALL_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, HERO_CATEGORIES, type Product } from "../data/catalog";
+import { ALL_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, getCatalogCategoryPath, HERO_CATEGORIES, type Product } from "../data/catalog";
 import ProductCard from "./ProductCard";
 
 type CatalogCategory = (typeof HERO_CATEGORIES)[number];
@@ -56,9 +56,9 @@ const CATEGORY_GUIDES: Record<CatalogCategory["category"], Array<{ title: string
   ],
 };
 
-export default function CatalogExplorer({ products, categories, discounted = false }: { products: Product[]; categories: ReadonlyArray<CatalogCategory>; discounted?: boolean }) {
+export default function CatalogExplorer({ products, categories, discounted = false, initialCategory }: { products: Product[]; categories: ReadonlyArray<CatalogCategory>; discounted?: boolean; initialCategory?: string }) {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(() => categories.find((item) => item.category === initialCategory || item.title === initialCategory)?.title ?? "");
   const [sort, setSort] = useState("default");
   const [hydrated, setHydrated] = useState(false);
 
@@ -70,8 +70,8 @@ export default function CatalogExplorer({ products, categories, discounted = fal
       || (item.category === "Инверторы напряжения" && ["Инвертора напряжения", "ИНВЕРТОРА НАПРЯЖЕНИЯ", "Инвертор напряжения", "Автомобильные инверторы", "АВТОМОБИЛЬНЫЕ ИНВЕРТОРЫ"].includes(requestedCategory))
       || (item.category === "Системы хранения энергии" && ["Системы хранения энергии ESS", "СИСТЕМЫ ХРАНЕНИЯ ЭНЕРГИИ ESS"].includes(requestedCategory))
       || (item.category === "LiFePO₄ аккумуляторы" && requestedCategory === "LiFePO4 аккумуляторы"));
-    setCategory(discounted ? "" : requested?.title ?? "");
-  }, [categories, products, discounted]);
+    setCategory(discounted ? "" : initialCategory ? categories.find((item) => item.category === initialCategory)?.title ?? "" : requested?.title ?? "");
+  }, [categories, discounted, initialCategory]);
 
   useEffect(() => {
     setHydrated(true);
@@ -92,8 +92,8 @@ export default function CatalogExplorer({ products, categories, discounted = fal
 
   return <div data-catalog-hydrated={hydrated}>
     {!discounted && <nav className="catalog-category-buttons" aria-label="Категории товаров">
-      <button className={category === "" ? "is-active" : ""} type="button" aria-pressed={category === ""} onClick={() => setCategory("")}>{ALL_PRODUCTS_LABEL}</button>
-      {categories.map((item) => <button className={category === item.title ? "is-active" : ""} type="button" aria-pressed={category === item.title} onClick={() => setCategory(category === item.title ? "" : item.title)} key={item.title}>{item.label}</button>)}
+      <a className={category === "" ? "is-active" : ""} href="/catalog" aria-current={category === "" ? "page" : undefined}>{ALL_PRODUCTS_LABEL}</a>
+      {categories.map((item) => <a className={category === item.title ? "is-active" : ""} href={getCatalogCategoryPath(item.category)} aria-current={category === item.title ? "page" : undefined} key={item.title}>{item.label}</a>)}
       <a href={DISCOUNTED_PRODUCTS_PATH}>{DISCOUNTED_PRODUCTS_LABEL}</a>
     </nav>}
     <section className="catalog-toolbar" aria-label="Фильтры каталога">

@@ -5,7 +5,7 @@ import CanonicalLink from "../../components/CanonicalLink.astro";
 import ProductStructuredData from "../../components/ProductStructuredData.astro";
 import ProductVariantSelector from "../../components/ProductVariantSelector";
 import { blogEntries } from "../../data/blog";
-import { DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, detailLines, detailRows, displayProductSku, getProductPrice, loadCatalogProducts, relatedProducts, type Product } from "../../data/catalog";
+import { DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, detailLines, detailRows, displayProductSku, getCatalogCategoryPath, getProductPrice, loadCatalogProducts, relatedProducts, type Product } from "../../data/catalog";
 import { optimizeCatalogImages } from "../../data/catalog-images";
 
 import "../../styles/global.css";
@@ -28,8 +28,8 @@ const warrantySets = product.variantWarranties
   ? Object.entries(product.variantWarranties)
   : [[initialVariantSku, product.warranty ?? ""] as const];
 const related = relatedProducts(product, await optimizeCatalogImages(await loadCatalogProducts("all")));
-const catalogPath = product.discounted ? DISCOUNTED_PRODUCTS_PATH : "/catalog";
-const catalogLabel = product.discounted ? DISCOUNTED_PRODUCTS_LABEL : "Каталог";
+const catalogPath = product.discounted ? DISCOUNTED_PRODUCTS_PATH : getCatalogCategoryPath(product.category) ?? "/catalog";
+const catalogLabel = product.discounted ? DISCOUNTED_PRODUCTS_LABEL : product.category;
 const articleSlugByCategory: Record<string, string> = {
   "Портативные зарядные станции": "energy-at-dacha",
   "Солнечные панели": "sun-in-the-system",

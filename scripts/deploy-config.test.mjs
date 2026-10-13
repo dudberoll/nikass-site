@@ -7,6 +7,27 @@ import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const source = readFileSync(resolve(root, 'deploy/deploy.sh'), 'utf8')
+const domainConfig = readFileSync(resolve(root, 'deploy/nginx-domain.conf.example'), 'utf8')
+
+test('Nginx permanently redirects legacy WordPress pages, categories, and product variants', () => {
+  const productRules = domainConfig.split('\n').filter((line) => line.startsWith('    rewrite ^/product/') && line.endsWith(' permanent;'))
+  const categoryRules = domainConfig.split('\n').filter((line) => line.startsWith('    rewrite ^/product-category/') && line.endsWith(' permanent;'))
+  const productSources = productRules.map((line) => line.match(/^    rewrite (\^.*?\$) /)?.[1])
+
+  assert.equal(productRules.length, 93) // 54 published + 39 trashed products in the 2026-10-12 export
+  assert.equal(new Set(productSources).size, productSources.length)
+  assert.equal(categoryRules.length, 17)
+  assert.doesNotMatch(domainConfig, /\/catalog\?category=/)
+  assert.ok(domainConfig.includes('location ~ ^/contact/?$ {\n        return 301 "https://nikass.ru/#contacts";'))
+  assert.ok(domainConfig.includes('rewrite ^/oplata-i-dostavka/?$ /payment-and-delivery permanent;'))
+  assert.ok(domainConfig.includes('rewrite ^/publichnaya-oferta/?$ /payment-and-delivery permanent;'))
+  assert.ok(domainConfig.includes('rewrite ^/product-category/portativnye-stantsii/?$ /catalog/category/portativnye-zaryadnye-stantsii permanent;'))
+  assert.ok(domainConfig.includes('rewrite ^/product/vneshniy-akkumulyator-60000-mah-s-bystroy-zaryadkoy/?$ /catalog/vneshniy-akkumulyator-20000-mah-s-bystroy-zaryadkoy?variant=PB-60 permanent;'))
+  assert.ok(domainConfig.includes('rewrite ^/product/portativnaya-zaryadnaya-stantsiya-500w-160000mah/?$ /catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah?variant=NS-69-500 permanent;'))
+  assert.ok(domainConfig.includes('rewrite ^/product/test/?$ /catalog permanent;'))
+  assert.ok(domainConfig.includes('if ($arg_post_type = product)'))
+  assert.ok(domainConfig.includes('location / {\n        try_files $uri $uri/index.html =404;\n    }'))
+})
 
 test('VPS publication accepts a separate HTTPS storefront domain and checks its access mode', () => {
   const settings = source.match(/publish\(\) \{\n([\s\S]*?)\n  for command/)[1]
