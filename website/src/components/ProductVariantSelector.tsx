@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent } from "
 import { AVAILABILITY_LABELS, displayProductSku, formatPrice, formatVariantPrice, getSelectedVariant, isVariantAddable, type Product } from "../data/catalog";
 import { addCartItem, readCart, saveCart } from "../lib/cart";
 import { productVariantUrl, selectedVariantSku } from "../lib/product-variant-url";
+import { productStructuredData, serializeJsonLd } from "../lib/seo";
 import RestockRequest from "./RestockRequest";
 import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
 
@@ -27,8 +28,8 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
     return () => window.removeEventListener("popstate", syncVariantFromUrl);
   }, [cachedProduct]);
   useEffect(() => {
-    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku, displaySku: displayProductSku(product, variant.sku), image: variant.image ?? product.image, imageSrcSet: variant.imageSrcSet ?? product.imageSrcSet } }));
-  }, [variant?.sku]);
+    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku, displaySku: displayProductSku(product, variant.sku), image: variant.image ?? product.image, imageSrcSet: variant.imageSrcSet ?? product.imageSrcSet, structuredData: serializeJsonLd(productStructuredData(product)) } }));
+  }, [product, variant?.sku]);
   if (!variant) return <p>Варианты пока не добавлены.</p>;
 
   function add(event: MouseEvent<HTMLButtonElement>) {

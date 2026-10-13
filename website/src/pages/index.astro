@@ -5,6 +5,7 @@ import AboutSection from "../components/AboutSection.astro";
 import ReviewsSection from "../components/ReviewsSection.astro";
 import StoreHeader from "../components/StoreHeader.astro";
 import CookieNotice from "../components/CookieNotice.astro";
+import CanonicalLink from "../components/CanonicalLink.astro";
 import StoreChat from "../components/StoreChat.astro";
 import { HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
 import { optimizeCatalogImages } from "../data/catalog-images";
@@ -48,6 +49,7 @@ const heroPosition = (index: number) => {
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <CanonicalLink />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="NIKASS — автономная энергия для дома, дороги и работы." />
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"NIKASS","url":"https://nikass.ru","logo":"https://nikass.ru/assets/images/nikass-smart-selection-logo.webp"}</script>

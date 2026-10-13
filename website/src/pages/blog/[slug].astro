@@ -1,6 +1,7 @@
 ---
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
+import CanonicalLink from "../../components/CanonicalLink.astro";
 import { blogEntries, type BlogEntry } from "../../data/blog";
 import { getProductPrice, HERO_CATEGORIES, loadCatalogProducts } from "../../data/catalog";
 import { optimizeCatalogImages } from "../../data/catalog-images";
@@ -41,6 +42,7 @@ const allowedCatalogCategories = HERO_CATEGORIES.flatMap(({ title, label, catego
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <CanonicalLink />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={entry.summary} />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />

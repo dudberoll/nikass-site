@@ -2,6 +2,7 @@
 import CatalogExplorer from "../components/CatalogExplorer";
 import StoreFooter from "../components/StoreFooter.astro";
 import StoreHeader from "../components/StoreHeader.astro";
+import CanonicalLink from "../components/CanonicalLink.astro";
 import { DISCOUNTED_PRODUCTS_LABEL, HERO_CATEGORIES, loadCatalogProducts } from "../data/catalog";
 import { optimizeCatalogImages } from "../data/catalog-images";
 import "../styles/global.css";
@@ -12,6 +13,7 @@ const products = await optimizeCatalogImages(await loadCatalogProducts("discount
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <CanonicalLink />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content="Уценённые товары NIKASS с незначительными дефектами по сниженной цене." />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />

@@ -1,6 +1,7 @@
 ---
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
+import CanonicalLink from "../../components/CanonicalLink.astro";
 import { blogEntries } from "../../data/blog";
 import "../../styles/global.css";
 ---
@@ -8,6 +9,7 @@ import "../../styles/global.css";
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <CanonicalLink />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content="Блог NIKASS о резервной энергии для дома, дороги и работы." />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />

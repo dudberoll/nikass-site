@@ -1,6 +1,8 @@
 ---
 import StoreFooter from "../../components/StoreFooter.astro";
 import StoreHeader from "../../components/StoreHeader.astro";
+import CanonicalLink from "../../components/CanonicalLink.astro";
+import ProductStructuredData from "../../components/ProductStructuredData.astro";
 import ProductVariantSelector from "../../components/ProductVariantSelector";
 import { blogEntries } from "../../data/blog";
 import { DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, detailLines, detailRows, displayProductSku, getProductPrice, loadCatalogProducts, relatedProducts, type Product } from "../../data/catalog";
@@ -14,6 +16,7 @@ export async function getStaticPaths() {
 }
 
 const { product } = Astro.props as { product: Product };
+const indexableProduct = !product.demo && product.slug !== "test";
 const characteristicSets = product.variantCharacteristics
   ? Object.entries(product.variantCharacteristics)
   : [[product.variants[0]?.sku ?? "default", product.characteristics] as const];
@@ -45,9 +48,11 @@ const articleLink = article && `/blog/${article.slug}?from=${encodeURIComponent(
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    {indexableProduct && <CanonicalLink />}
     <meta name="viewport" content="width=device-width" />
     {(product.demo || product.slug === "test") && <meta name="robots" content="noindex,follow" />}
     <meta name="description" content={product.description || product.name} />
+    {indexableProduct && <ProductStructuredData product={product} />}
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <title>{product.name} — NIKASS</title>
@@ -100,12 +105,14 @@ const articleLink = article && `/blog/${article.slug}?from=${encodeURIComponent(
       };
       const productImage = document.querySelector("[data-product-image]");
       const productSku = document.querySelector(".product-sku");
+      const productStructuredData = document.querySelector("[data-product-structured-data]");
       window.addEventListener("nikass:product-variant-change", (event) => {
         selectModelDetails(event.detail?.sku ?? "");
         if (event.detail?.displaySku && productSku) productSku.textContent = `Артикул: ${event.detail.displaySku}`;
         if (event.detail?.image) productImage?.setAttribute("src", event.detail.image);
         if (event.detail?.imageSrcSet) productImage?.setAttribute("srcset", event.detail.imageSrcSet);
         else productImage?.removeAttribute("srcset");
+        if (event.detail?.structuredData && productStructuredData) productStructuredData.textContent = event.detail.structuredData;
       });
     </script>
 

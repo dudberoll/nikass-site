@@ -1,0 +1,9 @@
+---
+import type { Product } from "../data/catalog";
+import { productStructuredData, serializeJsonLd } from "../lib/seo";
+
+const { product } = Astro.props as { product: Product };
+const structuredData = productStructuredData(product);
+---
+
+<script is:inline type="application/ld+json" data-product-structured-data set:html={serializeJsonLd(structuredData)}></script>
