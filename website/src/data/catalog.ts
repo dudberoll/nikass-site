@@ -105,7 +105,8 @@ type CatalogApiResponse = {
 
 type CatalogSelection = Record<string, readonly string[]>;
 
-// Product data comes from WooCommerce; this allow-list excludes unrelated published products.
+// The CSV contains 53 catalog rows. Product data still comes only from WooCommerce;
+// this allow-list excludes unrelated published products; `test` is included for payment checks.
 const catalogArticlesBySlug: CatalogSelection = Object.fromEntries([
   "invertor-avtomobilnyy-3500",
   "invertor-avtomobilnyy-600",
@@ -160,6 +161,7 @@ const catalogArticlesBySlug: CatalogSelection = Object.fromEntries([
   "litiy-zhelezo-fosfatnyy-akkumulyator-nsr-51-2-v-200-a-ch",
   "litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-100-a-ch",
   "litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-200-a-ch",
+  "test",
 ].map((slug) => [slug, []])) as CatalogSelection;
 type CatalogModelGroup = {
   name: string;
@@ -344,8 +346,7 @@ export function selectCatalogProducts(
   products: CatalogApiProduct[],
   selection: CatalogSelection = catalogArticlesBySlug,
 ) {
-  const publicProducts = products.filter((product) => product.slug !== "test");
-  const productsBySlug = new Map(publicProducts.map((product) => [product.slug, product]));
+  const productsBySlug = new Map(products.map((product) => [product.slug, product]));
   const missing = Object.keys(selection).filter((slug) => !productsBySlug.has(slug));
   if (missing.length > 0) throw new Error(`WooCommerce catalog is missing selected products: ${missing.join(", ")}`);
 
@@ -353,7 +354,7 @@ export function selectCatalogProducts(
     ...groupCatalogProducts(Object.entries(selection)
       .filter(([slug]) => !productsBySlug.get(slug)!.discounted)
       .map(([slug, articles]) => mapCatalogProduct(productsBySlug.get(slug)!, articles))),
-    ...publicProducts.filter((product) => product.discounted).map((product) => mapCatalogProduct(product)),
+    ...products.filter((product) => product.discounted).map((product) => mapCatalogProduct(product)),
   ];
 }
 

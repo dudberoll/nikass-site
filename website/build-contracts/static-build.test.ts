@@ -43,8 +43,6 @@ test("ships the Astra homepage and every product route from the API snapshot", (
   assert.equal(metaContent(home, "og:image"), `https://nikass.ru${HERO_CATEGORIES[0]!.image}`);
   const catalog = readFileSync(resolve(dist, "catalog/index.html"), "utf8");
   assert.equal(metaContent(catalog, "og:image"), `https://nikass.ru${HERO_CATEGORIES[0]!.image}`);
-  assert.doesNotMatch(catalog, /href="\/catalog\/test"/);
-  assert.equal(existsSync(resolve(dist, "catalog/test/index.html")), false);
   const routes = [...catalog.matchAll(/href="\/catalog\/([^"/]+)"/g)].map((entry) => entry[1]).filter((slug) => slug !== "category");
   const uniqueRoutes = new Set(routes);
   assert.ok(uniqueRoutes.size > 0);
@@ -68,7 +66,6 @@ test("ships the Astra homepage and every product route from the API snapshot", (
     assert.ok(productImages.includes(metaContent(page, "og:image")), `OG image does not match product ${slug}`);
   }
   const sitemap = readFileSync(resolve(dist, "sitemap.xml"), "utf8");
-  assert.doesNotMatch(sitemap, /https:\/\/nikass\.ru\/catalog\/test(?:<|\/)/);
   const sitemapPaths = [...sitemap.matchAll(/<loc>https:\/\/nikass\.ru([^<]+)<\/loc>/g)].map((entry) => entry[1]);
   for (const path of sitemapPaths) {
     const route = path === "/" ? "index.html" : `${path.slice(1)}/index.html`;

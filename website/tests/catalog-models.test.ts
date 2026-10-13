@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { detailRows, displayProductSku, groupCatalogProducts, mapCatalogProduct, selectCatalogProducts, type CatalogApiProduct } from "../src/data/catalog";
+import { detailRows, displayProductSku, groupCatalogProducts, mapCatalogProduct, type CatalogApiProduct } from "../src/data/catalog";
 import { emptyCatalogEdits, rowsForVariant } from "../src/data/catalog-editor";
 
 function source(slug: string, name: string, category: string, characteristics: Record<string, string>, sku: string, price: number) {
@@ -18,25 +18,6 @@ function source(slug: string, name: string, category: string, characteristics: R
   };
   return mapCatalogProduct(product);
 }
-
-test("excludes the test payment item from public and discounted catalog products", () => {
-  const product = (slug: string, discounted: boolean): CatalogApiProduct => ({
-    slug,
-    name: `Товар ${slug}`,
-    category: "other",
-    discounted,
-    images: [],
-    shortDescription: "",
-    description: "",
-    characteristics: {},
-    packageContents: [],
-    variants: [{ sku: slug, label: "Основной вариант", price: 100, availability: "in-stock" }],
-  });
-
-  const products = selectCatalogProducts([product("test", true), product("visible", true)], { visible: [] });
-
-  assert.deepEqual(products.map(({ slug }) => slug), ["visible"]);
-});
 
 test("uses WooCommerce specifications without a local SKU override or splitting semicolons", () => {
   const product = source("inverter", "Инвертор", "invertory", {
