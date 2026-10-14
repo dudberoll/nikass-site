@@ -1,0 +1,80 @@
+---
+import StoreFooter from "../components/StoreFooter.astro";
+import BreadcrumbStructuredData from "../components/BreadcrumbStructuredData.astro";
+import CanonicalLink from "../components/CanonicalLink.astro";
+import OpenGraphMeta from "../components/OpenGraphMeta.astro";
+import StoreHeader from "../components/StoreHeader.astro";
+import { CONTACT_DETAILS } from "../data/contacts";
+import "../styles/global.css";
+
+const breadcrumbItems = [{ name: "Главная", url: "/" }, { name: "Контакты" }];
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <CanonicalLink />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="Адрес, часы работы и контакты NIKASS. Позвоните или напишите нам в Telegram, WhatsApp и MAX." />
+    <OpenGraphMeta title="Контакты — NIKASS" description="Адрес, часы работы и контакты NIKASS. Позвоните или напишите нам в Telegram, WhatsApp и MAX." />
+    <BreadcrumbStructuredData items={breadcrumbItems} />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <title>Контакты — NIKASS</title>
+  </head>
+  <body class="store-page">
+    <StoreHeader />
+    <main class="store-main info-page" id="main-content">
+      <nav class="store-breadcrumb" aria-label="Хлебные крошки"><a href="/">Главная</a> / <span>Контакты</span></nav>
+
+      <section class="store-intro info-intro">
+        <p class="store-eyebrow">NIKASS / НА СВЯЗИ</p>
+        <h1>Контакты</h1>
+        <p>Позвоните нам или напишите в удобный мессенджер. Поможем с выбором оборудования и ответим на вопросы по заказу.</p>
+      </section>
+
+      <div class="info-sections">
+        <section class="info-section" aria-label="Адрес и режим работы">
+          <div class="info-columns">
+            <article class="info-card">
+              <p class="store-eyebrow">01 / САМОВЫВОЗ</p>
+              <h3>Адрес</h3>
+              <p>{CONTACT_DETAILS.pickup.address}</p>
+              <p class="info-note">Самовывоз бесплатный. Заберите заказ после подтверждения менеджером.</p>
+            </article>
+            <article class="info-card">
+              <p class="store-eyebrow">02 / ЧАСЫ РАБОТЫ</p>
+              <h3>{CONTACT_DETAILS.pickup.hours}</h3>
+              <p>Заказы обрабатываем в день оформления или на следующий рабочий день. Доставляем по всей России.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="info-section" aria-labelledby="contacts-options-title">
+          <div class="info-section-heading">
+            <p class="store-eyebrow">03 / СВЯЗЬ</p>
+            <h2 id="contacts-options-title">Выберите удобный способ</h2>
+          </div>
+          <div class="info-columns">
+            <article class="info-card">
+              <h3>Телефон и почта</h3>
+              <ul class="info-list">
+                <li><a href={CONTACT_DETAILS.phone.href}>{CONTACT_DETAILS.phone.label}</a></li>
+                <li><a href={CONTACT_DETAILS.email.href}>{CONTACT_DETAILS.email.label}</a></li>
+              </ul>
+            </article>
+            <article class="info-card">
+              <h3>Мессенджеры</h3>
+              <ul class="info-list">
+                {CONTACT_DETAILS.messengers.map(({ name, href }) => (
+                  <li><a href={href} target="_blank" rel="noopener noreferrer">{name}</a></li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
+    <StoreFooter />
+  </body>
+</html>

@@ -2,7 +2,9 @@
 
 Единый активный storefront: главная и визуальный язык Astra объединены с проверенной логикой вариантов, наличия, предзаказа, корзины и guest checkout. Каталог при сборке берётся из `GET /api/catalog` backend, а backend получает его из WooCommerce REST API. Обычный каталог ограничен выбранными товарными строками CSV, а совпадающие модельные семейства сворачиваются в публичные карточки с вариантами мощности и ёмкости. Опубликованные в WooCommerce, но не входящие в этот CSV старые и тестовые товары в витрину не попадают, кроме явно добавленного для проверки оплаты товара `test` (slug и SKU `test`, карточка `/catalog/test`). Его цена и наличие также берутся из WooCommerce. После проверки удалите `test` из списка в `src/data/catalog.ts` и пересоберите сайт.
 
-Маршруты: `/`, `/catalog`, `/catalog/category/[slug]`, `/discounted`, `/catalog/[slug]`, `/catalog-editor`, `/blog`, `/blog/[slug]`, `/cart`, `/checkout`, `/payment-and-delivery`, `/return-policy`, `/service-center`, `/message-scroller`.
+Маршруты: `/`, `/catalog`, `/catalog/category/[slug]`, `/discounted`, `/catalog/[slug]`, `/catalog-editor`, `/blog`, `/blog/[slug]`, `/cart`, `/checkout`, `/contacts`, `/payment-and-delivery`, `/return-policy`, `/service-center`, `/message-scroller`.
+
+`/contacts` содержит адрес и часы самовывоза, телефон, email и ссылки на Telegram, WhatsApp и MAX. Публичные контакты и адрес самовывоза находятся в `src/data/contacts.ts` и используются в шапке, оформлении и на странице контактов.
 
 `/robots.txt` points to the generated `/sitemap.xml`. The sitemap is rebuilt with the storefront from its public pages, blog entries, and catalog; checkout, cart, internal demos, and test products are excluded from search indexing.
 

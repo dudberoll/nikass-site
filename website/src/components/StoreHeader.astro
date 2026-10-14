@@ -1,12 +1,8 @@
 ---
 import { ALL_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_LABEL, DISCOUNTED_PRODUCTS_PATH, getCatalogCategoryPath, HERO_CATEGORIES } from "../data/catalog";
+import { CONTACT_DETAILS } from "../data/contacts";
 
 const isHomePage = Astro.url.pathname === "/";
-const CONTACT_PHONE = "+7 (925) 642-53-15";
-const CONTACT_PHONE_HREF = "tel:+79256425315";
-const TELEGRAM_HREF = "https://t.me/Nikass_energy";
-const WHATSAPP_HREF = "https://wa.me/message/LKDO2UNXC6XIM1";
-const MAX_HREF = "https://max.ru/u/f9LHodD0cOKUlKKjqQo3h1xKeys4xeVBPTG1niW8dBgXHShr8nf6QkokH8g";
 const DISCOUNTED_PRODUCTS_ICON = "/assets/images/category-icons/discounted-products.webp";
 const menuCategoryIcons = Object.fromEntries([
   ...HERO_CATEGORIES.map(({ label, icon }) => [label, icon] as const),
@@ -40,11 +36,9 @@ const menuCategoryIcons = Object.fromEntries([
     <a class="orbea-logo" href="/" aria-label="NIKASS — главная"><img class="orbea-logo-image" src="/assets/images/nikass-smart-selection-logo.webp" alt="" /></a>
     <div class="orbea-actions">
       <div class="orbea-header-contacts" role="group" aria-label="Контакты NIKASS">
-        <a class="orbea-header-phone" href={CONTACT_PHONE_HREF}>{CONTACT_PHONE}</a>
+        <a class="orbea-header-phone" href={CONTACT_DETAILS.phone.href}>{CONTACT_DETAILS.phone.label}</a>
         <div class="orbea-header-contact-messengers" role="group" aria-label="Мессенджеры NIKASS">
-          <a class="orbea-header-contact-icon" href={TELEGRAM_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в Telegram"><img src="/icons/telegram.svg" alt="" aria-hidden="true" /></a>
-          <a class="orbea-header-contact-icon" href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в WhatsApp"><img src="/icons/whatsapp.svg" alt="" aria-hidden="true" /></a>
-          <a class="orbea-header-contact-icon" href={MAX_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в MAX"><img src="/icons/max.svg" alt="" aria-hidden="true" /></a>
+          {CONTACT_DETAILS.messengers.map(({ name, href, icon }) => <a class="orbea-header-contact-icon" href={href} target="_blank" rel="noopener noreferrer" aria-label={`Написать в ${name}`}><img src={icon} alt="" aria-hidden="true" /></a>)}
         </div>
       </div>
       <button class="orbea-icon-button" type="button" aria-label="Поиск" data-search-open>
@@ -78,14 +72,12 @@ const menuCategoryIcons = Object.fromEntries([
       <a class="orbea-menu-root-link" href="/blog" data-menu-anchor>Блог</a>
       <a class="orbea-menu-root-link" href="/#custom" data-menu-anchor>Как выбрать</a>
       <button class="orbea-menu-root-link" type="button" data-menu-section="Commitment">О NIKASS <span>›</span></button>
-      <a class="orbea-menu-root-link" href="/#contacts" data-menu-anchor>Контакты</a>
+      <a class="orbea-menu-root-link" href="/contacts" data-menu-anchor>Контакты</a>
       <a class="orbea-menu-root-link" href="/#footer-documents" data-menu-anchor>Документы</a>
       <div class="orbea-menu-contacts" role="group" aria-label="Контакты NIKASS">
-        <a class="orbea-header-phone" href={CONTACT_PHONE_HREF}>{CONTACT_PHONE}</a>
+        <a class="orbea-header-phone" href={CONTACT_DETAILS.phone.href}>{CONTACT_DETAILS.phone.label}</a>
         <div class="orbea-menu-contact-messengers" role="group" aria-label="Мессенджеры NIKASS">
-          <a class="orbea-header-contact-icon" href={TELEGRAM_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в Telegram"><img src="/icons/telegram.svg" alt="" aria-hidden="true" /></a>
-          <a class="orbea-header-contact-icon" href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в WhatsApp"><img src="/icons/whatsapp.svg" alt="" aria-hidden="true" /></a>
-          <a class="orbea-header-contact-icon" href={MAX_HREF} target="_blank" rel="noopener noreferrer" aria-label="Написать в MAX"><img src="/icons/max.svg" alt="" aria-hidden="true" /></a>
+          {CONTACT_DETAILS.messengers.map(({ name, href, icon }) => <a class="orbea-header-contact-icon" href={href} target="_blank" rel="noopener noreferrer" aria-label={`Написать в ${name}`}><img src={icon} alt="" aria-hidden="true" /></a>)}
         </div>
       </div>
     </div>

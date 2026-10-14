@@ -10,6 +10,7 @@ const staticPaths = [
   "/discounted",
   "/blog",
   "/about",
+  "/contacts",
   "/payment-and-delivery",
   "/return-policy",
   "/service-center",
