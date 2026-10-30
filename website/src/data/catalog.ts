@@ -106,7 +106,7 @@ type CatalogApiResponse = {
 type CatalogSelection = Record<string, readonly string[]>;
 
 // The CSV contains 53 catalog rows. Product data still comes only from WooCommerce;
-// this allow-list excludes unrelated published products; `test` is included for payment checks.
+// this allow-list excludes unrelated published products.
 const catalogArticlesBySlug: CatalogSelection = Object.fromEntries([
   "invertor-avtomobilnyy-3500",
   "invertor-avtomobilnyy-600",
@@ -161,7 +161,6 @@ const catalogArticlesBySlug: CatalogSelection = Object.fromEntries([
   "litiy-zhelezo-fosfatnyy-akkumulyator-nsr-51-2-v-200-a-ch",
   "litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-100-a-ch",
   "litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-200-a-ch",
-  "test",
 ].map((slug) => [slug, []])) as CatalogSelection;
 type CatalogModelGroup = {
   name: string;
@@ -355,7 +354,7 @@ export function selectCatalogProducts(
       .filter(([slug]) => !productsBySlug.get(slug)!.discounted)
       .map(([slug, articles]) => mapCatalogProduct(productsBySlug.get(slug)!, articles))),
     ...products.filter((product) => product.discounted).map((product) => mapCatalogProduct(product)),
-  ];
+  ].filter((product) => product.slug !== "test");
 }
 
 export function createDemoDiscountedProducts(products: readonly Product[]): Product[] {
