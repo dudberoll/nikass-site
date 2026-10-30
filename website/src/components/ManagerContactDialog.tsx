@@ -14,7 +14,9 @@ export default function ManagerContactDialog({ product, variant, large = false }
     <dialog ref={dialog} id={`${id}-dialog`} className="restock-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`}>
       <button className="restock-close" type="button" aria-label="Закрыть окно" onClick={() => dialog.current?.close()}>×</button>
       <h2 id={`${id}-title`}>Заказать у менеджера</h2>
-      <p id={`${id}-description`} className="manager-contact-product">{product.name} {variant.label}</p>
+      <p id={`${id}-description`} className="manager-contact-product">{product.name} {variant.label}
+        {product.category === "Солнечные панели" && <span className="product-seller">Продавец: ООО «Ника»</span>}
+      </p>
       <p className="restock-hint">Выберите удобный способ связи</p>
       <div className="restock-channels" role="group" aria-label="Связаться с менеджером">
         <a href={CONTACT_DETAILS.phone.href} aria-label={`Позвонить ${CONTACT_DETAILS.phone.label}`} title={`Телефон ${CONTACT_DETAILS.phone.label}`}>

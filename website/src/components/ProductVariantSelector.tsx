@@ -55,8 +55,12 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
       <span className={`product-availability is-${variant.availability}`} aria-live="polite">{AVAILABILITY_LABELS[variant.availability]}</span>
     </div>
     {variant.salesMode === "manager"
-      ? <ManagerContactDialog product={product} variant={variant} large key={variant.sku} />
+      ? <div className="manager-contact-action">
+        <ManagerContactDialog product={product} variant={variant} large key={variant.sku} />
+        {product.category === "Солнечные панели" && <p className="product-seller">Продавец: ООО «Ника»</p>}
+      </div>
       : <>
+        {product.category === "Солнечные панели" && <p className="product-seller">Продавец: ООО «Ника»</p>}
         <RestockRequest product={product} variant={variant} large showTrigger={variant.availability === "preorder"} key={variant.sku} />
         {variant.availability !== "preorder" && <div className="product-variant-purchase">
       <div className="cart-quantity" role="group" aria-label={`Количество ${product.name}`}>
