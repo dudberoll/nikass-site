@@ -5,6 +5,7 @@ import { addCartItem, readCart, saveCart } from "../lib/cart";
 import { productVariantUrl, selectedVariantSku } from "../lib/product-variant-url";
 import { productStructuredData, serializeJsonLd } from "../lib/seo";
 import RestockRequest from "./RestockRequest";
+import ManagerContactDialog from "./ManagerContactDialog";
 import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
 
 const MAX_QUANTITY = 99;
@@ -41,6 +42,10 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
   }
 
   return <section className="product-variant-selector" aria-labelledby="variant-title">
+    {variant.salesMode === "manager" && <div className="manager-order-notice" role="note">
+      <span className="manager-order-notice-icon" aria-hidden="true">!</span>
+      <p className="manager-order-notice-copy"><strong>Заказ через менеджера</strong><span>В стоимость уже включён НДС 22%</span></p>
+    </div>}
     <h2 id="variant-title">Вариант</h2>
     {product.variants.length > 1 && <div className="product-variant-options">{product.variants.map((item) => <button type="button" className={item.sku === variant.sku ? "is-selected" : ""} aria-pressed={item.sku === variant.sku} onClick={() => { if (item.sku !== sku) window.history.pushState(window.history.state, "", productVariantUrl(window.location.href, item.sku)); setSku(item.sku); setQuantity(1); setMessage(""); }} key={item.sku}><span>{item.label}</span><small>{displayProductSku(product, item.sku)}</small><strong>{formatVariantPrice(item)}</strong></button>)}</div>}
     <div className="product-variant-summary">
@@ -49,16 +54,19 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
       {variant.availability !== "preorder" && variant.oldPrice && <del>{formatPrice(variant.oldPrice)}</del>}
       <span className={`product-availability is-${variant.availability}`} aria-live="polite">{AVAILABILITY_LABELS[variant.availability]}</span>
     </div>
-    <RestockRequest product={product} variant={variant} large showTrigger={variant.availability === "preorder"} key={variant.sku} />
-    {variant.availability !== "preorder" && <div className="product-variant-purchase">
+    {variant.salesMode === "manager"
+      ? <ManagerContactDialog product={product} variant={variant} large key={variant.sku} />
+      : <>
+        <RestockRequest product={product} variant={variant} large showTrigger={variant.availability === "preorder"} key={variant.sku} />
+        {variant.availability !== "preorder" && <div className="product-variant-purchase">
       <div className="cart-quantity" role="group" aria-label={`Количество ${product.name}`}>
         <button type="button" aria-label="Уменьшить количество" disabled={quantity <= 1} onClick={() => setQuantity((current) => Math.max(1, current - 1))}>−</button>
         <span aria-live="polite">{quantity}</span>
         <button type="button" aria-label="Увеличить количество" disabled={quantity >= MAX_QUANTITY || !isVariantAddable(variant)} onClick={() => setQuantity((current) => Math.min(MAX_QUANTITY, current + 1))}>+</button>
       </div>
       <button className="store-add-button store-add-button-large" type="button" disabled={!isVariantAddable(variant)} data-cart-stage={isVariantAddable(variant) ? "ready" : "blocked"} onClick={add}>{variant.availability === "unavailable" ? "Недоступен" : "Добавить в корзину"}</button>
-    </div>}
-    {failed && <p className="store-added-note" role="status">Не удалось обновить наличие. Проверим его перед оплатой.</p>}
+    </div>}</>}
+    {failed && <p className="store-added-note" role="status">Не удалось обновить наличие. {variant.salesMode === "manager" ? "Уточните его у менеджера." : "Проверим его перед оплатой."}</p>}
     <p className="store-added-note" role="status" aria-live="polite">{message}{message.startsWith("Товар") && <a href="/cart">Открыть корзину</a>}</p>
   </section>;
 }

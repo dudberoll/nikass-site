@@ -139,6 +139,12 @@ export function createApp({
     trustedProxyClientIpHeader: env.TRUSTED_PROXY_CLIENT_IP_HEADER,
     trustedProxyClientIpPosition: env.TRUSTED_PROXY_CLIENT_IP_POSITION,
   })) app.use('/api/catalog/restock', middleware)
+  for (const middleware of createChatSecurity({
+    bodyLimitBytes: 8_192, rateLimitMax: 5, rateLimitWindowSeconds: 60,
+    trustProxy: env.TRUST_PROXY,
+    trustedProxyClientIpHeader: env.TRUSTED_PROXY_CLIENT_IP_HEADER,
+    trustedProxyClientIpPosition: env.TRUSTED_PROXY_CLIENT_IP_POSITION,
+  })) app.use('/api/catalog/manager-contact', middleware)
 
   const chatRateLimit = createFixedWindowRateLimit({
     errorMessage: 'Too many chat requests',
@@ -208,7 +214,7 @@ export function createApp({
   app.route('/api/uploads', uploads.routes)
   app.route('/api/catalog', catalog.routes)
   app.route('/api/chat', chat.routes)
-  app.route('/api/orders', createOrdersModule({ env, db: prisma }).routes)
+  app.route('/api/orders', createOrdersModule({ env, db: prisma, hasManagerOnlyItems: (cart) => catalog.service.hasManagerOnlyItems(cart) }).routes)
 
   // Only the filesystem driver needs the backend to serve the URLs it signs. With an S3 driver
   // the browser uploads straight to the bucket and there is nothing to mount here.

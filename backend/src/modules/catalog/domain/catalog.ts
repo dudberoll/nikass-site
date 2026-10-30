@@ -6,6 +6,7 @@ export type CatalogProductVariant = {
   price: number
   oldPrice?: number
   availability: CatalogAvailability
+  salesMode?: 'manager'
 }
 
 export type CatalogProduct = {

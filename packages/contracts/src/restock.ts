@@ -5,7 +5,7 @@ export const restockChannelLabels = { phone: 'Телефон', telegram: 'Telegr
 const isPhone = (value: string) => /^\+?[1-9]\d{9,14}$/.test(value.replace(/[\s()-]/g, ''))
 const normalizePhone = (value: string) => `+${value.replace(/[^\d]/g, '').replace(/^8(?=\d{10}$)/, '7')}`
 
-export const restockRequestSchema = z.strictObject({
+export const productContactRequestSchema = z.strictObject({
   requestId: z.uuid(),
   slug: z.string().trim().min(1).max(240),
   sku: z.string().trim().min(1).max(100),
@@ -27,6 +27,9 @@ export const restockRequestSchema = z.strictObject({
   ? normalizePhone(input.contact)
   : input.channel === 'telegram' ? `@${input.contact.replace(/^https:\/\/t\.me\//, '').replace(/^@/, '')}` : input.contact }))
 
+export const restockRequestSchema = productContactRequestSchema
+
 export const restockResponseSchema = z.object({ requestId: z.uuid(), status: z.literal('accepted') })
 export type RestockRequest = z.infer<typeof restockRequestSchema>
 export type RestockChannel = z.infer<typeof restockChannelSchema>
+export type ProductContactRequest = z.infer<typeof productContactRequestSchema>

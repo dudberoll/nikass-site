@@ -143,6 +143,17 @@ model RestockRequest {
   @@map("restock_requests")
 }
 
+/// Keeps a manager contact recoverable until Telegram confirms delivery, then erases the contact.
+model ManagerContactRequest {
+  id         String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  dedupeKey  String    @unique @map("dedupe_key")
+  details    Json
+  notifiedAt DateTime? @map("notified_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("manager_contact_requests")
+}
+
 model AuthSession {
   id                       String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
   userId                   String    @map("user_id") @db.Uuid

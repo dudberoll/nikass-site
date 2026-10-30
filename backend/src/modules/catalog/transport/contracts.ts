@@ -44,6 +44,7 @@ const catalogVariantSchema = z
     price: z.number().nonnegative(),
     oldPrice: z.number().nonnegative().optional(),
     availability: z.enum(['in-stock', 'preorder', 'unavailable']),
+    salesMode: z.literal('manager').optional(),
   })
   .strict()
 

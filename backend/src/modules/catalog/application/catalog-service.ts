@@ -99,6 +99,14 @@ export class CatalogService {
     return result.data
   }
 
+  async hasManagerOnlyItems(input: CartReviewRequest) {
+    const cart = cartReviewRequestSchema.parse(input)
+    const snapshot = await this.refresh()
+    return cart.items.some((item) => snapshot.products
+      .find(({ slug }) => slug === item.slug)?.variants
+      .some((variant) => variant.sku === item.sku && variant.salesMode === 'manager'))
+  }
+
   private async snapshot(maxAgeMs = this.dependencies.cacheTtlMs): Promise<CacheEntry & { stale: boolean }> {
     const current = this.cache
     const age = current

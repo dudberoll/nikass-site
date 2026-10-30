@@ -1,9 +1,10 @@
-import { apiErrorSchema, cartReviewRequestSchema, cartReviewResponseSchema, catalogAvailabilityResponseSchema, restockRequestSchema, restockResponseSchema } from '@web-app-demo/contracts'
+import { apiErrorSchema, cartReviewRequestSchema, cartReviewResponseSchema, catalogAvailabilityResponseSchema, managerContactRequestSchema, managerContactResponseSchema, restockRequestSchema, restockResponseSchema } from '@web-app-demo/contracts'
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 
 import { validationErrorHook } from '../../../http/errors'
 import type { CatalogService } from '../application/catalog-service'
 import type { RestockService } from '../application/restock-service'
+import type { ManagerContactService } from '../application/manager-contact-service'
 import {
   catalogListQuerySchema,
   catalogListResponseSchema,
@@ -51,7 +52,7 @@ const getCatalogProductRoute = createRoute({
   },
 })
 
-export function createCatalogRoutes(service: CatalogService, restock: RestockService) {
+export function createCatalogRoutes(service: CatalogService, restock: RestockService, managerContact: ManagerContactService) {
   const routes = new OpenAPIHono({ defaultHook: validationErrorHook })
 
   routes.openapi(createRoute({
@@ -79,6 +80,22 @@ export function createCatalogRoutes(service: CatalogService, restock: RestockSer
   }), async (c) => {
     c.header('Cache-Control', 'no-store')
     return c.json(await executeCatalog(() => restock.request(c.req.valid('json'))), 202)
+  })
+
+  routes.openapi(createRoute({
+    method: 'post',
+    path: '/manager-contact',
+    request: { body: { required: true, content: { 'application/json': { schema: managerContactRequestSchema } } } },
+    responses: {
+      202: { content: { 'application/json': { schema: managerContactResponseSchema } }, description: 'Request saved for manager notification' },
+      400: { content: errorContent, description: 'Invalid contact or missing consent' },
+      404: { content: errorContent, description: 'Product or variant not found' },
+      409: { content: errorContent, description: 'Product is not sold through a manager' },
+      503: { content: errorContent, description: 'Request unavailable' },
+    },
+  }), async (c) => {
+    c.header('Cache-Control', 'no-store')
+    return c.json(await executeCatalog(() => managerContact.request(c.req.valid('json'))), 202)
   })
 
   routes.openapi(createRoute({

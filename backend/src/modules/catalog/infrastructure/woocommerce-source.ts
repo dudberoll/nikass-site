@@ -216,10 +216,11 @@ function withListParams(endpoint: string) {
 function mapProduct(product: WooProduct, variations: WooVariation[]): CatalogProduct {
   const isDiscountCategory = (category: NonNullable<WooProduct['categories']>[number]) =>
     category.slug === 'ucenennye-tovary' || category.name?.trim().toLocaleLowerCase('ru-RU').replace(/ё/g, 'е') === 'уцененные товары'
-  const variants = variations.length > 0
-    ? variations.map((variation) => mapVariant(variation, 'Вариант'))
-    : [mapVariant({ ...product, attributes: undefined }, 'Основной вариант')]
   const attributes = attributesToRecord(product.attributes)
+  const managerOnly = managerSalesMode(product.attributes)
+  const variants = variations.length > 0
+    ? variations.map((variation) => mapVariant(variation, 'Вариант', managerOnly))
+    : [mapVariant({ ...product, attributes: undefined }, 'Основной вариант', managerOnly)]
   const packageEntries = Object.entries(attributes).filter(([name]) =>
     name === 'Комплектация' || name.startsWith('Дополнительные опции'))
 
@@ -234,7 +235,8 @@ function mapProduct(product: WooProduct, variations: WooVariation[]): CatalogPro
     shortDescription: product.short_description?.trim() ?? '',
     description: product.description?.trim() ?? '',
     characteristics: Object.fromEntries(Object.entries(attributes).filter(([name]) =>
-      name !== 'Гарантия' && !packageEntries.some(([packageName]) => packageName === name))),
+      name !== 'Гарантия' && name.trim().toLocaleLowerCase('ru-RU') !== 'способ продажи'
+      && !packageEntries.some(([packageName]) => packageName === name))),
     packageContents: packageEntries.map(([name, value]) => name === 'Комплектация' ? value : `${name}: ${value}`),
     warranty: attributes['Гарантия'] ?? '',
     reviews: [],
@@ -251,6 +253,7 @@ function mapVariant(
     attributes?: WooVariation['attributes']
   },
   fallbackLabel: string,
+  managerOnly: boolean,
 ): CatalogProductVariant {
   const sku = product.sku?.trim()
   const price = parseNumber(product.sale_price) ?? parseNumber(product.price) ?? parseNumber(product.regular_price)
@@ -265,7 +268,13 @@ function mapVariant(
     price,
     ...(oldPrice !== null && oldPrice > price ? { oldPrice } : {}),
     availability: availability(product.stock_status),
+    ...(managerOnly ? { salesMode: 'manager' as const } : {}),
   }
+}
+
+function managerSalesMode(attributes: WooProduct['attributes']) {
+  return attributes?.some(({ name, options }) => name?.trim().toLocaleLowerCase('ru-RU') === 'способ продажи'
+    && options?.some((option) => option.trim().toLocaleLowerCase('ru-RU') === 'через менеджера')) ?? false
 }
 
 function attributesToRecord(attributes: WooProduct['attributes']): Record<string, string> {

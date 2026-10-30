@@ -96,7 +96,10 @@ export const backgroundJobs = {
   'orders:payments:reconcile': async (runtime, now) => {
     if (!runtime.env.YOO_KASSA_ENABLED) return
     const { createOrdersModule } = await import('./modules/orders')
-    await createOrdersModule({ env: runtime.env, db: runtime.prisma }).reconcilePendingPayments(now)
+    const { createCatalogModule } = await import('./modules/catalog')
+    const catalog = createCatalogModule({ env: runtime.env, db: runtime.prisma })
+    await createOrdersModule({ env: runtime.env, db: runtime.prisma,
+      hasManagerOnlyItems: (cart) => catalog.service.hasManagerOnlyItems(cart) }).reconcilePendingPayments(now)
     console.log('Job orders:payments:reconcile completed.')
   },
   'outbox:drain': async (runtime, now) => {

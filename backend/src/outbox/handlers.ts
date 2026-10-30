@@ -23,6 +23,13 @@ export const taskHandlers = {
       await deliverRestockNotification(payload, runtime, signal)
     },
   },
+  'catalog:manager-contact-notify': {
+    maxAttempts: 5,
+    run: async ({ payload, signal }, runtime) => {
+      const { deliverManagerContactNotification } = await import('../modules/catalog')
+      await deliverManagerContactNotification(payload, runtime, signal)
+    },
+  },
   'payment:fulfill': {
     maxAttempts: 5,
     run: async ({ payload, signal }, runtime) => {

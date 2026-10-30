@@ -1062,6 +1062,15 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .checkout-shell > .checkout-error { max-width: 820px; margin-bottom: 14px; padding: 14px 18px; background: #fff0ed; }
 :is(.orbea-button, .store-add-button, .store-primary-button, .checkout-secondary-button, .cart-quantity button):active { transform: scale(.96); }
 
+.manager-order-notice { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; padding: 14px 16px; border: 1px solid #bc1c28; border-radius: 18px; background: #fff; color: #111; }
+.manager-order-notice-icon { display: grid; flex: 0 0 30px; place-items: center; width: 30px; height: 30px; border: 1.5px solid #bc1c28; border-radius: 50%; color: #bc1c28; font-size: 19px; font-weight: 600; line-height: 1; }
+.manager-order-notice-copy { display: grid; gap: 2px; margin: 0; color: #111; font-size: 14px; line-height: 1.35; }
+.manager-order-notice-copy strong { font-size: 16px; font-weight: 600; }
+.manager-order-notice-copy span { color: #111; }
+.manager-contact-trigger { border-color: #111; background: #111; color: #fff; font-size: 15px; font-weight: 500; }
+.manager-contact-trigger:hover { border-color: #333; background: #333; }
+@media (max-width: 600px) { .manager-contact-trigger { font-size: 16px; } }
+
 .store-product-card-description { margin: 12px 0 0; color: #555; font-size: 13px; line-height: 1.45; }
 .catalog-editor-intro { margin-bottom: 28px; }
 .catalog-editor-intro > p:last-child { max-width: 760px; color: #555; }

@@ -60,6 +60,7 @@ export type ProductVariant = {
   price: number;
   oldPrice?: number;
   availability: Availability;
+  salesMode?: "manager";
   sourceSlug?: string;
 };
 
@@ -96,6 +97,7 @@ export type CatalogApiProduct = {
     price: number;
     oldPrice?: number;
     availability: Availability;
+    salesMode?: "manager";
   }>;
 };
 

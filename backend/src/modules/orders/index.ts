@@ -1,5 +1,6 @@
 import type { AppEnv } from '../../env'
 import type { DbClient } from '../../db'
+import type { CartReviewRequest } from '@web-app-demo/contracts'
 import { OrdersService } from './application/orders-service'
 import { PaymentsService } from './application/payments-service'
 import { OrderFailure, PaymentFailure, type OrderProvider, type PaymentProvider } from './application/ports'
@@ -9,12 +10,23 @@ import { createCdekWidgetService } from './infrastructure/cdek-widget'
 import { createYooKassaPayments } from './infrastructure/yookassa-payments'
 import { createOrderRoutes } from './transport/routes'
 
-export function createOrdersModule({ env, db, provider }: { env: AppEnv; db: DbClient; provider?: OrderProvider }) {
+export function createOrdersModule({ env, db, provider, hasManagerOnlyItems }: { env: AppEnv; db: DbClient; provider?: OrderProvider; hasManagerOnlyItems?: (cart: CartReviewRequest) => Promise<boolean> }) {
   const disabled = async (): Promise<never> => { throw new OrderFailure('unavailable', 'Оформление временно недоступно. Попробуйте позже.') }
   const source = provider ?? (env.ORDERS_ENABLED && env.WOOCOMMERCE_PRODUCTS_ENDPOINT && env.WOOCOMMERCE_STORE_ENDPOINT && env.WOOCOMMERCE_CONSUMER_KEY && env.WOOCOMMERCE_CONSUMER_SECRET
     ? createWooCommerceOrders({ productsEndpoint: env.WOOCOMMERCE_PRODUCTS_ENDPOINT, storeEndpoint: env.WOOCOMMERCE_STORE_ENDPOINT, consumerKey: env.WOOCOMMERCE_CONSUMER_KEY, consumerSecret: env.WOOCOMMERCE_CONSUMER_SECRET, timeoutMs: env.CATALOG_REQUEST_TIMEOUT_MS })
     : { assertInStock: disabled, quote: disabled, submit: disabled })
   const emailEnabled = Boolean(env.ORDER_MANAGER_EMAIL && ['postbox', 'resend'].includes(env.EMAIL_DELIVERY))
+  const guardedSource: OrderProvider = {
+    ...source,
+    quote: async (input) => {
+      if (await hasManagerOnlyItems?.(input.cart)) throw new OrderFailure('invalid', 'Этот товар оформляется только через менеджера.')
+      return source.quote(input)
+    },
+    assertInStock: async (input) => {
+      if (await hasManagerOnlyItems?.(input.cart)) throw new OrderFailure('invalid', 'Этот товар оформляется только через менеджера.')
+      return source.assertInStock(input)
+    },
+  }
   const store = createOrderStore(db, emailEnabled)
   const paymentProvider: PaymentProvider = env.YOO_KASSA_ENABLED && env.YOO_KASSA_SHOP_ID && env.YOO_KASSA_SECRET_KEY
     ? createYooKassaPayments({ apiUrl: env.YOO_KASSA_API_URL, shopId: env.YOO_KASSA_SHOP_ID, secretKey: env.YOO_KASSA_SECRET_KEY, timeoutMs: env.CATALOG_REQUEST_TIMEOUT_MS, testMode: env.YOO_KASSA_TEST_MODE, receiptVatCode: env.YOO_KASSA_RECEIPT_VAT_CODE })
@@ -22,10 +34,10 @@ export function createOrdersModule({ env, db, provider }: { env: AppEnv; db: DbC
   const cdekWidget = env.CDEK_ACCOUNT && env.CDEK_PASSWORD
     ? createCdekWidgetService({ account: env.CDEK_ACCOUNT, password: env.CDEK_PASSWORD, environment: env.CDEK_API_ENVIRONMENT, timeoutMs: env.CATALOG_REQUEST_TIMEOUT_MS })
     : undefined
-  const payments = new PaymentsService(store, paymentProvider, env.YOO_KASSA_RETURN_URL ?? '', env.YOO_KASSA_TEST_MODE, source,
+  const payments = new PaymentsService(store, paymentProvider, env.YOO_KASSA_RETURN_URL ?? '', env.YOO_KASSA_TEST_MODE, guardedSource,
     env.YOO_KASSA_FULFILLMENT_MODE === 'woocommerce')
   return {
-    routes: createOrderRoutes(new OrdersService(store, source, !env.YOO_KASSA_TEST_MODE), payments, cdekWidget),
+    routes: createOrderRoutes(new OrdersService(store, guardedSource, !env.YOO_KASSA_TEST_MODE), payments, cdekWidget),
     reconcilePendingPayments: (now: Date) => payments.reconcilePending(now),
   }
 }
