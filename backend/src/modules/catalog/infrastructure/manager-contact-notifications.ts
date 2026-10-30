@@ -1,33 +1,12 @@
-import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import { managerContactRequestSchema, restockChannelLabels } from '@web-app-demo/contracts'
-import type { DbClient } from '../../../db'
 import type { AppEnv } from '../../../env'
-import { AppError } from '../../../http/errors'
-import { enqueueTask, TerminalTaskError } from '../../../outbox'
+import { TerminalTaskError } from '../../../outbox'
 import type { BackendRuntime } from '../../../runtime'
-import type { ManagerContactNotification } from '../application/manager-contact-service'
 
 const notificationSchema = z.object({ request: managerContactRequestSchema, name: z.string().min(1), label: z.string().min(1) })
 
-export function createManagerContactQueue(db: DbClient) {
-  return async (notification: ManagerContactNotification) => {
-    const dedupeKey = createHash('sha256').update(JSON.stringify(notification.request)).digest('hex')
-    try {
-      await db.$transaction(async (tx) => {
-        await tx.managerContactRequest.createMany({ data: [{ dedupeKey, details: notification as never }], skipDuplicates: true })
-        const request = await tx.managerContactRequest.findUniqueOrThrow({ where: { dedupeKey } })
-        if (request.notifiedAt) return
-        const task = await enqueueTask(tx, { type: 'catalog:manager-contact-notify', dedupeKey: request.id, payload: { id: request.id } })
-        const row = await tx.taskOutbox.findUniqueOrThrow({ where: { id: task.id }, select: { status: true } })
-        if (row.status === 'failed' || row.status === 'skipped') throw new Error('Delivery failed')
-      })
-    } catch {
-      throw new AppError(503, 'INTERNAL_ERROR', 'Не удалось передать запрос менеджеру. Попробуйте ещё раз.')
-    }
-  }
-}
-
+// Finish previously queued requests; new contacts use direct storefront links.
 export async function deliverManagerContactNotification(payload: unknown, runtime: Pick<BackendRuntime, 'env' | 'prisma'>, signal: AbortSignal,
   fetchImpl: (input: string, init: RequestInit) => Promise<Response> = fetch) {
   const task = z.object({ id: z.uuid() }).safeParse(payload)

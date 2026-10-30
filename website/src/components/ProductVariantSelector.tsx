@@ -44,10 +44,10 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
   return <section className="product-variant-selector" aria-labelledby="variant-title">
     {variant.salesMode === "manager" && <div className="manager-order-notice" role="note">
       <span className="manager-order-notice-icon" aria-hidden="true">!</span>
-      <p className="manager-order-notice-copy"><strong>Заказ через менеджера</strong><span>В стоимость уже включён НДС 22%</span></p>
+      <p className="manager-order-notice-copy"><strong>Заказ через менеджера</strong></p>
     </div>}
     <h2 id="variant-title">Вариант</h2>
-    {product.variants.length > 1 && <div className="product-variant-options">{product.variants.map((item) => <button type="button" className={item.sku === variant.sku ? "is-selected" : ""} aria-pressed={item.sku === variant.sku} onClick={() => { if (item.sku !== sku) window.history.pushState(window.history.state, "", productVariantUrl(window.location.href, item.sku)); setSku(item.sku); setQuantity(1); setMessage(""); }} key={item.sku}><span>{item.label}</span><small>{displayProductSku(product, item.sku)}</small><strong>{formatVariantPrice(item)}</strong></button>)}</div>}
+    {product.variants.length > 1 && <div className="product-variant-options">{product.variants.map((item) => <button type="button" className={item.sku === variant.sku ? "is-selected" : ""} aria-pressed={item.sku === variant.sku} onClick={() => { if (item.sku !== sku) window.history.pushState(window.history.state, "", productVariantUrl(window.location.href, item.sku)); setSku(item.sku); setQuantity(1); setMessage(""); }} key={item.sku}><span>{item.label}</span><small>{displayProductSku(product, item.sku)}</small><strong>{formatVariantPrice(item)}{item.salesMode === "manager" && item.availability !== "preorder" && <span className="product-variant-tax"> — включая НДС 22%</span>}</strong></button>)}</div>}
     <div className="product-variant-summary">
       <span>{variant.label} · SKU {displayProductSku(product, variant.sku)}</span>
       <strong>{formatVariantPrice(variant)}</strong>

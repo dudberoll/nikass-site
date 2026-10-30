@@ -83,6 +83,22 @@ test("labels powerbank categories and model cards in English", () => {
   assert.deepEqual(powerbank?.variants.map((variant) => variant.label.replace(/\s/g, "")), ["20000мАч", "50000мАч"]);
 });
 
+test("solar panel variants show power without weight for portable and flexible families", () => {
+  const products = [
+    source("portativnaya-solnechnaya-panel-30w-18-v", "Портативная солнечная панель 30 Вт", "solnechnye-paneli", { Вес: "2,1 кг" }, "SP-30", 2650),
+    source("portativnaya-solnechnaya-panel-50w-18v", "Портативная солнечная панель 50 Вт", "solnechnye-paneli", { Вес: "3,3 кг" }, "SP-50", 3370),
+    source("gibkaya-solnechnaya-panel-30w-18v", "Гибкая солнечная панель 30 Вт", "gibkie", { Вес: "0,6 кг" }, "FSP-30", 2000),
+    source("gibkaya-solnechnaya-panel-50w-18v", "Гибкая солнечная панель 50 Вт", "gibkie", { Вес: "0,9 кг" }, "FSP-50", 3000),
+  ];
+  const grouped = groupCatalogProducts(products);
+  assert.equal(grouped.length, 2);
+  for (const product of grouped) {
+    assert.deepEqual(product.variants.map(({ label }) => label), ["30 Вт", "50 Вт"]);
+  }
+  assert.match(grouped[0].variantCharacteristics?.["SP-30"] ?? "", /Вес: 2,1 кг/);
+  assert.match(grouped[1].variantCharacteristics?.["FSP-30"] ?? "", /Вес: 0,6 кг/);
+});
+
 test("keeps NS-31 characteristics per selected variant", () => {
   const station = groupCatalogProducts([
     source("portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2", "Портативная зарядная станция SL-31 150 Вт", "portativnye-stantsii", { Ёмкость: "153,6 Вт·ч", "Эквивалентная ёмкость": "48 000 мАч", Размеры: "230 × 130 × 220 мм" }, "NS-31-150", 10_000),

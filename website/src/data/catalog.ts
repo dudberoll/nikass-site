@@ -531,12 +531,11 @@ function modelVariantLabel(product: Product, variant: ProductVariant) {
   const hybridPower = readSpec(specText, /(\d[\d\s.,]*)\s*(?:kW|кВт)(?!\w)/i);
   const capacity = readSpec(specText, /(\d[\d\s.,]*)\s*(?:mAh|мА(?:·)?ч|Ah|А(?:·)?ч)(?!\w)/i);
   const energy = readSpec(specText, /(\d[\d\s.,]*)\s*(?:Wh|Втч|Вт[·.]?ч)(?!\w)/i);
-  const weight = readSpec(specText, /(\d[\d\s.,]*)\s*(?:kg|кг|g|г)(?!\w)/i);
 
   if (product.category === VOLTAGE_INVERTER_CATEGORY && power) return `${power} Вт`;
   if (product.category === "Гибридные инверторы" && hybridPower) return `${hybridPower} кВт`;
   if ((product.category === "AGM аккумуляторы" || product.category === LIFEPO4_CATEGORY) && capacity) return `${capacity} А·ч`;
-  if (product.category === "Солнечные панели" && power) return `${power} Вт${weight ? ` · ${weight}` : ""}`;
+  if (product.category === "Солнечные панели" && power) return `${power} Вт`;
   if (product.category === "POWERBANK" && capacity) return `${capacity} мАч`;
   if (product.category === "Портативные зарядные станции" && power) {
     return [

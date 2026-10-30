@@ -139,12 +139,6 @@ export function createApp({
     trustedProxyClientIpHeader: env.TRUSTED_PROXY_CLIENT_IP_HEADER,
     trustedProxyClientIpPosition: env.TRUSTED_PROXY_CLIENT_IP_POSITION,
   })) app.use('/api/catalog/restock', middleware)
-  for (const middleware of createChatSecurity({
-    bodyLimitBytes: 8_192, rateLimitMax: 5, rateLimitWindowSeconds: 60,
-    trustProxy: env.TRUST_PROXY,
-    trustedProxyClientIpHeader: env.TRUSTED_PROXY_CLIENT_IP_HEADER,
-    trustedProxyClientIpPosition: env.TRUSTED_PROXY_CLIENT_IP_POSITION,
-  })) app.use('/api/catalog/manager-contact', middleware)
 
   const chatRateLimit = createFixedWindowRateLimit({
     errorMessage: 'Too many chat requests',

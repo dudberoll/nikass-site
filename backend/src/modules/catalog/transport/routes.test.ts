@@ -45,6 +45,13 @@ function app() {
   })
 }
 
+test('manager contact uses direct links and no longer accepts contact submissions', async () => {
+  const response = await app().request('/api/catalog/manager-contact', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+  })
+  expect(response.status).toBe(404)
+})
+
 test('exposes the public catalog list and product routes', async () => {
   const api = app()
 

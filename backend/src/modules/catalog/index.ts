@@ -2,8 +2,6 @@ import type { AppEnv } from '../../env'
 import type { DbClient } from '../../db'
 import { RestockService } from './application/restock-service'
 import { createRestockQueue } from './infrastructure/restock-notifications'
-import { ManagerContactService } from './application/manager-contact-service'
-import { createManagerContactQueue, deliverManagerContactNotification } from './infrastructure/manager-contact-notifications'
 import { CatalogService } from './application/catalog-service'
 import type { CatalogClock, CatalogSource } from './application/ports'
 import { CatalogFailure } from './domain/catalog'
@@ -30,8 +28,7 @@ export function createCatalogModule({ env, db, source, clock = systemClock }: Cr
 
   return {
     routes: createCatalogRoutes(service,
-      new RestockService(service, Boolean(env.ORDER_TELEGRAM_BOT_TOKEN && env.ORDER_TELEGRAM_CHAT_ID), createRestockQueue(db)),
-      new ManagerContactService(service, Boolean(env.ORDER_TELEGRAM_BOT_TOKEN && env.ORDER_TELEGRAM_CHAT_ID), createManagerContactQueue(db))),
+      new RestockService(service, Boolean(env.ORDER_TELEGRAM_BOT_TOKEN && env.ORDER_TELEGRAM_CHAT_ID), createRestockQueue(db))),
     service,
   }
 }
