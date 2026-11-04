@@ -1142,7 +1142,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "WJF-3500GST",
         "label": "3 500 Вт",
-        "price": 23925,
+        "price": 24980,
         "availability": "in-stock",
         "image": "/catalog-images/wjf-3500gst_1tpovY.webp",
         "imageSrcSet": "/catalog-images/wjf-3500gst_Z1rsn6i.webp 96w, /catalog-images/wjf-3500gst_ZiUcgB.webp 160w, /catalog-images/wjf-3500gst_1tpovY.webp 320w, /catalog-images/wjf-3500gst_ZLL5q7.webp 640w, /catalog-images/wjf-3500gst_2h3w0t.webp 960w, /catalog-images/wjf-3500gst_1uvB9G.webp 1200w"
@@ -1284,7 +1284,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "WJF-2500GST",
         "label": "2 500 Вт",
-        "price": 15625,
+        "price": 16330,
         "availability": "in-stock",
         "image": "/catalog-images/wjf-2500gst_Z1qV06z.webp",
         "imageSrcSet": "/catalog-images/wjf-2500gst_Z1K747A.webp 96w, /catalog-images/wjf-2500gst_KAeJr.webp 160w, /catalog-images/wjf-2500gst_Z1qV06z.webp 320w, /catalog-images/wjf-2500gst_19xFGb.webp 640w, /catalog-images/wjf-2500gst_Z1yXISK.webp 960w, /catalog-images/wjf-2500gst_Z1LUjmE.webp 1200w"
@@ -1330,7 +1330,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "WJF-1800GST",
         "label": "1 800 Вт",
-        "price": 11450,
+        "price": 11950,
         "availability": "in-stock",
         "image": "/catalog-images/wjf-1800gst_Z1aeJON.webp",
         "imageSrcSet": "/catalog-images/wjf-1800gst_15pM32.webp 96w, /catalog-images/wjf-1800gst_27BMbx.webp 160w, /catalog-images/wjf-1800gst_Z1aeJON.webp 320w, /catalog-images/wjf-1800gst_1DKT22.webp 640w, /catalog-images/wjf-1800gst_ZmAClj.webp 960w, /catalog-images/wjf-1800gst_Hiabf.webp 1200w"
@@ -1425,7 +1425,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "WJF-800GST",
         "label": "800 Вт",
-        "price": 6700,
+        "price": 6980,
         "availability": "in-stock",
         "image": "/catalog-images/wjf-800gst_mAFfG.webp",
         "imageSrcSet": "/catalog-images/wjf-800gst_Z1om5q.webp 96w, /catalog-images/wjf-800gst_1K1pbY.webp 160w, /catalog-images/wjf-800gst_mAFfG.webp 320w, /catalog-images/wjf-800gst_5fieb.webp 640w, /catalog-images/wjf-800gst_Z1bDf6W.webp 960w, /catalog-images/wjf-800gst_11bQ0Y.webp 1200w"
