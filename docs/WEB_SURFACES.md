@@ -89,16 +89,24 @@ rebuilding on every small change is not a substitute for choosing the right rend
 
 ## NIKASS guest checkout exception
 
-NIKASS catalog content is owned by the existing WooCommerce products and native product
-attributes. The catalog adapter maps `Комплектация` and `Дополнительные опции…` attributes to
-`packageContents`, and `Гарантия` to the optional `warranty` text field. It does not invent a
-warranty duration; the legacy `warrantyMonths` field is optional for compatibility. The website
-keeps these sections and specifications per SKU when grouping products, and renders only the
-WooCommerce snapshot on public routes. Browser catalog-editor saves are draft previews only.
-Public images also come from WooCommerce; each grouped variant keeps its source product's
-primary image, which follows selection in the catalog, product page, and cart. Product-specific
-local photo/specification overrides are not applied. The existing manual SSG rebuild remains
-the publication mechanism for content, numeric prices, and new product routes.
+NIKASS public product pages read the checked-in snapshot at
+`website/src/data/catalog-snapshot.ts`; SSG does not request `GET /api/catalog`. The current
+snapshot covers 53 selected SKUs: specifications, kit contents, and warranty values come from
+the supplied catalog workbook, most displayed prices use the verified 2026-10-30 ×5/6 targets;
+the in-stock ordinary panels SP-30, SP-50, and SP-100 use cost ×3 plus 22% VAT, rounded up to the
+next 50 ₽. Product photos are local responsive WebP files under `website/public/catalog-images`.
+The local
+image variants match the photos embedded in the workbook. Product data stays fixed until the
+snapshot is refreshed and the site is rebuilt. Browser catalog-editor saves remain draft previews
+and do not publish changes automatically.
+
+The site keeps specifications, kit contents, warranty, and the source photo per SKU when grouping
+products; selecting a variant changes its photo in the catalog, product page, recommendations, and
+cart. `Комплектация` and `Дополнительные опции…` map to `packageContents`, while `Гарантия` maps
+to the optional `warranty` text field; the site does not invent warranty durations. The legacy
+`warrantyMonths` field remains optional for compatibility. Runtime availability still comes from
+`GET /api/catalog/availability`; the backend remains authoritative for current SKU, price, and
+order checks before checkout.
 
 На 2026-10-07 владелец выбрал исключение для быстро меняющегося наличия при нескольких
 каналах продаж: статический HTML сразу показывает сохранённую цену и контент, React обновляет

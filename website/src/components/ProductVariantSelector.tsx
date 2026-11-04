@@ -12,7 +12,7 @@ const MAX_QUANTITY = 99;
 const useBrowserLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 export default function ProductVariantSelector({ product: cachedProduct }: { product: Product }) {
-  const { stock, failed } = useCatalogAvailability();
+  const { stock } = useCatalogAvailability();
   const product = useMemo(() => applyProductAvailability(cachedProduct, stock), [cachedProduct, stock]);
   const [sku, setSku] = useState(product.variants[0]?.sku);
   const [quantity, setQuantity] = useState(1);
@@ -70,7 +70,6 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
       </div>
       <button className="store-add-button store-add-button-large" type="button" disabled={!isVariantAddable(variant)} data-cart-stage={isVariantAddable(variant) ? "ready" : "blocked"} onClick={add}>{variant.availability === "unavailable" ? "Недоступен" : "Добавить в корзину"}</button>
     </div>}</>}
-    {failed && <p className="store-added-note" role="status">Не удалось обновить наличие. {variant.salesMode === "manager" ? "Уточните его у менеджера." : "Проверим его перед оплатой."}</p>}
     <p className="store-added-note" role="status" aria-live="polite">{message}{message.startsWith("Товар") && <a href="/cart">Открыть корзину</a>}</p>
   </section>;
 }

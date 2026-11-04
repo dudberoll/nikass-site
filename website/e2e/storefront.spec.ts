@@ -1,4 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { catalogSnapshot } from "../src/data/catalog-snapshot";
+
+function catalogItemBySku(sku: string) {
+  const product = catalogSnapshot.find((item) => item.variants.some((variant) => variant.sku === sku))!;
+  return { product, variant: product.variants.find((item) => item.sku === sku)! };
+}
 
 test("catalog opens below the desktop header trigger", async ({ page }) => {
   await page.goto("/");
@@ -183,13 +189,10 @@ test("NS-31 characteristics follow the selected variant", async ({ page }) => {
   await expect(warranty.locator('[data-product-detail-sku="NS-31-300"]')).toHaveText("1 год со дня продажи");
 });
 
-test("WooCommerce photos follow the selected variant in catalog, product page and cart", async ({ page }) => {
-  const api = process.env.CATALOG_BUILD_API_URL ?? "http://127.0.0.1:3000";
-  const response = await page.request.get(`${api}/api/catalog?perPage=100`);
-  expect(response.ok()).toBe(true);
-  const { items } = await response.json();
-  const images = ["PB-20", "PB-50", "PB-60"].map((sku) => items.find((item: { variants: Array<{ sku: string }> }) => item.variants.some((variant) => variant.sku === sku)).images[0]);
+test("local catalog photos follow the selected variant in catalog, product page and cart", async ({ page }) => {
+  const images = ["PB-20", "PB-50", "PB-60"].map((sku) => catalogItemBySku(sku).variant.image!);
   expect(new Set(images).size).toBe(3);
+  expect(images.every((image) => image.startsWith("/catalog-images/"))).toBe(true);
 
   await page.goto("/catalog");
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
@@ -349,12 +352,8 @@ test("empty mobile chat keeps the composer above the shortened viewport", async 
 });
 
 
-test("homepage variants persist into the product page and preorder displays pending price", async ({ page, request }) => {
-  const response = await request.get(`${process.env.CATALOG_BUILD_API_URL ?? "http://127.0.0.1:3000"}/api/catalog?perPage=100`);
-  expect(response.ok()).toBeTruthy();
-  const { items } = await response.json();
-  const model = items.find((item: { variants: Array<{ sku: string }> }) => item.variants.some((variant) => variant.sku === "NS-69-500"));
-  const variant = model.variants.find((item: { sku: string }) => item.sku === "NS-69-500");
+test("homepage variants persist into the product page and preorder displays pending price", async ({ page }) => {
+  const { variant } = catalogItemBySku("NS-69-500");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/#bestsellers");
   const card = page.locator("#bestsellers [data-product-card]").first();
@@ -364,7 +363,7 @@ test("homepage variants persist into the product page and preorder displays pend
   await choice.click();
   await expect(choice).toHaveAttribute("aria-pressed", "true");
   await expect(card.locator(".orbea-bestseller-price strong")).toHaveText(`${new Intl.NumberFormat("ru-RU").format(variant.price)} ₽`);
-  await expect(card.locator(".orbea-bestseller-image img")).toHaveAttribute("src", model.images[0]);
+  await expect(card.locator(".orbea-bestseller-image img")).toHaveAttribute("src", variant.image!);
   await card.getByRole("link", { name: "Выбрать вариант", exact: true }).click();
   await expect(page).toHaveURL(/variant=NS-69-500/);
   await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-69-500");
@@ -372,8 +371,8 @@ test("homepage variants persist into the product page and preorder displays pend
   await page.goto("/catalog");
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
   const solar = page.locator("[data-product-card]").filter({ has: page.getByRole("heading", { name: "Портативная солнечная панель", exact: true }) });
-  const panel = items.find((item: { variants: Array<{ sku: string }> }) => item.variants.some((variant) => variant.sku === "SP-30"));
-  await expect(solar.locator(".store-product-bottom strong")).toHaveText(`от ${new Intl.NumberFormat("ru-RU").format(panel.variants[0].price)} ₽`);
+  const { variant: panelVariant } = catalogItemBySku("SP-30");
+  await expect(solar.locator(".store-product-bottom strong")).toHaveText(`от ${new Intl.NumberFormat("ru-RU").format(panelVariant.price)} ₽`);
   const preorderPanel = solar.getByRole("button", { name: /450 Вт.*Цена уточняется/ });
   if (!(await preorderPanel.isVisible())) await solar.getByRole("button", { name: /Ещё/ }).click();
   await preorderPanel.click();
@@ -381,7 +380,7 @@ test("homepage variants persist into the product page and preorder displays pend
   await expect(solar.locator(".store-product-bottom strong")).toHaveText("Цена уточняется");
   await expect(solar.getByRole("button", { name: "Сообщить о поступлении", exact: true })).toBeVisible();
   await solar.getByRole("button", { name: /^30 Вт.*₽/ }).click();
-  await expect(solar.locator(".store-product-bottom strong")).toHaveText(`${new Intl.NumberFormat("ru-RU").format(panel.variants[0].price)} ₽`);
+  await expect(solar.locator(".store-product-bottom strong")).toHaveText(`${new Intl.NumberFormat("ru-RU").format(panelVariant.price)} ₽`);
   const waiting = page.locator("[data-product-card]").filter({ has: page.locator(".product-availability.is-preorder") });
   expect(await waiting.count()).toBeGreaterThan(0);
   for (const pending of await waiting.all()) {

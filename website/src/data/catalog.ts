@@ -1,3 +1,5 @@
+import { catalogSnapshot } from "./catalog-snapshot";
+
 export type Product = {
   slug: string;
   sku: string;
@@ -86,6 +88,7 @@ export type CatalogApiProduct = {
   category: string;
   discounted?: boolean;
   images: string[];
+  imageSrcSet?: string;
   shortDescription: string;
   description: string;
   characteristics: Record<string, string>;
@@ -98,17 +101,14 @@ export type CatalogApiProduct = {
     oldPrice?: number;
     availability: Availability;
     salesMode?: "manager";
+    image?: string;
+    imageSrcSet?: string;
   }>;
-};
-
-type CatalogApiResponse = {
-  items: CatalogApiProduct[];
 };
 
 type CatalogSelection = Record<string, readonly string[]>;
 
-// The CSV contains 53 catalog rows. Product data still comes only from WooCommerce;
-// this allow-list excludes unrelated published products.
+// The CSV allow-list keeps the local snapshot limited to the storefront catalog.
 const catalogArticlesBySlug: CatalogSelection = Object.fromEntries([
   "invertor-avtomobilnyy-3500",
   "invertor-avtomobilnyy-600",
@@ -318,28 +318,15 @@ export const AVAILABILITY_LABELS: Record<Availability, string> = {
   unavailable: "Недоступен",
 };
 
-const apiBase = (import.meta.env.SSR && import.meta.env.CATALOG_BUILD_API_URL || import.meta.env.PUBLIC_API_URL || "http://localhost:3000").replace(/\/$/, "");
-let catalogPromise: Promise<Product[]> | undefined;
+let catalogProducts: Product[] | undefined;
 
 export async function loadCatalogProducts(scope: "regular" | "discounted" | "all" = "regular") {
-  catalogPromise ??= fetch(`${apiBase}/api/catalog?perPage=100&sort=popularity`, {
-    headers: { Accept: "application/json" },
-  }).then(async (response) => {
-    if (!response.ok) throw new Error(`WooCommerce catalog request failed: ${response.status}`);
-    const payload = await response.json() as CatalogApiResponse;
-    if (!payload || !Array.isArray(payload.items)) throw new Error("WooCommerce catalog response is invalid");
-    const products = selectCatalogProducts(payload.items);
-    if (import.meta.env.SSR && import.meta.env.CATALOG_DEMO_DISCOUNTED === "true") {
-      products.push(...createDemoDiscountedProducts(products));
-    }
-    return products;
-  }).catch((error) => {
-    // Allow a later retry when the API was still starting during static/dev boot.
-    catalogPromise = undefined;
-    throw error;
-  });
+  catalogProducts ??= selectCatalogProducts(catalogSnapshot);
+  if (import.meta.env.SSR && import.meta.env.CATALOG_DEMO_DISCOUNTED === "true" && !catalogProducts.some((product) => product.demo)) {
+    catalogProducts.push(...createDemoDiscountedProducts(catalogProducts));
+  }
 
-  const products = await catalogPromise;
+  const products = catalogProducts;
   return scope === "all" ? products : products.filter((product) => Boolean(product.discounted) === (scope === "discounted"));
 }
 
@@ -349,7 +336,7 @@ export function selectCatalogProducts(
 ) {
   const productsBySlug = new Map(products.map((product) => [product.slug, product]));
   const missing = Object.keys(selection).filter((slug) => !productsBySlug.has(slug));
-  if (missing.length > 0) throw new Error(`WooCommerce catalog is missing selected products: ${missing.join(", ")}`);
+  if (missing.length > 0) throw new Error(`Local catalog snapshot is missing selected products: ${missing.join(", ")}`);
 
   return [
     ...groupCatalogProducts(Object.entries(selection)
@@ -384,9 +371,9 @@ export function mapCatalogProduct(product: CatalogApiProduct, articles: readonly
   const category = categoryLabel(product.category, product.name);
   const normalize = category === PORTABLE_STATION_CATEGORY ? normalizeStationText : (value: string) => value;
   const image = product.images[0] ?? "/assets/images/gear-menu.webp";
-  const variants = product.variants.map((variant) => ({ ...variant, image, sourceSlug: product.slug }));
+  const variants = product.variants.map((variant) => ({ ...variant, image: variant.image ?? image, sourceSlug: product.slug }));
   const primary = variants[0];
-  if (!primary) throw new Error(`WooCommerce product ${product.slug} has no variants`);
+  if (!primary) throw new Error(`Catalog product ${product.slug} has no variants`);
   const article = articles[0] ?? primary.sku;
   const characteristicLines = Object.entries(product.characteristics)
       .filter(([label]) => label !== "Артикул")
@@ -415,6 +402,7 @@ export function mapCatalogProduct(product: CatalogApiProduct, articles: readonly
       ...characteristicLines,
     ].join("\n"),
     image,
+    imageSrcSet: product.imageSrcSet,
     variants,
   };
 }

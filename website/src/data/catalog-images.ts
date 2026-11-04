@@ -54,7 +54,7 @@ export async function optimizeCatalogImages(products: readonly Product[]) {
       optimizeImage(product.image),
       Promise.all(product.variants.map(async (variant) => {
         const optimizedImage = await optimizeImage(variant.image ?? product.image);
-        return { ...variant, image: optimizedImage.src, imageSrcSet: optimizedImage.srcSet };
+        return { ...variant, image: optimizedImage.src, imageSrcSet: optimizedImage.srcSet ?? variant.imageSrcSet };
       })),
       Promise.all((product.images ?? []).slice(1).map(optimizeImage)),
     ]);
@@ -62,7 +62,7 @@ export async function optimizeCatalogImages(products: readonly Product[]) {
     return {
       ...product,
       image: image.src,
-      imageSrcSet: image.srcSet,
+      imageSrcSet: image.srcSet ?? product.imageSrcSet,
       galleryImages,
       variants,
     };
