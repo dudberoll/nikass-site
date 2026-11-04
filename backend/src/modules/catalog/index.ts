@@ -6,6 +6,7 @@ import { CatalogService } from './application/catalog-service'
 import type { CatalogClock, CatalogSource } from './application/ports'
 import { CatalogFailure } from './domain/catalog'
 import { createWooCommerceCatalogSource } from './infrastructure/woocommerce-source'
+import { snapshotCatalogSource } from './infrastructure/snapshot-source'
 import { createCatalogRoutes } from './transport/routes'
 
 type CreateCatalogModuleOptions = {
@@ -34,6 +35,7 @@ export function createCatalogModule({ env, db, source, clock = systemClock }: Cr
 }
 
 function sourceFromEnv(env: AppEnv): CatalogSource {
+  if (env.CATALOG_PROVIDER === 'snapshot') return snapshotCatalogSource
   if (env.CATALOG_PROVIDER !== 'woocommerce') {
     return {
       listProducts: async () => {

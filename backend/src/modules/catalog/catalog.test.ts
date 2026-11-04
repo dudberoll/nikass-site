@@ -7,6 +7,12 @@ const base = {
   JWT_SECRET: '12345678901234567890123456789012',
 }
 
+test('snapshot mode needs no WooCommerce credentials and rejects ignored legacy keys', () => {
+  expect(loadEnv({ ...base, CATALOG_PROVIDER: 'snapshot' }).CATALOG_PROVIDER).toBe('snapshot')
+  expect(() => loadEnv({ ...base, CATALOG_PROVIDER: 'snapshot',
+    WOOCOMMERCE_CONSUMER_KEY: 'ck_unused' })).toThrow('WOOCOMMERCE_CONSUMER_KEY')
+})
+
 test('keeps the catalog disabled until all WooCommerce settings are supplied', () => {
   expect(loadEnv(base).CATALOG_PROVIDER).toBe('disabled')
 

@@ -83,29 +83,8 @@ export function getCatalogCategoryPath(category: string) {
   return match ? `/catalog/category/${match.slug}` : undefined;
 }
 
-export type CatalogApiProduct = {
-  slug: string;
-  name: string;
-  category: string;
-  discounted?: boolean;
-  images: string[];
-  imageSrcSet?: string;
-  shortDescription: string;
-  description: string;
-  characteristics: Record<string, string>;
-  packageContents: string[];
-  warranty?: string;
-  variants: Array<{
-    sku: string;
-    label: string;
-    price: number;
-    oldPrice?: number;
-    availability: Availability;
-    salesMode?: "manager";
-    image?: string;
-    imageSrcSet?: string;
-  }>;
-};
+export type { CatalogApiProduct } from "@web-app-demo/contracts/catalog-snapshot";
+import type { CatalogApiProduct } from "@web-app-demo/contracts/catalog-snapshot";
 
 type CatalogSelection = Record<string, readonly string[]>;
 

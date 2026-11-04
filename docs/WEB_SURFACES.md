@@ -90,7 +90,7 @@ rebuilding on every small change is not a substitute for choosing the right rend
 ## NIKASS guest checkout exception
 
 NIKASS public product pages read the checked-in snapshot at
-`website/src/data/catalog-snapshot.ts`; SSG does not request `GET /api/catalog`. The current
+`packages/contracts/src/catalog-snapshot.ts` (the website keeps a compatibility re-export); SSG does not request `GET /api/catalog`. The current
 snapshot covers 53 selected SKUs: specifications, kit contents, and warranty values come from
 the supplied catalog workbook, most displayed prices use the verified 2026-10-30 ×5/6 targets;
 the in-stock ordinary panels SP-30, SP-50, and SP-100 use cost ×3 plus 22% VAT, rounded up to the
@@ -267,3 +267,11 @@ Before implementation:
 Keep provider deployment details in `DEPLOYMENT.md` or `YANDEX_CLOUD.md`, native IAP setup on the
 `mobile` branch, and app-specific coding conventions in each workspace README. Keep this document
 focused on the product boundaries that every implementation must preserve.
+
+### Current VPS catalog mode — 2026-11-04
+
+The owner confirmed WooCommerce is not used. Cloud.ru uses `CATALOG_PROVIDER=snapshot`: website
+and backend share the checked-in catalog; availability and restock validation require no external
+store. Changes require rebuilding both artifacts. `ORDERS_ENABLED=false`,
+`YOO_KASSA_ENABLED=false`, and `YOO_KASSA_FULFILLMENT_MODE=disabled` keep online purchases off.
+Manager contact buttons are direct links. No WordPress upstream is configured on the new VPS.

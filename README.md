@@ -4,9 +4,9 @@
 > вариантами, корзиной и guest checkout.
 > Запуск сайта вместе с API: `bun run dev:storefront`.
 > Товарные маршруты: `/`, `/catalog`, `/catalog/category/[slug]`, `/catalog/[slug]`, `/cart`, `/checkout`.
-> Закрытый VPS `https://93.188.186.9` использует боевую YooKassa, создание заказов в WooCommerce и Telegram. Контрольная реальная покупка ещё не подтверждена; публичный запуск на домене остаётся следующим этапом.
+> Текущий VPS: Cloud.ru `194.113.34.112`, домен `https://nikass.ru`. Каталог локальный, WooCommerce и онлайн-оплата отключены; товары заказываются через прямые контакты менеджера.
 
-Скрипты для закрытой публикации на Beget VPS: [deploy/README.md](deploy/README.md).
+Текущий порядок публикации на Cloud.ru и история Beget: [deploy/README.md](deploy/README.md).
 
 <p align="center">
   <img src="docs/assets/vibe_tmpl_schema.png" alt="Vibe Coding Template architecture schema" width="100%">

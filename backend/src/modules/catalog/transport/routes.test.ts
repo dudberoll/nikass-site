@@ -37,6 +37,21 @@ const source = {
   listProducts: async () => [catalogProduct],
 }
 
+test('snapshot catalog serves availability and product details without WooCommerce', async () => {
+  const api = createApp({ env: loadEnv({ DATABASE_URL: env.DATABASE_URL, JWT_SECRET: env.JWT_SECRET,
+    CATALOG_PROVIDER: 'snapshot' }), prisma: {} as DbClient })
+  const response = await api.request('/api/catalog/availability')
+  const availability = catalogAvailabilityResponseSchema.parse(await response.json())
+  expect(response.status).toBe(200)
+  expect(availability.items).toHaveLength(53)
+  expect(availability.items[0]?.variants[0]).toMatchObject({ sku: 'NS-69-500', availability: 'in-stock' })
+  const list = await api.request('/api/catalog?perPage=100')
+  expect(list.status).toBe(200)
+  expect(catalogListResponseSchema.parse(await list.json()).total).toBe(53)
+  const detail = await api.request(`/api/catalog/${availability.items[0]!.slug}`)
+  expect(detail.status).toBe(200)
+})
+
 function app() {
   return createApp({
     catalogSource: source,

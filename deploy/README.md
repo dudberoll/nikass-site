@@ -1,5 +1,66 @@
 # NIKASS: сайт на Beget VPS
 
+## Актуальный VPS Cloud.ru — 2026-11-04
+
+Основной домен `https://nikass.ru`, `www` перенаправляется на него. VPS —
+`194.113.34.112`, SSH — `ssh -F deploy/cloud-ru-ssh.conf nikass-cloud-vps`.
+На том же VPS работает NailsProfi: его vhost, файлы и сертификат не изменяем.
+Все действия выполняются существующим пользователем `nikass`; Docker запускается
+через `sudo -n docker`. Пользователь `deploy` не создаётся, права SSH/Docker не расширяются.
+Приведённые ниже старые команды Beget с `deploy@93.188.186.9` относятся к прежнему серверу;
+`deploy.sh` рассчитан на этот прежний доступ и сейчас для Cloud.ru не используется.
+
+Профиль NIKASS: Astro-статика в `/var/www/nikass/releases/<release>`, атомарная ссылка
+`/var/www/nikass/current`, Compose-проект `nikass` в `/srv/nikass`, PostgreSQL 18,
+API на `127.0.0.1:8080` и scheduler. Соседний сайт использует свой каталог.
+`/srv/nikass/.env` и `runtime.env` имеют права `600`; ключи интеграций берутся из
+актуального локального `backend/.env`, пароли новой БД и JWT создаются отдельно.
+Первичный администратор — `shop@nikass.ru`; его случайный пароль доступен только
+оператору в защищённом `.env` на VPS. База создаётся с нуля; данные старого VPS
+не импортируются и старый VPS не очищается.
+
+**WooCommerce и онлайн-оплата не используются.** На сервере задаются
+`CATALOG_PROVIDER=snapshot`, `ORDERS_ENABLED=false`, `YOO_KASSA_ENABLED=false`,
+`YOO_KASSA_FULFILLMENT_MODE=disabled`; переменные `WOOCOMMERCE_*` и старые
+платёжные ключи не передаются runtime. Данные для сайта, API наличия и проверки
+заявок на поступление общие: `packages/contracts/src/catalog-snapshot.ts`.
+Правки цен/наличия публикуются новой сборкой backend и сайта. Заказ у менеджера
+открывает прямые телефонные ссылки и мессенджеры. Заявки на поступление по-прежнему
+проходят через PostgreSQL/outbox и Telegram; тестовые уведомления без запроса не отправлять.
+Nginx использует `nginx-domain.conf.example` без проксирования WordPress на Beget.
+
+Порядок следующей публикации через текущий SSH-профиль:
+
+1. Проверить чистую, отправленную в `origin/main` ветку `main`; сохранить тег
+   `<UTC-время>-<12 символов commit>` для образа и каталога статики.
+2. Локально выполнить проверки backend/website и собрать образ:
+   `docker buildx build --platform linux/amd64 --load -f backend/Dockerfile -t nikass-api:<release> .`.
+3. Передать образ через `docker save | gzip -1 | ssh ... 'sudo -n docker load'`.
+   Все команды Compose выполняются в `/srv/nikass` с `APP_IMAGE_TAG=<release>`:
+   `sudo -n env APP_IMAGE_TAG=<release> docker compose --env-file .env -f compose.yml ...`.
+4. Запустить `up -d --wait db`, затем `run --rm --no-deps --interactive=false
+   -e ADMIN_SEED_EMAIL= -e ADMIN_SEED_PASSWORD= migrate bun scripts/deploy-database.ts`
+   (для уже созданной БД), затем `up -d --force-recreate api scheduler`.
+   Проверить `http://127.0.0.1:8080/health/ready` через SSH.
+5. Собрать сайт с `PUBLIC_API_URL=https://nikass.ru`, `PUBLIC_TEST_MODE=false`,
+   `CATALOG_DEMO_DISCOUNTED=false`, HTTPS-адресами политики и условий.
+   Передать `website/dist/` через rsync в новый каталог релиза и атомарно
+   переключить `current`; записать тег в `/srv/nikass/release.env`.
+6. Проверить HTTPS обоих доменов, каталог, наличие, запрет онлайн-заказов и
+   работоспособность NailsProfi. При откате вернуть прежний тег API/scheduler
+   и прежнюю ссылку `current`; БД автоматически не откатывать.
+
+Сертификат `nikass.ru` / `www.nikass.ru` выпускается отдельно от NailsProfi:
+`sudo certbot certonly --webroot -w /var/www/html --cert-name nikass.ru
+-d nikass.ru -d www.nikass.ru --non-interactive --agree-tos`.
+HTTP-01 открыт только в `/.well-known/acme-challenge/`; прочий HTTP ведёт на HTTPS.
+За продление отвечает `snap.certbot.renew.timer`, hook
+`/etc/letsencrypt/renewal-hooks/deploy/nikass-nginx.sh` проверяет и перезагружает Nginx.
+Проверка: `sudo certbot renew --cert-name nikass.ru --dry-run`.
+
+## История прежнего развёртывания Beget
+
+
 Этот вариант публикует Astro storefront, Bun API, PostgreSQL 18 и планировщик на одном VPS. С 2026-10-07 включён боевой магазин YooKassa и создание оплаченных заказов в WooCommerce. По запросу владельца витрина открыта на `https://nikass.ru` без пароля; YooKassa webhook проверяется backend через API YooKassa. Контрольную реальную покупку владелец проверяет самостоятельно.
 
 Нужны VPS Beget с Ubuntu и установленными Docker/Compose (образ Docker), 2 ГБ RAM как минимум, публичный IPv4, SSH-ключ, WooCommerce REST/Store API, Shop ID и ключ YooKassa выбранного магазина. Certbot устанавливается из Snap, поскольку сертификаты Let's Encrypt для IP требуют версии 5.4+ и профиля `shortlived`; сертификат действует около шести дней и обновляется автоматически. Для оформления нужны реальные опубликованные HTTPS-адреса политики конфиденциальности и условий покупки. Без этих документов форма специально не отправляет персональные данные.

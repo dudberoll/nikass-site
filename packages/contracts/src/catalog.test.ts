@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test'
-import { catalogAvailabilityResponseSchema } from './index'
+import { catalogAvailabilityResponseSchema, type CatalogAvailabilityResponse } from './index'
 
-const response = {
+const response: CatalogAvailabilityResponse = {
   items: [{ slug: 'station', variants: [
     { sku: 'S1', availability: 'in-stock' },
     { sku: 'S2', availability: 'preorder' },

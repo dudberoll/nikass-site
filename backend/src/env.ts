@@ -63,7 +63,7 @@ const envSchema = z.object({
   ORDER_MANAGER_EMAIL: z.preprocess((v) => v === '' ? undefined : v, z.string().email().optional()),
   ORDER_TELEGRAM_BOT_TOKEN: optionalStringSchema,
   ORDER_TELEGRAM_CHAT_ID: optionalStringSchema,
-  CATALOG_PROVIDER: z.enum(['disabled', 'woocommerce']).default('disabled'),
+  CATALOG_PROVIDER: z.enum(['disabled', 'woocommerce', 'snapshot']).default('disabled'),
   CATALOG_CACHE_TTL_SECONDS: z.coerce.number().int().positive().max(300).default(300),
   CATALOG_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().max(30_000).default(10_000),
   WOOCOMMERCE_PRODUCTS_ENDPOINT: optionalUrlSchema,
@@ -450,13 +450,13 @@ const catalogProviderKeys = [
 ] as const
 
 function validateCatalogEnv(env: z.infer<typeof envSchema>, ctx: z.RefinementCtx) {
-  if (env.CATALOG_PROVIDER === 'disabled') {
+  if (env.CATALOG_PROVIDER !== 'woocommerce') {
     for (const key of catalogProviderKeys) {
       if (env[key] !== undefined) {
         ctx.addIssue({
           code: 'custom',
           path: [key],
-          message: `${key} is set but CATALOG_PROVIDER is disabled, so it would be ignored`,
+          message: `${key} is set but CATALOG_PROVIDER is ${env.CATALOG_PROVIDER}, so it would be ignored`,
         })
       }
     }
