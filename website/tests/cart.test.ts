@@ -21,18 +21,22 @@ const product: Product = {
 
 test("merges duplicate lines, caps quantity and strips stale stored fields", () => {
   const variant = product.variants[0];
-  const cart = addCartItem(addCartItem([], product, variant.sku, 98), product, variant.sku, 5);
+  const cart = normalizeCart([
+    { productSlug: product.slug, variantSku: variant.sku, quantity: 98 },
+    { productSlug: product.slug, variantSku: variant.sku, quantity: 5 },
+  ]);
 
   assert.deepEqual(cart, [{ productSlug: product.slug, variantSku: variant.sku, quantity: 99 }]);
   assert.deepEqual(normalizeCart([{ ...cart[0], name: "stale" }, cart[0]]), [{ ...cart[0], quantity: 99 }]);
   assert.deepEqual(parseCart(JSON.stringify({ version: 0, items: cart })), []);
 });
 
-test("blocks preorder and unavailable additions and removes a line at zero", () => {
+test("blocks all new additions while manager ordering is active and removes a line at zero", () => {
   const base = product;
   const preorder: Product = { ...base, variants: [{ ...base.variants[0], sku: "pre", availability: "preorder" }] };
   const unavailable: Product = { ...base, variants: [{ ...base.variants[0], sku: "off", availability: "unavailable" }] };
 
+  assert.deepEqual(addCartItem([], base, base.sku), []);
   assert.deepEqual(addCartItem([], preorder, "pre"), []);
   assert.deepEqual(addCartItem([], unavailable, "off"), []);
   assert.deepEqual(setCartItemQuantity([{ productSlug: base.slug, variantSku: base.sku, quantity: 1 }], base.slug, base.sku, 0), []);

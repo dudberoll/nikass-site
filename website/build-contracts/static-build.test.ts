@@ -99,7 +99,9 @@ test("ships related products, variant state, cart and contract-backed checkout h
   assert.ok(existsSync(resolve(dist, `catalog/${slug}/index.html`)));
   const product = readFileSync(resolve(dist, `catalog/${slug}/index.html`), "utf8");
   assert.match(product, /Рекомендуем в комплект/);
-  assert.match(product, /data-cart-stage="ready"/);
+  assert.match(product, /class="manager-order-notice"/);
+  assert.match(product, /Заказать у менеджера/);
+  assert.doesNotMatch(product, /data-cart-stage="ready"/);
   assert.match(product, /В наличии/);
   for (const route of ["cart/index.html", "checkout/index.html"]) {
     const html = readFileSync(resolve(dist, route), "utf8");

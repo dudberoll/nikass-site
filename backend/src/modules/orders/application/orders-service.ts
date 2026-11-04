@@ -6,10 +6,11 @@ const hash = (token: string) => createHash('sha256').update(token).digest('hex')
 const result = (row: CheckoutAttempt) => ({ state: row.state, orderNumber: row.orderNumber })
 
 export class OrdersService {
-  constructor(private readonly store: OrderStore, private readonly provider: OrderProvider, private readonly allowSubmission = true) {}
+  constructor(private readonly store: OrderStore, private readonly provider: OrderProvider, private readonly allowSubmission = true, private readonly onlineOrderingEnabled = true) {}
 
   async quote(value: OrderQuoteRequest) {
     const input = orderQuoteRequestSchema.parse(value)
+    this.assertOnlineOrdering()
     const { cartToken, totals } = await this.provider.quote(input)
     const checkedTotals = orderTotalsSchema.parse(totals)
     const checkoutToken = randomBytes(32).toString('hex')
@@ -30,6 +31,7 @@ export class OrdersService {
   async status(token: string) { return result(await this.find(token)) }
 
   async submit(token: string) {
+    this.assertOnlineOrdering()
     if (!this.allowSubmission) throw new OrderFailure('unavailable', 'В тестовом режиме реальные заказы не создаются.')
     const row = await this.find(token)
     if (row.state !== 'quoted') return result(row)
@@ -52,6 +54,10 @@ export class OrdersService {
     // If this transaction fails, the durable submitting state blocks duplicate remote writes.
     await this.store.finish(row.id, orderNumber)
     return { state: 'confirmed' as const, orderNumber }
+  }
+
+  private assertOnlineOrdering() {
+    if (!this.onlineOrderingEnabled) throw new OrderFailure('unavailable', 'Онлайн-оформление временно отключено. Закажите товар у менеджера.')
   }
 
   private async find(token: string) {

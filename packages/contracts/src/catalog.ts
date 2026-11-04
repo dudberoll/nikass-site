@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+// Online ordering is paused while the payment provider is unavailable.
+export const CATALOG_MANAGER_ONLY = true
+
 export const catalogAvailabilityResponseSchema = z.object({
   items: z.array(z.object({
     slug: z.string().min(1),

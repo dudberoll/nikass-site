@@ -73,6 +73,26 @@ const reservedOrder: PaymentOrderProvider = {
   cancelPaymentOrder: async () => undefined,
 }
 
+test('paused payments block starts and creation retries but still reconcile existing payments', async () => {
+  const { store, attempt } = makeStore(makeRow({ wooOrderId: 42, cartToken: null, state: 'submitting', paymentState: 'creating' }))
+  store.findPending = async () => [attempt]
+  let creates = 0
+  let reads = 0
+  const service = new PaymentsService(store, {
+    create: async () => { creates++; return pending },
+    get: async () => { reads++; return { ...pending, status: 'succeeded', paid: true } },
+  }, 'https://example.test/checkout', true, { assertInStock: async () => undefined, ...reservedOrder }, true, false)
+  await expect(service.start('a'.repeat(64))).rejects.toThrow('Закажите товар у менеджера')
+  await service.reconcilePending(new Date())
+  expect(creates).toBe(0)
+  expect(reads).toBe(0)
+  Object.assign(attempt, { paymentId, paymentState: 'pending' })
+  await service.reconcilePending(new Date())
+  expect(reads).toBe(1)
+  expect(attempt.paymentState).toBe('succeeded')
+  expect(attempt.fulfillmentState).toBe('queued')
+})
+
 test('reserves and persists one WooCommerce order before creating a hosted payment', async () => {
   const { calls: storeCalls, store, attempt } = makeStore()
   const events: string[] = []

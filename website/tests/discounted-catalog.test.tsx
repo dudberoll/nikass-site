@@ -43,14 +43,14 @@ test("preorder prices are pending in cards and variant details", () => {
   assert.equal(getProductPrice(product, "READY").label, "10\u00a0000 ₽");
 });
 
-test("includes separate discounted stock outside the regular allow-list and preserves a mixed cart", () => {
+test("includes separate discounted stock outside the regular allow-list and blocks new cart additions", () => {
   const products = selectCatalogProducts([regular, discounted, { ...regular, slug: "legacy" }], { station: [] });
   assert.deepEqual(products.map(({ slug }) => slug), ["station", "station-outlet-1"]);
   assert.equal(products[1]?.defectDescription, "Царапина на корпусе");
   assert.deepEqual(products[1]?.images, discounted.images);
   assert.deepEqual(relatedProducts(products[0]!, products), []);
   const cart = products.reduce((items, product) => addCartItem(items, product, product.variants[0]!.sku), [] as ReturnType<typeof addCartItem>);
-  assert.deepEqual(cart.map(({ productSlug, variantSku }) => [productSlug, variantSku]), [["station", "STATION"], ["station-outlet-1", "STATION-OUTLET-1"]]);
+  assert.deepEqual(cart, []);
   const markup = renderToStaticMarkup(<CatalogExplorer products={[products[1]!]} categories={HERO_CATEGORIES} discounted />);
   assert.doesNotMatch(markup, /aria-label="Категории товаров"/);
   assert.doesNotMatch(markup, /href="\/discounted"/);
@@ -94,8 +94,7 @@ test("creates one independent demo variant per regular card in every category wi
     assert.equal(demo.image, originals[index]?.variants[1]?.image);
     assert.deepEqual(demo.images, [demo.image]);
     const cart = addCartItem(addCartItem([], originals[index]!, `ON-${index}`), demo, demo.sku);
-    assert.equal(cart.length, 2);
-    assert.equal(cart[1]?.productSlug, demo.slug);
+    assert.deepEqual(cart, []);
   }
   assert.deepEqual(originals, before);
   assert.deepEqual(createDemoDiscountedProducts(demos), []);

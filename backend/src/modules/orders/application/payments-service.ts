@@ -25,9 +25,11 @@ export class PaymentsService {
     private readonly testMode: boolean,
     private readonly orders: Pick<OrderProvider, 'assertInStock'> & Partial<PaymentOrderProvider>,
     private readonly reserveWooOrderBeforePayment = false,
+    private readonly onlinePaymentsEnabled = true,
   ) {}
 
   async start(token: string) {
+    if (!this.onlinePaymentsEnabled) throw new PaymentFailure('unavailable', 'Онлайн-оплата временно отключена. Закажите товар у менеджера.')
     let row = await this.findByToken(token)
     const input = orderQuoteRequestSchema.parse(row.input)
     if (row.state === 'rejected' || row.paymentState === 'canceled') {
@@ -99,7 +101,7 @@ export class PaymentsService {
       await Promise.all(batch.map(async (row) => {
         try {
           if (row.paymentId) await this.status(row.paymentId)
-          else if (row.paymentState === 'creating') await this.retryPaymentCreation(row, now, retryBefore, idempotencyBefore)
+          else if (this.onlinePaymentsEnabled && row.paymentState === 'creating') await this.retryPaymentCreation(row, now, retryBefore, idempotencyBefore)
         } catch (error) {
           console.error('Pending checkout payment reconciliation failed.', { attemptId: row.id, type: error instanceof Error ? error.name : typeof error })
         }

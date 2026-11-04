@@ -1,6 +1,6 @@
 import type { AppEnv } from '../../env'
 import type { DbClient } from '../../db'
-import type { CartReviewRequest } from '@web-app-demo/contracts'
+import { CATALOG_MANAGER_ONLY, type CartReviewRequest } from '@web-app-demo/contracts'
 import { OrdersService } from './application/orders-service'
 import { PaymentsService } from './application/payments-service'
 import { OrderFailure, PaymentFailure, type OrderProvider, type PaymentProvider } from './application/ports'
@@ -35,9 +35,9 @@ export function createOrdersModule({ env, db, provider, hasManagerOnlyItems }: {
     ? createCdekWidgetService({ account: env.CDEK_ACCOUNT, password: env.CDEK_PASSWORD, environment: env.CDEK_API_ENVIRONMENT, timeoutMs: env.CATALOG_REQUEST_TIMEOUT_MS })
     : undefined
   const payments = new PaymentsService(store, paymentProvider, env.YOO_KASSA_RETURN_URL ?? '', env.YOO_KASSA_TEST_MODE, guardedSource,
-    env.YOO_KASSA_FULFILLMENT_MODE === 'woocommerce')
+    env.YOO_KASSA_FULFILLMENT_MODE === 'woocommerce', !CATALOG_MANAGER_ONLY)
   return {
-    routes: createOrderRoutes(new OrdersService(store, guardedSource, !env.YOO_KASSA_TEST_MODE), payments, cdekWidget),
+    routes: createOrderRoutes(new OrdersService(store, guardedSource, !env.YOO_KASSA_TEST_MODE, !CATALOG_MANAGER_ONLY), payments, cdekWidget),
     reconcilePendingPayments: (now: Date) => payments.reconcilePending(now),
   }
 }

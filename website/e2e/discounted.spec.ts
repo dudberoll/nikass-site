@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("demo discounted variants cover all categories and share the cart without entering checkout", async ({ page }) => {
+test("demo discounted variants cover all categories and use manager contacts", async ({ page }) => {
   await page.goto("/catalog");
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
   const regularCount = await page.locator("[data-product-card]").count();
@@ -19,7 +19,7 @@ test("demo discounted variants cover all categories and share the cart without e
   expect(backBounds!.y + backBounds!.height).toBeLessThan(headingBounds!.y);
   await back.click();
   await expect(page).toHaveURL(/\/catalog$/);
-  await expect(page.getByRole("button", { name: "Все товары", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Все товары", exact: true })).toBeVisible();
   await page.locator(".catalog-category-buttons").getByRole("link", { name: "Уценённые товары" }).click();
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
   await expect(page.locator("[data-product-card]")).toHaveCount(regularCount);
@@ -31,19 +31,10 @@ test("demo discounted variants cover all categories and share the cart without e
   await expect(page.getByRole("navigation", { name: "Категории товаров" })).toHaveCount(0);
   await page.locator("[data-product-card]").first().getByRole("link", { name: "Выбрать вариант" }).click();
   await expect(page.getByText(/Тестовый экземпляр — для проверки/)).toBeVisible();
-  await page.getByRole("button", { name: "Добавить в корзину" }).click();
-  await expect(page.getByRole("status")).toContainText("Товар добавлен");
-
-  await page.goto("/catalog");
-  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
-  await page.locator("[data-product-card]").first().getByRole("link", { name: "Выбрать вариант" }).click();
-  await page.getByRole("button", { name: "Добавить в корзину" }).click();
-  await page.getByLabel("Корзина", { exact: true }).click();
-  await expect(page.locator(".cart-line")).toHaveCount(2);
-  const checkout = page.getByRole("button", { name: "Перейти к оформлению" });
-  await expect(checkout).toBeDisabled();
-  await expect(page.getByText("Удалите тестовые экземпляры из корзины, чтобы оформить заказ.")).toBeVisible();
-  await page.locator(".cart-line").filter({ hasText: "Тестовый экземпляр — не продаётся" }).getByRole("button", { name: "Удалить" }).click();
-  await expect(page.locator(".cart-line")).toHaveCount(1);
-  await expect(checkout).toBeEnabled();
+  await expect(page.locator("astro-island").filter({ has: page.locator(".product-variant-selector") })).not.toHaveAttribute("ssr", "");
+  await page.getByRole("button", { name: "Заказать у менеджера" }).click();
+  const dialog = page.getByRole("dialog", { name: "Заказать у менеджера" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("link")).toHaveCount(4);
+  await expect(page.getByRole("button", { name: "Добавить в корзину" })).toHaveCount(0);
 });

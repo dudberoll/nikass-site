@@ -1,10 +1,25 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import { selectCatalogProducts } from "../src/data/catalog";
 import { catalogSnapshot } from "../src/data/catalog-snapshot";
+
+async function seedCart(page: Page, sku = "WJF-800GST") {
+  const { product } = catalogItemBySku(sku);
+  await page.addInitScript(({ slug, sku }) => sessionStorage.setItem("nikass-cart", JSON.stringify({
+    version: 1, items: [{ productSlug: slug, variantSku: sku, quantity: 1 }],
+  })), { slug: product.slug, sku });
+}
 
 function catalogItemBySku(sku: string) {
   const product = catalogSnapshot.find((item) => item.variants.some((variant) => variant.sku === sku))!;
   return { product, variant: product.variants.find((item) => item.sku === sku)! };
 }
+
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/catalog/availability", (route) => route.fulfill({ json: {
+    items: catalogSnapshot.map(({ slug, variants }) => ({ slug, variants: variants.map(({ sku, availability }) => ({ sku, availability })) })),
+    cachedAt: new Date().toISOString(), stale: false,
+  } }));
+});
 
 test("catalog opens below the desktop header trigger", async ({ page }) => {
   await page.goto("/");
@@ -23,21 +38,30 @@ test("catalog opens below the desktop header trigger", async ({ page }) => {
   await expect(catalogTrigger).toHaveAttribute("aria-expanded", "false");
 });
 
-test("finds by SKU and keeps a checked cart through checkout navigation", async ({ page }) => {
+test("finds by SKU, opens manager contacts and blocks checkout for an existing cart", async ({ page }) => {
+  await seedCart(page);
   await page.goto("/catalog");
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
-  await expect(page.locator("[data-product-card]")).toHaveCount(9);
-  await page.getByLabel("Поиск по каталогу").fill("3204442838");
+  await page.getByLabel("Поиск по каталогу").fill("WJF-800GST");
   await expect(page.locator("[data-product-card]")).toHaveCount(1);
   await page.getByRole("link", { name: "Выбрать вариант" }).last().click();
-  await page.getByRole("button", { name: "Добавить в корзину" }).click();
-  await page.getByLabel("Корзина").click();
-  await expect(page.getByRole("heading", { name: "NIKASS Автомобильный инвертор" })).toBeVisible();
-  await page.getByRole("button", { name: "Увеличить количество" }).click();
-  await expect(page.locator(".cart-summary-row").first()).toContainText("2");
-  await page.getByRole("button", { name: "Перейти к оформлению" }).click();
-  await expect(page).toHaveURL(/\/checkout$/);
-  await expect(page.getByRole("group", { name: "Личные данные" })).toBeVisible();
+  await expect(page.locator(".manager-order-notice")).toHaveText("!Заказ через менеджера");
+  await expect(page.getByRole("button", { name: "Добавить в корзину" })).toHaveCount(0);
+  await expect(page.locator("astro-island").filter({ has: page.locator(".product-variant-selector") })).not.toHaveAttribute("ssr", "");
+  await page.getByRole("button", { name: "Заказать у менеджера" }).click();
+  const dialog = page.getByRole("dialog", { name: "Заказать у менеджера" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("link")).toHaveCount(4);
+  await expect(dialog.getByRole("link", { name: /Позвонить/ })).toHaveAttribute("href", /^tel:/);
+  await expect(dialog.getByRole("link", { name: "Написать в Telegram" })).toHaveAttribute("href", /^https:\/\/t.me\//);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("button", { name: "Заказать у менеджера" })).toBeFocused();
+  await page.getByLabel("Корзина", { exact: true }).click();
+  await expect(page.locator(".cart-line")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Перейти к оформлению" })).toBeDisabled();
+  await page.getByRole("link", { name: "Связаться с менеджером" }).click();
+  await expect(page.locator(".manager-order-notice")).toBeVisible();
 });
 
 test("product page shows availability and related products", async ({ page }) => {
@@ -69,27 +93,25 @@ test("portable station description opens the dacha article", async ({ page }) =>
   await expect(page.getByRole("link", { name: "Вернуться в каталог" })).toBeHidden();
 });
 
-test("product page adds the selected quantity", async ({ page }) => {
-  await page.goto("/catalog");
-  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
-  await page.getByLabel("Поиск по каталогу").fill("3204442838");
-  await page.locator("[data-product-card] a[href^='/catalog/']").first().click();
-
-  const quantity = page.getByRole("group", { name: /Количество/ });
-  await quantity.getByRole("button", { name: "Увеличить количество" }).click();
-  await expect(quantity.locator("span")).toHaveText("2");
-  await page.getByRole("button", { name: "Добавить в корзину" }).click();
-  await expect(page.getByRole("status")).toContainText("2 шт.");
+test("manager contact panel is the same for solar panels and other in-stock products", async ({ page }) => {
+  for (const sku of ["SP-30", "PB-20", "NS-31-300"]) {
+    const product = selectCatalogProducts(catalogSnapshot).find((item) => item.variants.some((variant) => variant.sku === sku))!;
+    await page.goto(`/catalog/${product.slug}?variant=${sku}`);
+    await expect(page.locator(".manager-order-notice")).toBeVisible();
+    await expect(page.getByRole("group", { name: /Количество/ })).toHaveCount(0);
+    await expect(page.locator("astro-island").filter({ has: page.locator(".product-variant-selector") })).not.toHaveAttribute("ssr", "");
+    await page.getByRole("button", { name: "Заказать у менеджера" }).click();
+    const dialog = page.getByRole("dialog", { name: "Заказать у менеджера" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("link")).toHaveCount(4);
+    await dialog.getByRole("button", { name: "Закрыть окно" }).click();
+    await expect(dialog).toBeHidden();
+  }
 });
 
 test("checkout offers delivery and pickup before the address step", async ({ page }) => {
-  await page.goto("/catalog");
-  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
-  await page.getByLabel("Поиск по каталогу").fill("3204442838");
-  await page.locator("[data-product-card] a[href^='/catalog/']").first().click();
-  await page.getByRole("button", { name: "Добавить в корзину" }).click();
-  await page.getByLabel("Корзина").click();
-  await page.getByRole("button", { name: "Перейти к оформлению" }).click();
+  await seedCart(page);
+  await page.goto("/checkout");
 
   await page.getByLabel("Имя и фамилия").fill("Анна Иванова");
   await page.getByLabel("Телефон").fill("+7 999 123-45-67");
@@ -166,15 +188,11 @@ test("NS-31 characteristics follow the selected variant", async ({ page }) => {
   await expect(visibleSpecs).toContainText("23 × 13 × 22 см");
   await expect(visibleSpecs).toContainText("307,2 Вт·ч");
   await expect(visibleSpecs).not.toContainText("153,6 Вт·ч");
-  const quantity = page.getByRole("group", { name: /Количество/ });
-  await quantity.getByRole("button", { name: "Увеличить количество" }).click();
-  await quantity.getByRole("button", { name: "Увеличить количество" }).click();
-  await expect(quantity.locator("span")).toHaveText("3");
+  await expect(page.getByRole("button", { name: "Заказать у менеджера" })).toBeVisible();
 
   await page.goBack();
   await expect(page).toHaveURL(/\/catalog\/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2$/);
   await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-31-150");
-  await expect(quantity.locator("span")).toHaveText("1");
   await page.goForward();
   await expect(page).toHaveURL(/variant=NS-31-300/);
   await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-31-300");
@@ -190,6 +208,7 @@ test("NS-31 characteristics follow the selected variant", async ({ page }) => {
 });
 
 test("local catalog photos follow the selected variant in catalog, product page and cart", async ({ page }) => {
+  await seedCart(page, "PB-60");
   const images = ["PB-20", "PB-50", "PB-60"].map((sku) => catalogItemBySku(sku).variant.image!);
   expect(new Set(images).size).toBe(3);
   expect(images.every((image) => image.startsWith("/catalog-images/"))).toBe(true);
@@ -212,7 +231,6 @@ test("local catalog photos follow the selected variant in catalog, product page 
   await page.getByRole("button", { name: /60\s*000 мАч/ }).click();
   await expect(page.locator(".product-gallery img")).toHaveAttribute("src", images[2]);
   await expect.poll(() => page.locator(".product-gallery img").evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
-  await page.getByRole("button", { name: "Добавить в корзину" }).click();
   await page.getByLabel("Корзина").click();
   await expect(page.locator(".cart-line-image img")).toHaveAttribute("src", images[2]);
   await page.locator(".cart-line-image").click();
@@ -221,14 +239,8 @@ test("local catalog photos follow the selected variant in catalog, product page 
 });
 
 test("moves from personal details to the Yandex-assisted delivery address", async ({ page }) => {
-  await page.goto("/catalog");
-  await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
-  await page.getByLabel("Поиск по каталогу").fill("3204442838");
-  await expect(page.locator("[data-product-card]")).toHaveCount(1);
-  await page.getByRole("link", { name: "Выбрать вариант" }).last().click();
-  await page.getByRole("button", { name: "Добавить в корзину" }).click();
-  await page.getByLabel("Корзина").click();
-  await page.getByRole("button", { name: "Перейти к оформлению" }).click();
+  await seedCart(page);
+  await page.goto("/checkout");
 
   await expect(page.getByRole("group", { name: "Личные данные" })).toBeVisible();
   await expect(page.getByRole("group", { name: "Адрес доставки" })).toBeHidden();
@@ -254,23 +266,12 @@ test("moves from personal details to the Yandex-assisted delivery address", asyn
   await page.getByRole("button", { name: "Перейти к адресу" }).click();
 
   await expect(page.getByRole("group", { name: "Личные данные" })).toBeHidden();
-  await expect(page.getByRole("group", { name: "Адрес" })).toBeVisible();
-  await expect(page.locator('fieldset:not([hidden]) label[for="addressSearch"]')).toHaveCount(0);
-  await expect(page.getByPlaceholder("Дом / корпус")).toBeVisible();
-  await expect(page.locator('fieldset:not([hidden]) label[for="comment"]')).toBeVisible();
-  await expect(page.locator('fieldset:not([hidden]) label[for="promoCode"]')).toBeVisible();
-  const manualAddressButton = page.getByRole("button", { name: "Ввести адрес вручную" });
-  if (await manualAddressButton.isVisible()) await manualAddressButton.click();
-  await expect(page.getByPlaceholder("Регион / область")).toBeVisible();
-  await expect(page.getByPlaceholder("Город")).toBeVisible();
+  await expect(page.getByRole("region", { name: "2. Адрес" })).toBeVisible();
+  await page.getByRole("button", { name: /Курьер/ }).click();
+  await page.getByRole("button", { name: "Ввести адрес вручную" }).click();
+  await expect(page.locator("#cdek-manual-address-fields")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Город", exact: true })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Улица", exact: true })).toBeVisible();
-  await expect(page.getByPlaceholder("Квартира / офис (необязательно)")).toBeVisible();
-  await expect(page.getByPlaceholder("Почтовый индекс")).toBeVisible();
-  await expect(page.locator("#manual-address-fields")).toBeVisible();
-  await expect(page.locator("#addressSearch")).toBeHidden();
-
-  await page.getByRole("button", { name: "Перейти к оплате" }).click();
-  await expect(page.getByLabel("Регион / область")).toBeFocused();
 });
 
 test("solution CTA points to the system builder", async ({ page }) => {

@@ -14,7 +14,7 @@ test('preorder offers a restock request instead of a cart or quantity control', 
   assert.match(markup, /Сообщить о поступлении/);
   assert.doesNotMatch(markup, /Добавить в корзину|Оформить предзаказ|Увеличить количество/);
   const inStock = renderToStaticMarkup(<ProductVariantSelector product={{ ...product, variants: [{ ...product.variants[0]!, availability: 'in-stock' }] }} />);
-  assert.match(inStock, /Добавить в корзину/);
+  assert.match(inStock, /Заказать у менеджера/);
   assert.doesNotMatch(inStock, /Сообщить о поступлении/);
 });
 
@@ -32,7 +32,7 @@ test('live availability switches a cached SKU to a restock request without chang
     { ...product.variants[0]!, sourceSlug: 'source-station', availability: 'in-stock' },
   ] };
   const before = structuredClone(cached);
-  assert.match(renderToStaticMarkup(<ProductVariantSelector product={cached} />), /Добавить в корзину/);
+  assert.match(renderToStaticMarkup(<ProductVariantSelector product={cached} />), /Заказать у менеджера/);
   const sold = applyProductAvailability(cached, new Map([['source-station\0S1', 'preorder']]));
   assert.deepEqual(sold.variants[0], { ...cached.variants[0]!, availability: 'preorder' });
   assert.equal(sold.slug, cached.slug);

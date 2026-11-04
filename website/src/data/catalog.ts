@@ -1,3 +1,4 @@
+import { CATALOG_MANAGER_ONLY } from "@web-app-demo/contracts";
 import { catalogSnapshot } from "./catalog-snapshot";
 
 export type Product = {
@@ -642,7 +643,11 @@ export function getSelectedVariant(product: Product, sku?: string) {
 }
 
 export function isVariantAddable(variant: ProductVariant) {
-  return variant.availability === "in-stock";
+  return variant.availability === "in-stock" && !isVariantManagerOnly(variant);
+}
+
+export function isVariantManagerOnly(variant: ProductVariant) {
+  return variant.salesMode === "manager" || (CATALOG_MANAGER_ONLY && variant.availability === "in-stock");
 }
 
 export function productAvailability(product: Product): Availability {

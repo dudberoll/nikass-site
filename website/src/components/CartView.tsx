@@ -1,7 +1,7 @@
 import { cartReviewRequestSchema, paymentStatusResponseSchema } from "@web-app-demo/contracts";
 import { useEffect, useMemo, useState } from "react";
 
-import { AVAILABILITY_LABELS, displayProductSku, formatPrice, formatVariantPrice, type Product } from "../data/catalog";
+import { AVAILABILITY_LABELS, isVariantManagerOnly, displayProductSku, formatPrice, formatVariantPrice, type Product } from "../data/catalog";
 import { getCartCount, readCart, removeCartItem, saveCart, setCartItemQuantity, subscribeToCart, type CartLine, type CartStorageError } from "../lib/cart";
 import { clearActivePayment, readActiveSavedPayment, requestCheckout, saveCheckoutSnapshot, setActivePayment, type SavedPayment } from "../lib/checkout-session";
 import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
@@ -102,12 +102,12 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
   const hasDemo = lines.some(({ product }) => product.demo);
   const preorder = lines.some(({ variant }) => variant.availability === "preorder");
   const unavailable = lines.some(({ variant }) => variant.availability === "unavailable");
-  const managerOnly = lines.some(({ variant }) => variant.salesMode === "manager");
+  const managerOnly = lines.some(({ variant }) => isVariantManagerOnly(variant));
   const blocked = hasDemo || preorder || unavailable || managerOnly;
   function update(next: CartLine[]) { const state = saveCart(next); setCart(state.items); setError(state.error); }
   function checkout() {
     if (hasDemo) return setCheckoutError("Удалите тестовые экземпляры из корзины, чтобы оформить заказ.");
-    if (managerOnly) return setCheckoutError("Товары через менеджера нельзя оплатить онлайн. Удалите их из корзины, чтобы оформить остальные товары.");
+    if (managerOnly) return setCheckoutError("Эти товары оформляются через менеджера. Свяжитесь с ним на странице товара.");
     if (preorder) return setCheckoutError("Этот товар можно только добавить в список ожидания. Удалите его из корзины и оставьте заявку на странице товара.");
     if (unavailable) return setCheckoutError("Удалите недоступные товары из корзины перед оформлением.");
     const parsed = cartReviewRequestSchema.safeParse({ version: 1, items: cart.map((line) => ({ slug: line.productSlug, sku: line.variantSku, quantity: line.quantity })) });
@@ -126,7 +126,7 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
         <p className="store-product-category">{product.category}</p><h2><a href={`/catalog/${product.slug}`}>{product.name}</a></h2>
         {product.demo && <p className="store-product-card-description">Тестовый экземпляр — не продаётся</p>}
         <p>SKU: {displayProductSku(product, variant.sku)} · {AVAILABILITY_LABELS[variant.availability]}</p><strong>{formatVariantPrice(variant)}</strong>
-        {variant.salesMode === "manager" && <p className="cart-checkout-note">Этот товар оформляется через менеджера. <a href={`/catalog/${product.slug}?variant=${encodeURIComponent(variant.sku)}`}>Связаться с менеджером</a></p>}
+        {isVariantManagerOnly(variant) && <p className="cart-checkout-note">Этот товар оформляется через менеджера. <a href={`/catalog/${product.slug}?variant=${encodeURIComponent(variant.sku)}`}>Связаться с менеджером</a></p>}
         {variant.availability === "preorder" && <p className="cart-checkout-note">Этот вариант нельзя купить сейчас. Удалите его из корзины и оставьте заявку на странице товара.</p>}
         {variant.availability === "unavailable" && <p className="cart-checkout-note">Этот вариант больше недоступен. Удалите его перед оформлением.</p>}
         <div className="cart-quantity" role="group" aria-label={`Количество ${product.name}`}>
@@ -137,6 +137,6 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
         </div>
       </div>
     </article>)}</div>
-    <aside className="cart-summary"><p className="store-eyebrow">ИТОГО</p><h2>Ваш заказ</h2><div className="cart-summary-row"><span>Товаров</span><strong>{getCartCount(cart)}</strong></div><div className="cart-summary-row cart-summary-total"><span>Сумма</span><strong>{pendingPrice ? "Цена уточняется" : formatPrice(total)}</strong></div><button className="store-primary-button" type="button" disabled={blocked} onClick={checkout}>Перейти к оформлению</button><button className="cart-clear" type="button" onClick={() => { if (confirm("Очистить всю корзину?")) update([]); }}>Очистить корзину</button>{managerOnly && <p className="cart-checkout-note">Товары через менеджера нельзя оформить онлайн. Удалите их из корзины, чтобы перейти к оформлению остальных товаров.</p>}{preorder && <p className="cart-checkout-note">Товары с нулевым остатком нельзя оформить или оплатить. Для уведомления откройте карточку товара и оставьте заявку.</p>}{unavailable && <p className="cart-checkout-note">В корзине есть недоступный вариант.</p>}{hasDemo && <p className="cart-checkout-note">Удалите тестовые экземпляры из корзины, чтобы оформить заказ.</p>}{checkoutError && <p className="cart-checkout-note" role="alert">{checkoutError}</p>}</aside>
+    <aside className="cart-summary"><p className="store-eyebrow">ИТОГО</p><h2>Ваш заказ</h2><div className="cart-summary-row"><span>Товаров</span><strong>{getCartCount(cart)}</strong></div><div className="cart-summary-row cart-summary-total"><span>Сумма</span><strong>{pendingPrice ? "Цена уточняется" : formatPrice(total)}</strong></div><button className="store-primary-button" type="button" disabled={blocked} onClick={checkout}>Перейти к оформлению</button><button className="cart-clear" type="button" onClick={() => { if (confirm("Очистить всю корзину?")) update([]); }}>Очистить корзину</button>{managerOnly && <p className="cart-checkout-note">Эти товары оформляются через менеджера. Для заказа откройте страницу товара и свяжитесь с ним.</p>}{preorder && <p className="cart-checkout-note">Товары с нулевым остатком нельзя оформить или оплатить. Для уведомления откройте карточку товара и оставьте заявку.</p>}{unavailable && <p className="cart-checkout-note">В корзине есть недоступный вариант.</p>}{hasDemo && <p className="cart-checkout-note">Удалите тестовые экземпляры из корзины, чтобы оформить заказ.</p>}{checkoutError && <p className="cart-checkout-note" role="alert">{checkoutError}</p>}</aside>
   </div></>;
 }

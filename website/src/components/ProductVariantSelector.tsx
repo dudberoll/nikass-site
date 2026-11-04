@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent } from "react";
 
-import { AVAILABILITY_LABELS, displayProductSku, formatPrice, formatVariantPrice, getSelectedVariant, isVariantAddable, type Product } from "../data/catalog";
+import { AVAILABILITY_LABELS, isVariantManagerOnly, displayProductSku, formatPrice, formatVariantPrice, getSelectedVariant, isVariantAddable, type Product } from "../data/catalog";
 import { addCartItem, readCart, saveCart } from "../lib/cart";
 import { productVariantUrl, selectedVariantSku } from "../lib/product-variant-url";
 import { productStructuredData, serializeJsonLd } from "../lib/seo";
@@ -42,7 +42,7 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
   }
 
   return <section className="product-variant-selector" aria-labelledby="variant-title">
-    {variant.salesMode === "manager" && <div className="manager-order-notice" role="note">
+    {isVariantManagerOnly(variant) && <div className="manager-order-notice" role="note">
       <span className="manager-order-notice-icon" aria-hidden="true">!</span>
       <p className="manager-order-notice-copy"><strong>Заказ через менеджера</strong></p>
     </div>}
@@ -54,7 +54,7 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
       {variant.availability !== "preorder" && variant.oldPrice && <del>{formatPrice(variant.oldPrice)}</del>}
       <span className={`product-availability is-${variant.availability}`} aria-live="polite">{AVAILABILITY_LABELS[variant.availability]}</span>
     </div>
-    {variant.salesMode === "manager"
+    {isVariantManagerOnly(variant)
       ? <div className="manager-contact-action">
         <ManagerContactDialog product={product} variant={variant} large key={variant.sku} />
         {product.category === "Солнечные панели" && <p className="product-seller">Продавец: ООО «Ника»</p>}

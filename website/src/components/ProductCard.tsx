@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AVAILABILITY_LABELS, formatVariantPrice, getProductPrice, getSelectedVariant, productAvailability, type Product } from "../data/catalog";
+import { AVAILABILITY_LABELS, isVariantManagerOnly, formatVariantPrice, getProductPrice, getSelectedVariant, productAvailability, type Product } from "../data/catalog";
 import RestockRequest from "./RestockRequest";
 import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
 
@@ -17,8 +17,8 @@ export default function ProductCard({ product: cachedProduct, appearance = "cata
   const productHref = `/catalog/${product.slug}${selectedSku ? `?variant=${encodeURIComponent(selectedSku)}` : ""}`;
   const moreVariantsOnDesktop = product.variants.length > 4;
   const moreVariantsOnPhone = product.variants.length > 2;
-  const restock = variant?.salesMode !== "manager" && variant?.availability === "preorder" && (product.variants.length === 1 || Boolean(selectedSku));
-  const managerOnly = selectedSku ? variant?.salesMode === "manager" : product.variants.every((item) => item.salesMode === "manager");
+  const restock = variant && !isVariantManagerOnly(variant) && variant.availability === "preorder" && (product.variants.length === 1 || Boolean(selectedSku));
+  const managerOnly = selectedSku ? variant && isVariantManagerOnly(variant) : product.variants.some(isVariantManagerOnly);
   return <article className={bestseller ? "orbea-bestseller-card" : "store-product-card"} data-product-card data-variant-count={product.variants.length}>
     <a className={bestseller ? "orbea-bestseller-image" : "store-product-image"} href={productHref}><img src={variant?.image ?? product.image} srcSet={variant?.imageSrcSet ?? product.imageSrcSet} sizes={bestseller ? "(max-width: 900px) 45vw, 260px" : "(max-width: 900px) calc((100vw - 56px) / 2), (max-width: 1200px) 24vw, 300px"} alt={product.name} loading="lazy" /></a>
     <div className={bestseller ? "orbea-bestseller-copy" : "store-product-card-body"}>
