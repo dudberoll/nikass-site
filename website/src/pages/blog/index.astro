@@ -29,7 +29,7 @@ import "../../styles/global.css";
       <div class="blog-grid">
         {blogEntries.map((entry) => (
           <a class="blog-card" href={`/blog/${entry.slug}`}>
-            <div class="blog-card-media"><img src={`/assets/images/${entry.image}`} alt="" loading="lazy" /></div>
+            {!entry.hideCardImage && <div class="blog-card-media"><img src={`/assets/images/${entry.image}`} alt="" loading="lazy" /></div>}
             <div class="blog-card-copy">
               <div class="blog-card-meta"><span>{entry.date}</span><span>{entry.category}</span></div>
               <h2>{entry.title}</h2>

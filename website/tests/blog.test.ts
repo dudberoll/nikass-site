@@ -19,3 +19,15 @@ test("energy article recommends a station and a solar panel in bestseller cards"
   assert.ok(articlePage.includes("Солнечные панели"));
   assert.ok(homepageStyles.includes(".blog-recommended-products .orbea-bestsellers-grid"));
 });
+
+test("new SEO articles have separate pages, metadata and no visible photos", async () => {
+  const { seoEntries, blogEntries } = await import("../src/data/blog");
+  assert.equal(seoEntries.length, 10);
+  assert.equal(new Set(blogEntries.map((entry) => entry.slug)).size, blogEntries.length);
+  for (const entry of seoEntries) {
+    assert.ok(blogEntries.includes(entry));
+    assert.ok(entry.seoTitle && entry.summary && entry.blocks?.length);
+    assert.ok(entry.hideImage && entry.hideCardImage);
+    assert.ok(entry.blocks.some((block) => block.type === "links"));
+  }
+});

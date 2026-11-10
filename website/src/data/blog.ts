@@ -1,3 +1,7 @@
+import { seoEntries } from "./seo-articles";
+
+export { seoEntries };
+
 export type BlogEntry = {
   slug: string;
   kind: "story" | "direction";
@@ -5,12 +9,14 @@ export type BlogEntry = {
   date: string;
   tag?: string;
   title: string;
+  seoTitle?: string;
   body?: string;
   image: string;
   summary: string;
   content: [string, string, string, string, string];
   blocks?: ArticleBlock[];
   hideImage?: boolean;
+  hideCardImage?: boolean;
   recommendedProductSlugs?: string[];
 };
 
@@ -271,4 +277,4 @@ export const directionEntries: BlogEntry[] = [
   },
 ];
 
-export const blogEntries = [...storyEntries, ...directionEntries];
+export const blogEntries = [...seoEntries, ...storyEntries, ...directionEntries];

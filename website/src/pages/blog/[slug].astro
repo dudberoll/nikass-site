@@ -16,7 +16,7 @@ export function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const articleTitle = `${entry.title} — Блог NIKASS`;
+const articleTitle = entry.seoTitle ?? `${entry.title} — Блог NIKASS`;
 const articleImage = `/assets/images/${entry.image}`;
 const breadcrumbItems = [
   { name: "Главная", url: "/" },
