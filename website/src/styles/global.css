@@ -460,6 +460,9 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .store-eyebrow, .store-product-category { margin: 0; color: #666; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 .store-intro h1, .cart-page > h1 { max-width: 720px; margin: 18px 0 14px; font-size: clamp(38px, 6vw, 76px); font-weight: 500; line-height: .96; letter-spacing: -.06em; }
 .store-intro > p:last-child { max-width: 520px; margin: 0; color: #5f5f5b; font-size: 20px; line-height: 1.25; }
+@media (min-width: 901px) {
+  .blog-page .store-intro, .blog-page .store-intro h1 { max-width: none; }
+}
 .catalog-intro > p:last-child { max-width: none; }
 .catalog-category-buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: -20px 0 40px; }
 .catalog-category-buttons :is(button, a) { display: flex; align-items: center; justify-content: center; text-align: center; text-decoration: none; min-height: 48px; padding: 12px 18px; border: 1px solid #d4d4ce; border-radius: 40px; background: #fff; color: #111; font-size: 14px; font-weight: 500; transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .15s ease; }
