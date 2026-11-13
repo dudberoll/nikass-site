@@ -3,6 +3,7 @@ import type { BlogEntry } from "./blog";
 export const seoEntries: BlogEntry[] = [
   {
     "slug": "solar-panels-30-50-100-watts",
+    "recommendedProductSlugs": ["portativnaya-solnechnaya-panel-30w-18-v", "gibkaya-solnechnaya-panel-30w-18v"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -60,19 +61,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Для редкой зарядки небольших устройств рассмотрите 30 Вт. Для более быстрого пополнения компактного накопителя — 50 Вт. Для регулярной зарядки станции — 100 Вт. Панели NIKASS SP-30, SP-50 и SP-100 оснащены кабелем DC5521 длиной 3 метра; для зарядки телефона напрямую потребуется совместимое устройство с USB-выходом."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Солнечные панели",
-            "href": "/catalog/category/solnechnye-paneli"
-          }
-        ]
       }
     ],
     "content": [
@@ -85,6 +73,7 @@ export const seoEntries: BlogEntry[] = [
   },
   {
     "slug": "why-solar-panel-produces-less",
+    "recommendedProductSlugs": ["portativnaya-solnechnaya-panel-30w-18-v", "gibkaya-solnechnaya-panel-30w-18v"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -134,19 +123,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Установите панель на открытом месте без тени, направьте к солнцу, поддерживайте поверхность чистой и периодически корректируйте наклон. Сравнивайте показатели в разные часы: одно мгновенное значение не характеризует панель целиком."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Солнечные панели",
-            "href": "/catalog/category/solnechnye-paneli"
-          }
-        ]
       }
     ],
     "content": [
@@ -159,6 +135,7 @@ export const seoEntries: BlogEntry[] = [
   },
   {
     "slug": "solar-panels-in-winter",
+    "recommendedProductSlugs": ["portativnaya-solnechnaya-panel-30w-18-v", "gibkaya-solnechnaya-panel-30w-18v"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -208,19 +185,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Да, для дополнительной энергии на связь, свет и небольшие устройства. Но для зимней автономности важно закладывать меньшую солнечную выработку и достаточную ёмкость накопителя."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Солнечные панели",
-            "href": "/catalog/category/solnechnye-paneli"
-          }
-        ]
       }
     ],
     "content": [
@@ -233,6 +197,7 @@ export const seoEntries: BlogEntry[] = [
   },
   {
     "slug": "solar-panel-for-power-station",
+    "recommendedProductSlugs": ["portativnaya-solnechnaya-panel-30w-18-v", "portativnaya-elektrostantsiya-168000-mah-600w"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -298,19 +263,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Проверяйте параметры в порядке: напряжение → ток → мощность → разъём."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Перейти в каталог",
-            "href": "/catalog/category/solnechnye-paneli"
-          }
-        ]
       }
     ],
     "content": [
@@ -323,6 +275,7 @@ export const seoEntries: BlogEntry[] = [
   },
   {
     "slug": "power-station-runtime",
+    "recommendedProductSlugs": ["portativnaya-elektrostantsiya-168000-mah-600w", "portativnaya-elektrostantsiya-560000-mah-2000w-1792wh"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -380,19 +333,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Для нагрузки 100 Вт на пять часов нужно 500 Вт·ч энергии для приборов. При коэффициенте 0,8 разумный расчётный ориентир — аккумулятор от 625 Вт·ч. Для холодильников и других циклических нагрузок отдельно оценивают среднее потребление."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Портативные станции",
-            "href": "/catalog"
-          }
-        ]
       }
     ],
     "content": [
@@ -405,6 +345,7 @@ export const seoEntries: BlogEntry[] = [
   },
   {
     "slug": "power-station-for-refrigerator",
+    "recommendedProductSlugs": ["portativnaya-elektrostantsiya-168000-mah-600w", "portativnaya-elektrostantsiya-560000-mah-2000w-1792wh"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -462,19 +403,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Найдите энергопотребление холодильника в кВт·ч за сутки или год, определите нужную длительность резерва, затем проверьте пусковой запас станции. Для техники с двигателями обычно предпочтительна чистая синусоида."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Портативные станции",
-            "href": "/catalog"
-          }
-        ]
       }
     ],
     "content": [
@@ -487,6 +415,7 @@ export const seoEntries: BlogEntry[] = [
   },
   {
     "slug": "ups-inverter-or-power-station",
+    "recommendedProductSlugs": ["avtonomnyy-gibridnyy-invertor-ibp-1-2-kvt", "portativnaya-elektrostantsiya-168000-mah-600w"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -544,19 +473,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Если нужны роутер, две лампы и ноутбук, часто достаточно портативной станции. Если требуется питание холодильника, насоса и освещения на сутки, понадобится более ёмкое решение с учётом пусковых нагрузок."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Каталог",
-            "href": "/catalog"
-          }
-        ]
       }
     ],
     "content": [
@@ -569,6 +485,7 @@ export const seoEntries: BlogEntry[] = [
   },
   {
     "slug": "pure-sine-wave-and-surge-power",
+    "recommendedProductSlugs": ["invertor-avtomobilnyy-800", "avtonomnyy-gibridnyy-invertor-ibp-1-2-kvt"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -626,19 +543,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Причиной может быть пусковой ток, просадка напряжения аккумулятора или ограничение по току питания. Чистая синусоида и пусковой запас решают разные задачи — оба параметра нужно оценивать отдельно."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Инверторы",
-            "href": "/catalog"
-          }
-        ]
       }
     ],
     "content": [
@@ -651,6 +555,7 @@ export const seoEntries: BlogEntry[] = [
   },
   {
     "slug": "agm-vs-lifepo4",
+    "recommendedProductSlugs": ["svintsovo-kislotnyy-germetichnyy-akkumulyator-65ah-12v", "litiy-zhelezo-fosfatnyy-akkumulyator-nslfp-12-8-v-100-a-ch"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -708,19 +613,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Не всегда напрямую: отличаются зарядные профили, рабочие напряжения и ограничения по току. При замене нужно учитывать характеристики конкретного ИБП и аккумулятора."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Аккумуляторы",
-            "href": "/catalog"
-          }
-        ]
       }
     ],
     "content": [
@@ -733,6 +625,7 @@ export const seoEntries: BlogEntry[] = [
   },
   {
     "slug": "home-energy-storage-system",
+    "recommendedProductSlugs": ["sistema-hraneniya-energii-ess-10-240-vt-ch-6-2-kvt", "sistema-hraneniya-energii-ess-1-280-vt-ch-600-vt"],
     "kind": "story",
     "category": "Практика",
     "date": "NIKASS",
@@ -798,19 +691,6 @@ export const seoEntries: BlogEntry[] = [
       {
         "type": "paragraph",
         "text": "Составьте список приборов, рассчитайте их одновременную и пусковую мощность, затем определите нужное время автономности и запас энергии. Так подбор будет основан на реальном потреблении, а не только на площади дома."
-      },
-      {
-        "type": "heading",
-        "text": "Товары NIKASS"
-      },
-      {
-        "type": "links",
-        "items": [
-          {
-            "text": "Каталог ESS",
-            "href": "/catalog"
-          }
-        ]
       }
     ],
     "content": [

@@ -22,12 +22,20 @@ test("energy article recommends a station and a solar panel in bestseller cards"
 
 test("new SEO articles have separate pages, metadata and no visible photos", async () => {
   const { seoEntries, blogEntries } = await import("../src/data/blog");
+  const { loadCatalogProducts } = await import("../src/data/catalog");
+  const products = await loadCatalogProducts();
   assert.equal(seoEntries.length, 10);
   assert.equal(new Set(blogEntries.map((entry) => entry.slug)).size, blogEntries.length);
   for (const entry of seoEntries) {
     assert.ok(blogEntries.includes(entry));
     assert.ok(entry.seoTitle && entry.summary && entry.blocks?.length);
     assert.ok(entry.hideImage && entry.hideCardImage);
-    assert.ok(entry.blocks.some((block) => block.type === "links"));
+    assert.ok(!entry.blocks.some((block) => block.type === "heading" && block.text === "Товары NIKASS"));
+    assert.ok(!entry.blocks.some((block) => block.type === "links"));
+    assert.equal(entry.recommendedProductSlugs?.length, 2, entry.slug);
+    assert.equal(new Set(entry.recommendedProductSlugs).size, 2, entry.slug);
+    for (const slug of entry.recommendedProductSlugs ?? []) {
+      assert.ok(products.some((product) => product.slug === slug), `${entry.slug}: ${slug}`);
+    }
   }
 });
