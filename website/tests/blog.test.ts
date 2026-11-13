@@ -24,7 +24,7 @@ test("new SEO articles have separate pages, metadata and no visible photos", asy
   const { seoEntries, blogEntries } = await import("../src/data/blog");
   const { loadCatalogProducts } = await import("../src/data/catalog");
   const products = await loadCatalogProducts();
-  assert.equal(seoEntries.length, 10);
+  assert.equal(seoEntries.length, 11);
   assert.equal(new Set(blogEntries.map((entry) => entry.slug)).size, blogEntries.length);
   for (const entry of seoEntries) {
     assert.ok(blogEntries.includes(entry));
