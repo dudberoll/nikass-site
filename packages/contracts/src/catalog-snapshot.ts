@@ -115,7 +115,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-63-600",
         "label": "600 Вт · 168 000 мАч · 537,6 Вт·ч",
-        "price": 26425,
+        "price": 30080,
         "availability": "in-stock",
         "image": "/catalog-images/sl-63_Z1qRJUq.webp",
         "imageSrcSet": "/catalog-images/sl-63_Z1O1nMb.webp 96w, /catalog-images/sl-63_Z1Dfcp0.webp 160w, /catalog-images/sl-63_Z1qRJUq.webp 320w, /catalog-images/sl-63_ZAprEp.webp 640w, /catalog-images/sl-63_Z1aK5Gi.webp 960w, /catalog-images/sl-63_x5VLF.webp 1200w"
@@ -166,7 +166,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-93-300",
         "label": "300 Вт · 64 000 мАч · 205 Вт·ч",
-        "price": 11750,
+        "price": 11630,
         "availability": "in-stock",
         "image": "/catalog-images/sl-93_lgkaN.webp",
         "imageSrcSet": "/catalog-images/sl-93_Ztdfni.webp 96w, /catalog-images/sl-93_ZlR1rK.webp 160w, /catalog-images/sl-93_lgkaN.webp 320w, /catalog-images/sl-93_ZWAiun.webp 640w, /catalog-images/sl-93_Z1t6e44.webp 960w, /catalog-images/sl-93_Z18jPjP.webp 1200w"
@@ -216,7 +216,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-69-150",
         "label": "L1 — 150 Вт",
-        "price": 9675,
+        "price": 9680,
         "availability": "in-stock",
         "image": "/catalog-images/sl-69_Z1fziuq.webp",
         "imageSrcSet": "/catalog-images/sl-69_2fGNe4.webp 96w, /catalog-images/sl-69_Z1M76n5.webp 160w, /catalog-images/sl-69_Z1fziuq.webp 320w, /catalog-images/sl-69_fdGxK.webp 640w, /catalog-images/sl-69_1K1GAV.webp 960w, /catalog-images/sl-69_Z2quBjM.webp 1200w"
@@ -265,7 +265,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-66-1000",
         "label": "Основной вариант",
-        "price": 51625,
+        "price": 52750,
         "availability": "in-stock",
         "image": "/catalog-images/sl-66_1GImIh.webp",
         "imageSrcSet": "/catalog-images/sl-66_Z1fLLWo.webp 96w, /catalog-images/sl-66_1NReYi.webp 160w, /catalog-images/sl-66_1GImIh.webp 320w, /catalog-images/sl-66_P7h09.webp 640w, /catalog-images/sl-66_Z1tNHY.webp 960w, /catalog-images/sl-66_AwtiQ.webp 1200w"
@@ -369,7 +369,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-93-150",
         "label": "150 Вт · 48 000 мАч · 153,6 Вт·ч",
-        "price": 7250,
+        "price": 8430,
         "availability": "in-stock",
         "image": "/catalog-images/sl-93_lgkaN.webp",
         "imageSrcSet": "/catalog-images/sl-93_Ztdfni.webp 96w, /catalog-images/sl-93_ZlR1rK.webp 160w, /catalog-images/sl-93_lgkaN.webp 320w, /catalog-images/sl-93_ZWAiun.webp 640w, /catalog-images/sl-93_Z1t6e44.webp 960w, /catalog-images/sl-93_Z18jPjP.webp 1200w"
@@ -422,7 +422,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-31-300",
         "label": "300 Вт · 96 000 мАч · 307,2 Вт·ч",
-        "price": 13250,
+        "price": 15950,
         "availability": "in-stock",
         "image": "/catalog-images/sl31-stantsiya-150w-_-300w_2gE8kV.webp",
         "imageSrcSet": "/catalog-images/sl31-stantsiya-150w-_-300w_2jP1jP.webp 96w, /catalog-images/sl31-stantsiya-150w-_-300w_SWmo8.webp 160w, /catalog-images/sl31-stantsiya-150w-_-300w_2gE8kV.webp 320w, /catalog-images/sl31-stantsiya-150w-_-300w_1EqM4O.webp 640w, /catalog-images/sl31-stantsiya-150w-_-300w_Zqo0uf.webp 960w, /catalog-images/sl31-stantsiya-150w-_-300w_Z1lnUGy.webp 1200w"
@@ -472,7 +472,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-69-300",
         "label": "L2 — 300 Вт",
-        "price": 13875,
+        "price": 13880,
         "availability": "in-stock",
         "image": "/catalog-images/sl-69_Z1fziuq.webp",
         "imageSrcSet": "/catalog-images/sl-69_2fGNe4.webp 96w, /catalog-images/sl-69_Z1M76n5.webp 160w, /catalog-images/sl-69_Z1fziuq.webp 320w, /catalog-images/sl-69_fdGxK.webp 640w, /catalog-images/sl-69_1K1GAV.webp 960w, /catalog-images/sl-69_Z2quBjM.webp 1200w"
@@ -523,7 +523,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-93-500",
         "label": "500 Вт · 112 500 мАч · 360 Вт·ч",
-        "price": 16500,
+        "price": 19200,
         "availability": "in-stock",
         "image": "/catalog-images/sl-93_lgkaN.webp",
         "imageSrcSet": "/catalog-images/sl-93_Ztdfni.webp 96w, /catalog-images/sl-93_ZlR1rK.webp 160w, /catalog-images/sl-93_lgkaN.webp 320w, /catalog-images/sl-93_ZWAiun.webp 640w, /catalog-images/sl-93_Z1t6e44.webp 960w, /catalog-images/sl-93_Z18jPjP.webp 1200w"
@@ -621,7 +621,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-63-800",
         "label": "800 Вт · 240 000 мАч · 768 Вт·ч",
-        "price": 34550,
+        "price": 39350,
         "availability": "in-stock",
         "image": "/catalog-images/sl-63_Z1qRJUq.webp",
         "imageSrcSet": "/catalog-images/sl-63_Z1O1nMb.webp 96w, /catalog-images/sl-63_Z1Dfcp0.webp 160w, /catalog-images/sl-63_Z1qRJUq.webp 320w, /catalog-images/sl-63_ZAprEp.webp 640w, /catalog-images/sl-63_Z1aK5Gi.webp 960w, /catalog-images/sl-63_x5VLF.webp 1200w"
@@ -672,7 +672,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "NS-54",
         "label": "Основной вариант",
-        "price": 10875,
+        "price": 10880,
         "availability": "in-stock",
         "image": "/catalog-images/sl-54-speredi-1_Z1Imqbx.webp",
         "imageSrcSet": "/catalog-images/sl-54-speredi-1_Z8bfUf.webp 96w, /catalog-images/sl-54-speredi-1_1o663c.webp 160w, /catalog-images/sl-54-speredi-1_Z1Imqbx.webp 320w, /catalog-images/sl-54-speredi-1_Z23srAB.webp 640w, /catalog-images/sl-54-speredi-1_1Vb7HC.webp 960w, /catalog-images/sl-54-speredi-1_Z1vChlN.webp 1200w"
@@ -1545,7 +1545,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "WJF-1200MX",
         "label": "1 200 Вт",
-        "price": 4875,
+        "price": 4880,
         "availability": "in-stock",
         "image": "/catalog-images/wjf-1200mx_Z1Ros99.webp",
         "imageSrcSet": "/catalog-images/wjf-1200mx_ZTHMd8.webp 96w, /catalog-images/wjf-1200mx_24eUFU.webp 160w, /catalog-images/wjf-1200mx_Z1Ros99.webp 320w, /catalog-images/wjf-1200mx_lcuoB.webp 640w, /catalog-images/wjf-1200mx_2phdO0.webp 960w, /catalog-images/wjf-1200mx_ZoARM3.webp 1200w"
@@ -2232,7 +2232,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "FSP-210",
         "label": "210 Вт",
-        "price": 12225,
+        "price": 12230,
         "availability": "preorder",
         "image": "/catalog-images/fsp-210w_Z9eC6n.webp",
         "imageSrcSet": "/catalog-images/fsp-210w_OuGJv.webp 96w, /catalog-images/fsp-210w_Z1RcvpR.webp 160w, /catalog-images/fsp-210w_Z9eC6n.webp 320w, /catalog-images/fsp-210w_Zrj9ca.webp 640w, /catalog-images/fsp-210w_Z2mEFMp.webp 960w, /catalog-images/fsp-210w_Z1RYK4H.webp 1200w"
@@ -2631,7 +2631,7 @@ export const catalogSnapshot: CatalogApiProduct[] = [
       {
         "sku": "PB-20",
         "label": "20 000 мАч",
-        "price": 1425,
+        "price": 1430,
         "availability": "in-stock",
         "image": "/catalog-images/powerbank-20_Z2hWEtC.webp",
         "imageSrcSet": "/catalog-images/powerbank-20_2nu6Li.webp 96w, /catalog-images/powerbank-20_Z24JeMs.webp 160w, /catalog-images/powerbank-20_Z2hWEtC.webp 320w, /catalog-images/powerbank-20_1XWbml.webp 640w, /catalog-images/powerbank-20_Z1gvIr4.webp 960w, /catalog-images/powerbank-20_ZJVnhI.webp 1200w"
