@@ -10,6 +10,7 @@ let resizeFit: string | undefined;
 mock.module("astro:assets", () => ({
   getImage: async ({ src, fit }: { src: string; fit?: string }) => {
     resizeFit = fit;
+    if (src.includes("missing-image")) throw new Error("Image unavailable");
     return {
       src: `/_astro/${src.split("/").at(-1)}.webp`,
       srcSet: { attribute: `/_astro/${src.split("/").at(-1)}.webp 320w` },
@@ -74,4 +75,14 @@ test("maps optimized variant sources into the fields consumed by variant selecto
     const metadata = await sharp(resized.data).metadata();
     assert.equal(metadata.width, metadata.height, "optimization must preserve the full square image at every srcset size");
   }
+});
+
+
+test("a required image failure stops publication instead of shipping a broken remote fallback", async () => {
+  await assert.rejects(optimizeCatalogImages([{
+    slug: "missing", sku: "M1", name: "Missing image", category: "", rawCategory: "", price: 1,
+    description: "", packageContents: "", characteristics: "",
+    image: "https://nikass.ru/wp-content/uploads/missing-image.png",
+    variants: [{ sku: "M1", label: "Model", price: 1, availability: "in-stock" }],
+  }]), /Could not optimize required catalog image/);
 });

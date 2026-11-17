@@ -76,3 +76,5 @@ export type {
   CatalogSort,
 } from './domain/catalog'
 export type { CatalogClock, CatalogSource } from './application/ports'
+
+export { observeCatalogWebsite, reconcileCatalogWebsite, buildCatalogWebsite } from './infrastructure/website-publication'

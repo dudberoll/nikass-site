@@ -64,6 +64,10 @@ const envSchema = z.object({
   ORDER_TELEGRAM_BOT_TOKEN: optionalStringSchema,
   ORDER_TELEGRAM_CHAT_ID: optionalStringSchema,
   CATALOG_PROVIDER: z.enum(['disabled', 'woocommerce', 'snapshot']).default('disabled'),
+  WEBSITE_PUBLISH_ROOT: z.string().startsWith('/').optional(),
+  WEBSITE_PUBLIC_URL: z.url().optional(),
+  WEBSITE_SOURCE_REVISION: z.string().regex(/^[a-f0-9]{40}$/).optional(),
+
   CATALOG_CACHE_TTL_SECONDS: z.coerce.number().int().positive().max(300).default(300),
   CATALOG_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().max(30_000).default(10_000),
   WOOCOMMERCE_PRODUCTS_ENDPOINT: optionalUrlSchema,

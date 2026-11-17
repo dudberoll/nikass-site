@@ -34,8 +34,7 @@ function optimizeImage(src: string) {
               return { src: optimized.src, srcSet: optimized.srcSet.attribute };
             } catch (error) {
               if (attempt === 2) {
-                console.warn(`Could not optimize catalog image; using its original URL: ${src}`);
-                return { src };
+                throw new Error(`Could not optimize required catalog image: ${src}`, { cause: error });
               }
               await new Promise((resolve) => setTimeout(resolve, (attempt + 1) * 500));
             }

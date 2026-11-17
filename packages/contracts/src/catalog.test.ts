@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { catalogAvailabilityResponseSchema, type CatalogAvailabilityResponse } from './index'
+import { catalogAvailabilityResponseSchema, catalogBuildResponseSchema, type CatalogAvailabilityResponse } from './index'
 
 const response: CatalogAvailabilityResponse = {
   items: [{ slug: 'station', variants: [
@@ -21,4 +21,18 @@ test('validates the compact catalog availability response and rejects unexpected
   ]) {
     expect(catalogAvailabilityResponseSchema.safeParse(invalid).success).toBe(false)
   }
+})
+
+
+test('website builds reject stale or empty catalogs and persist only public product fields', () => {
+  const item = { slug: 'panel', name: 'Panel', category: 'panels', images: ['/panel.webp'],
+    shortDescription: '', description: '', characteristics: {}, packageContents: [],
+    variants: [{ sku: 'SP-30', label: '30 W', price: 2650, availability: 'in-stock', salesMode: 'manager' }],
+    internalNote: 'must not be published',
+  }
+  const parsed = catalogBuildResponseSchema.parse({ items: [item], stale: false, privateData: 'omit' })
+  expect('privateData' in parsed).toBe(false)
+  expect('internalNote' in parsed.items[0]!).toBe(false)
+  expect(catalogBuildResponseSchema.safeParse({ items: [item], stale: true }).success).toBe(false)
+  expect(catalogBuildResponseSchema.safeParse({ items: [], stale: false }).success).toBe(false)
 })

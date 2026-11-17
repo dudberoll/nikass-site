@@ -79,6 +79,32 @@ HTTP-01 на обоих доменах доступен извне. `certbot ren
 `--no-random-sleep-on-renew`; успешный dry-run пока не зафиксирован.
 Реальные заявки в Telegram при проверке не отправлялись.
 
+## Восстановление WooCommerce — подготовлено 2026-11-17
+
+Этот раздел описывает новый выпуск; текущий опубликованный manager-only релиз не переключается автоматически при изменении репозитория. Новый Beget VPS пока не создаётся. Заказы, платежи, заявки и уведомления для проверки не отправлять: проверены только каталог, статьи, изображения, добавление в корзину и изменение количества.
+
+Перед выпуском сверить чистую `main`, `origin/main` и действующий релиз. Применить миграцию `website_publication` штатным `migrate`-сервисом до старта обновлённых процессов. Настройки API и scheduler: `CATALOG_PROVIDER=woocommerce`, HTTPS `WOOCOMMERCE_PRODUCTS_ENDPOINT=https://nikass.ru/wp-json/wc/v3/products`, существующие ключи, `WOOCOMMERCE_STORE_ENDPOINT=https://nikass.ru/wp-json/wc/store/v1`. Включение существующего checkout требует `ORDERS_ENABLED=true`, `YOO_KASSA_ENABLED=true`, `YOO_KASSA_FULFILLMENT_MODE=woocommerce` и проверенных реквизитов/настроек чеков из `docs/ORDERS.md`. Их наличие не означает успешной контрольной покупки — её проводит владелец.
+
+Website собирается с доступом к обновлённому backend; локальный снимок больше не подставляется при ошибке. Порядок: миграция → backend → первая ручная сборка/публикация → builder. Сохранить прежний API image и `current` до ручной проверки владельцем.
+
+Для автоматических обновлений дополнительно собрать отдельный образ:
+
+```bash
+docker buildx build --platform linux/amd64 --load -f deploy/website-builder.Dockerfile --build-arg SOURCE_REVISION=<полный-SHA-чистого-коммита> -t nikass-website:<release> .
+```
+
+Передать образ на VPS штатным `docker save | gzip | ssh ... docker load`. Скопировать `website.env.example` в `/srv/nikass/website.env`, сохранив публичные ключи карт из текущей конфигурации website. Builder использует runtime.env для БД и WooCommerce; ключи никогда не попадают в статический DTO и браузерный bundle. Только builder получает `WEBSITE_PUBLISH_ROOT`, остальные процессы не должны иметь эту переменную. Никакого Docker socket или SSH-доступа контейнеру не требуется.
+
+UID 1000 внутри builder должен иметь права записи только в каталог NIKASS: `releases`, `.builds` и замену `current` в `/var/www/nikass`. Проверить фактических владельцев перед выдачей прав; каталог NailsProfi не затрагивать. В `runtime.env` не задавать `WEBSITE_SOURCE_REVISION`: точный SHA закреплён в образе. Запуск после доставки обновлённого compose и обоих env-файлов:
+
+```bash
+sudo -n docker compose --env-file .env --env-file release.env -f compose.yml --profile website up -d website-builder
+```
+
+Существующий scheduler продолжает outbox/платёжные задачи; повторный scheduler безопасен благодаря PostgreSQL job locks. Job `website:rebuild:reconcile` раз в минуту читает только публичные товары WooCommerce. Изменение DTO или SHA исходников записывает desired revision и outbox wake-up в одной транзакции. Reconcile запускает один дочерний build (не более пяти минут), не ждёт его внутри outbox и при следующем проходе принимает готовый marker. Потерянный запуск или прерванный build повторяется после шести минут. Готовая сборка переключается атомарно и проверяется по `https://nikass.ru/catalog-revision.txt`; при ошибке проверки возвращается прежняя ссылка. Отставшие сборки предыдущего SHA не публикуются. Обычно изменение видно после следующего polling, сборки и следующего reconcile; уже открытая вкладка получает новые цены после обновления страницы. Наличие продолжает обновляться отдельно через API.
+
+Диагностика: логи `website-builder`, строка `website_publications` (desired/published/active revision, last_error), публичный marker. Последний рабочий сайт сохраняется при ошибке WooCommerce или сборки. Builder сохраняет три последних автоматических релиза и предыдущий активный релиз; каталоги ручных релизов не очищаются автоматически. При откате к прежнему коду сначала остановить только `website-builder`, затем вернуть прежние image и `current`; БД назад не откатывать.
+
 ## История прежнего развёртывания Beget
 
 

@@ -228,3 +228,19 @@ enum CheckoutFulfillmentState {
 
   @@map("checkout_fulfillment_state")
 }
+
+/// Durable catalog publication state; WooCommerce remains the product authority.
+model WebsitePublication {
+  id                 String   @id
+  desiredRevision    String   @map("desired_revision")
+  desiredSnapshot    Json     @map("desired_snapshot")
+  publishedRevision  String?  @map("published_revision")
+  activeRevision     String?  @map("active_revision")
+  activeSnapshot     Json?    @map("active_snapshot")
+  activeDeploymentId String?  @map("active_deployment_id")
+  startedAt          DateTime? @map("started_at")
+  lastError          String?  @map("last_error")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("website_publications")
+}

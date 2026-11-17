@@ -369,3 +369,8 @@ rather than building a rebuild pipeline. Neither hosting offers per-page ISR.
 - Docker restart policies: https://docs.docker.com/engine/containers/start-containers-automatically/
 - croner, the scheduler library used here: https://github.com/hexagon/croner
 - PostgreSQL advisory locks: https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS
+
+
+## NIKASS own-server catalog publisher
+
+The opt-in `website-builder` Compose profile runs the same scheduler registry with the website toolchain and a write mount scoped to NIKASS. `website:rebuild:reconcile` polls WooCommerce every minute, persists `website_publications` and an outbox wake-up transactionally, then executes a short reconciliation pass. The pass serializes with a database lock, persists a unique deployment id before spawning a bounded child build, and adopts its completed artifact marker after a restart. The outbox handler never waits for a build. Failed/expired builds remain unpublished and retry through the timer. Activation is atomic; a failed public-marker verification restores the previous symlink. A source SHA participates in the revision, so an earlier code release cannot publish after a new builder release. This own-server executor has no provider API or Docker socket; setup and rollback are in `deploy/README.md`.

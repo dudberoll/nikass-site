@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("demo discounted variants cover all categories and use manager contacts", async ({ page }) => {
+test("demo discounted variants cover all categories and can enter the local cart", async ({ page }) => {
   await page.goto("/catalog");
   await expect(page.locator("[data-catalog-hydrated=true]")).toBeVisible();
   const regularCount = await page.locator("[data-product-card]").count();
@@ -32,9 +32,6 @@ test("demo discounted variants cover all categories and use manager contacts", a
   await page.locator("[data-product-card]").first().getByRole("link", { name: "Выбрать вариант" }).click();
   await expect(page.getByText(/Тестовый экземпляр — для проверки/)).toBeVisible();
   await expect(page.locator("astro-island").filter({ has: page.locator(".product-variant-selector") })).not.toHaveAttribute("ssr", "");
-  await page.getByRole("button", { name: "Заказать у менеджера" }).click();
-  const dialog = page.getByRole("dialog", { name: "Заказать у менеджера" });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("link")).toHaveCount(4);
-  await expect(page.getByRole("button", { name: "Добавить в корзину" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Добавить в корзину" }).click();
+  await expect(page.getByText(/Товар добавлен/)).toBeVisible();
 });

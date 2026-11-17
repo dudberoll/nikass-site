@@ -16,6 +16,18 @@ export type TaskHandlerRegistry = Record<string, TaskHandlerEntry>
  * `await import()` inside `run`, which also keeps a module out of the runs that do not use it.
  */
 export const taskHandlers = {
+  'website:rebuild': {
+    maxAttempts: 3,
+    run: async ({ payload }, runtime) => {
+      if (!payload || typeof payload !== 'object' || !('revision' in payload)
+        || typeof payload.revision !== 'string' || !/^[a-f0-9]{64}$/.test(payload.revision)) {
+        throw new TerminalTaskError('Invalid website revision')
+      }
+      if (!runtime.env.WEBSITE_PUBLISH_ROOT) return 'skipped'
+      const { reconcileCatalogWebsite } = await import('../modules/catalog')
+      await reconcileCatalogWebsite(runtime)
+    },
+  },
   'catalog:restock-notify': {
     maxAttempts: 5,
     run: async ({ payload, signal }, runtime) => {
@@ -77,19 +89,6 @@ export const taskHandlers = {
       await createAuthTasks(runtime).deliverPasswordChanged(input, signal)
     },
   },
-  // This is only a wake-up for a durable, single-flight rebuild controller. Publishing advances
-  // desiredRevision and enqueues a unique website:rebuild:<revision> task; short reconciler passes
-  // persist/adopt provider deployment state, verify the public artifact revision, and start one
-  // follow-up while desiredRevision is newer than publishedRevision. A recurring reconcile job is
-  // the repair path, so correctness never depends on reopening this terminal outbox row. The
-  // template does not ship that state machine. See docs/BACKGROUND_JOBS.md before implementing.
-  //
-  // 'website:rebuild': {
-  //   maxAttempts: 3,
-  //   run: async (_context, runtime) => {
-  //     await triggerDeployment(runtime.env)
-  //   },
-  // },
 } satisfies TaskHandlerRegistry
 
 /**

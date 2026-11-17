@@ -31,12 +31,14 @@ test("merges duplicate lines, caps quantity and strips stale stored fields", () 
   assert.deepEqual(parseCart(JSON.stringify({ version: 0, items: cart })), []);
 });
 
-test("blocks all new additions while manager ordering is active and removes a line at zero", () => {
+test("adds available products, blocks manager-only and unavailable products, and removes a line at zero", () => {
   const base = product;
   const preorder: Product = { ...base, variants: [{ ...base.variants[0], sku: "pre", availability: "preorder" }] };
   const unavailable: Product = { ...base, variants: [{ ...base.variants[0], sku: "off", availability: "unavailable" }] };
 
-  assert.deepEqual(addCartItem([], base, base.sku), []);
+  assert.deepEqual(addCartItem([], base, base.sku), [{ productSlug: base.slug, variantSku: base.sku, quantity: 1 }]);
+  const manager: Product = { ...base, variants: [{ ...base.variants[0], salesMode: "manager" }] };
+  assert.deepEqual(addCartItem([], manager, manager.sku), []);
   assert.deepEqual(addCartItem([], preorder, "pre"), []);
   assert.deepEqual(addCartItem([], unavailable, "off"), []);
   assert.deepEqual(setCartItemQuantity([{ productSlug: base.slug, variantSku: base.sku, quantity: 1 }], base.slug, base.sku, 0), []);

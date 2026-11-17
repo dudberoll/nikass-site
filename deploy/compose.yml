@@ -47,6 +47,25 @@ services:
     volumes:
       - ./storage:/app/backend/.storage
 
+  website-builder:
+    image: nikass-website:${APP_IMAGE_TAG:?Set APP_IMAGE_TAG in release.env}
+    profiles: ["website"]
+    restart: unless-stopped
+    env_file:
+      - runtime.env
+      - website.env
+    environment:
+      NODE_ENV: staging
+      COOKIE_SECURE: "true"
+      WEBSITE_PUBLISH_ROOT: /var/www/nikass
+      WEBSITE_PUBLIC_URL: https://nikass.ru
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - /var/www/nikass:/var/www/nikass
+      - ./storage:/app/backend/.storage
+
   migrate:
     image: nikass-api:${APP_IMAGE_TAG:?Set APP_IMAGE_TAG in release.env}
     profiles: ["tools"]

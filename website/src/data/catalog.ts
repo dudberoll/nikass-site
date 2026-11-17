@@ -1,5 +1,4 @@
-import { CATALOG_MANAGER_ONLY } from "@web-app-demo/contracts";
-import { catalogSnapshot } from "./catalog-snapshot";
+import { catalogBuildResponseSchema } from "@web-app-demo/contracts";
 
 export type Product = {
   slug: string;
@@ -88,7 +87,7 @@ import type { CatalogApiProduct } from "@web-app-demo/contracts/catalog-snapshot
 
 type CatalogSelection = Record<string, readonly string[]>;
 
-// The CSV allow-list keeps the local snapshot limited to the storefront catalog.
+// Keep the published catalog limited to the selected storefront models.
 const catalogArticlesBySlug: CatalogSelection = Object.fromEntries([
   "invertor-avtomobilnyy-3500",
   "invertor-avtomobilnyy-600",
@@ -298,15 +297,29 @@ export const AVAILABILITY_LABELS: Record<Availability, string> = {
   unavailable: "Недоступен",
 };
 
-let catalogProducts: Product[] | undefined;
+let catalogProducts: Promise<Product[]> | undefined;
 
 export async function loadCatalogProducts(scope: "regular" | "discounted" | "all" = "regular") {
-  catalogProducts ??= selectCatalogProducts(catalogSnapshot);
-  if (import.meta.env.SSR && import.meta.env.CATALOG_DEMO_DISCOUNTED === "true" && !catalogProducts.some((product) => product.demo)) {
-    catalogProducts.push(...createDemoDiscountedProducts(catalogProducts));
-  }
-
-  const products = catalogProducts;
+  catalogProducts ??= (async () => {
+    let payload: unknown;
+    if (import.meta.env.SSR && import.meta.env.CATALOG_BUILD_FILE) {
+      const { readFile } = await import("node:fs/promises");
+      payload = JSON.parse(await readFile(import.meta.env.CATALOG_BUILD_FILE, "utf8"));
+    } else {
+      const apiBase = (import.meta.env.PUBLIC_API_URL || "http://localhost:3000").replace(/\/$/, "");
+      const response = await fetch(`${apiBase}/api/catalog?perPage=100&sort=popularity`, {
+        headers: { Accept: "application/json" }, signal: AbortSignal.timeout(30_000),
+      });
+      if (!response.ok) throw new Error(`WooCommerce catalog request failed: ${response.status}`);
+      payload = await response.json();
+    }
+    const products = selectCatalogProducts(catalogBuildResponseSchema.parse(payload).items);
+    if (import.meta.env.SSR && import.meta.env.CATALOG_DEMO_DISCOUNTED === "true") {
+      products.push(...createDemoDiscountedProducts(products));
+    }
+    return products;
+  })().catch((error) => { catalogProducts = undefined; throw error; });
+  const products = await catalogProducts;
   return scope === "all" ? products : products.filter((product) => Boolean(product.discounted) === (scope === "discounted"));
 }
 
@@ -316,7 +329,7 @@ export function selectCatalogProducts(
 ) {
   const productsBySlug = new Map(products.map((product) => [product.slug, product]));
   const missing = Object.keys(selection).filter((slug) => !productsBySlug.has(slug));
-  if (missing.length > 0) throw new Error(`Local catalog snapshot is missing selected products: ${missing.join(", ")}`);
+  if (missing.length > 0) throw new Error(`WooCommerce catalog is missing selected products: ${missing.join(", ")}`);
 
   return [
     ...groupCatalogProducts(Object.entries(selection)
@@ -626,7 +639,7 @@ export function isVariantAddable(variant: ProductVariant) {
 }
 
 export function isVariantManagerOnly(variant: ProductVariant) {
-  return variant.salesMode === "manager" || (CATALOG_MANAGER_ONLY && variant.availability === "in-stock");
+  return variant.salesMode === "manager";
 }
 
 export function productAvailability(product: Product): Availability {

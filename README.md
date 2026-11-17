@@ -1,6 +1,6 @@
 # Vibe Coding Template
 
-> Текущий локальный сайт: единый NIKASS storefront на Astro + React с 47 товарными строками из CSV, загружаемыми через WooCommerce API,
+> Текущий локальный сайт: единый NIKASS storefront на Astro + React с 53 выбранными SKU, загружаемыми через WooCommerce API,
 > вариантами, корзиной и guest checkout.
 > Запуск сайта вместе с API: `bun run dev:storefront`.
 > Товарные маршруты: `/`, `/catalog`, `/catalog/category/[slug]`, `/catalog/[slug]`, `/cart`, `/checkout`.

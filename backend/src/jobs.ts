@@ -102,6 +102,12 @@ export const backgroundJobs = {
       hasManagerOnlyItems: (cart) => catalog.service.hasManagerOnlyItems(cart) }).reconcilePendingPayments(now)
     console.log('Job orders:payments:reconcile completed.')
   },
+  'website:rebuild:reconcile': async (runtime) => {
+    if (!runtime.env.WEBSITE_PUBLISH_ROOT) return
+    const { observeCatalogWebsite, reconcileCatalogWebsite } = await import('./modules/catalog')
+    await observeCatalogWebsite(runtime)
+    await reconcileCatalogWebsite(runtime)
+  },
   'outbox:drain': async (runtime, now) => {
     const { drainOptionsFromEnv, drainTaskOutbox } = await import('./outbox')
     const metrics = await drainTaskOutbox(runtime, {

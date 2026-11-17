@@ -89,16 +89,9 @@ rebuilding on every small change is not a substitute for choosing the right rend
 
 ## NIKASS guest checkout exception
 
-NIKASS public product pages read the checked-in snapshot at
-`packages/contracts/src/catalog-snapshot.ts` (the website keeps a compatibility re-export); SSG does not request `GET /api/catalog`. The current
-snapshot covers 53 selected SKUs: specifications, kit contents, and warranty values come from
-the supplied catalog workbook, most displayed prices use the verified 2026-10-30 ×5/6 targets;
-the in-stock ordinary panels SP-30, SP-50, and SP-100 use cost ×3 plus 22% VAT, rounded up to the
-next 50 ₽. Product photos are local responsive WebP files under `website/public/catalog-images`.
-The local
-image variants match the photos embedded in the workbook. Product data stays fixed until the
-snapshot is refreshed and the site is rebuilt. Browser catalog-editor saves remain draft previews
-and do not publish changes automatically.
+NIKASS public product pages load the validated WooCommerce-backed `GET /api/catalog` DTO at build time. The selection keeps 53 SKUs and the existing grouped canonical URLs; blog content remains repository-owned. Prices, descriptions, attributes, warranty, kit and images come from WooCommerce. The checked-in snapshot remains an offline fixture/editor asset, not an automatic production fallback. An unavailable, stale or incomplete build catalog fails the build.
+
+The own-server publisher polls WooCommerce once a minute. It records a content/source revision and a public DTO in `website_publications`, together with a deduplicated outbox wake-up. A separate builder image runs the existing scheduler. Reconciliation starts at most one identified child build, adopts its completion marker after restarts, promotes the immutable artifact through `current`, verifies its public revision marker, and then records publication. Failed activation restores the previous symlink. The timer repairs missed wake-ups; no WooCommerce mutation is needed to check publication.
 
 The site keeps specifications, kit contents, warranty, and the source photo per SKU when grouping
 products; selecting a variant changes its photo in the catalog, product page, recommendations, and
@@ -138,13 +131,7 @@ SKU/статус и сохраняет заявку вместе с outbox-за�
 «Синхронизировать товары» запускает синхронизацию каталога и может создавать товары; для
 обновления остатков её не используйте. Проверен точечный перенос остатка карточки NS-54.
 
-С 2026-11-04 из-за сбоя платёжного провайдера общий `CATALOG_MANAGER_ONLY`
-(`packages/contracts/src/catalog.ts`) временно переводит все SKU в наличии на ту же
-плашку и прямые контакты менеджера. Клиент запрещает добавление в корзину и оформление
-старой корзины; backend блокирует расчёт, отправку заказа и запуск/возобновление оплаты,
-scheduler — повторное создание платежей. Проверка статуса, webhooks и исполнение уже
-оплаченных заказов сохраняются. Для восстановления онлайн-продаж нужно отключить
-общий флаг и обновить website, API и scheduler.
+Восстановление от 2026-11-17 удаляет общий временный запрет покупки. Серверные `ORDERS_ENABLED` и `YOO_KASSA_ENABLED` остаются условиями включения. SP-30/SP-50/SP-100 сохраняют индивидуальный режим менеджера, SP-450 — текущий предзаказ. Проверка восстановления ограничена корзиной, без создания заказов, платежей и уведомлений; полный checkout проверяет владелец.
 
 Товары с WooCommerce атрибутом `Способ продажи: Через менеджера` показывают кнопку
 «Заказать у менеджера» и не добавляются в онлайн-корзину. Панель открывает прямые
@@ -268,7 +255,7 @@ Keep provider deployment details in `DEPLOYMENT.md` or `YANDEX_CLOUD.md`, native
 `mobile` branch, and app-specific coding conventions in each workspace README. Keep this document
 focused on the product boundaries that every implementation must preserve.
 
-### Current VPS catalog mode — 2026-11-04
+### Historical VPS catalog mode — 2026-11-04 (before restoration)
 
 The owner confirmed WooCommerce is not used. Cloud.ru uses `CATALOG_PROVIDER=snapshot`: website
 and backend share the checked-in catalog; availability and restock validation require no external

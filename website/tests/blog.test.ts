@@ -1,3 +1,4 @@
+import { catalogSnapshot } from "../src/data/catalog-snapshot";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -22,8 +23,8 @@ test("energy article recommends a station and a solar panel in bestseller cards"
 
 test("new SEO articles have separate pages, metadata and no visible photos", async () => {
   const { seoEntries, blogEntries } = await import("../src/data/blog");
-  const { loadCatalogProducts } = await import("../src/data/catalog");
-  const products = await loadCatalogProducts();
+  const { selectCatalogProducts } = await import("../src/data/catalog");
+  const products = selectCatalogProducts(catalogSnapshot);
   assert.equal(seoEntries.length, 11);
   assert.equal(new Set(blogEntries.map((entry) => entry.slug)).size, blogEntries.length);
   for (const entry of seoEntries) {
