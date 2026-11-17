@@ -85,6 +85,7 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .orbea-hero-copy h1 { margin: 0; font-size: 60px; font-weight: 500; line-height: 1; letter-spacing: -.03em; }
 .orbea-hero-copy p { max-width: 630px; margin: 22px 0 0; font-size: 20px; line-height: 1.2; }
 .orbea-hero-actions { display: grid; grid-template-columns: max-content; width: fit-content; gap: 12px; margin-top: 28px; }
+.hero-mobile-label { display: none; }
 .orbea-hero-featured { display: grid; grid-template-columns: minmax(0, .623fr) minmax(0, 1fr); align-items: center; gap: 12px; height: calc(100svh - 120px); min-height: 620px; padding: 86px 64px 48px; background: var(--sunken); color: #111; }
 .orbea-hero-featured .orbea-hero-copy { position: relative; right: auto; bottom: auto; left: auto; z-index: 1; max-width: 560px; }
 .orbea-hero-featured .orbea-hero-copy h1 { font-family: "Oswald", "Arial Narrow", sans-serif; font-size: clamp(40px, 5.2vw, 72px); font-weight: 700; line-height: .988; letter-spacing: -.0285em; text-transform: uppercase; }
@@ -306,6 +307,14 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
   .orbea-hero-featured .orbea-hero-copy { order: 2; width: 100%; }
   .orbea-hero-featured .orbea-hero-copy h1 { font-size: 28px; }
   .orbea-hero-featured .orbea-hero-copy p { max-width: 330px; margin-top: 10px; font-size: 15px; }
+  .orbea-hero-featured .orbea-hero-actions { grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .orbea-hero-featured .orbea-hero-actions .orbea-button { font-size: 15px; }
+  .orbea-hero-featured .hero-desktop-label { display: none; }
+  .orbea-hero-featured .hero-mobile-label { display: inline; }
+  .orbea-hero-featured .orbea-hero-actions a:first-child { background: #bc1c28; color: #fff; }
+  .orbea-hero-featured .orbea-hero-actions a:first-child:hover { background: #9f1721; }
+  .orbea-hero-featured .orbea-hero-actions a:last-child { background: #fff; color: #111; }
+  .orbea-hero-featured .orbea-hero-actions a:last-child:hover { background: #eee; }
   .orbea-hero-products { order: 1; width: 100%; padding-top: 32px; }
   .orbea-hero-current-category { display: block; margin: 0 38px 12px; color: #111; font-size: clamp(24px, 2.6vw, 34px); font-weight: 400; line-height: 1.1; text-align: center; text-transform: uppercase; }
   .orbea-hero-products-viewport { height: 164px; }
@@ -324,6 +333,7 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
   .orbea-bestsellers-intro { display: block; }
   .orbea-bestsellers-intro h2 { font-size: 28px; }
   .orbea-bestsellers-intro .orbea-button { margin-top: 22px; }
+  #bestsellers .orbea-bestsellers-intro .orbea-button { display: none; }
   .orbea-bestsellers-carousel { margin-inline: -20px; }
   .orbea-bestsellers-grid { display: flex; gap: 12px; max-width: none; overflow-x: auto; padding: 0 20px 4px; scroll-snap-type: x proximity; scrollbar-width: none; }
   .orbea-bestsellers-grid::-webkit-scrollbar { display: none; }
