@@ -1,4 +1,4 @@
-# Independent NIKASS virtual host; no WordPress or WooCommerce upstream.
+# Independent NIKASS virtual host; WordPress administration remains on Beget.
 server {
     listen 80;
     server_name nikass.ru www.nikass.ru;
@@ -154,6 +154,17 @@ server {
             return 301 /catalog;
         }
         try_files $uri $uri/ =404;
+    }
+
+    location ~ ^/(wp-admin(?:/|$)|wp-login\.php$|wp-includes/|wp-content/|wp-json(?:/|$)) {
+        proxy_pass https://87.236.16.43;
+        proxy_ssl_server_name on;
+        proxy_ssl_name beget.com;
+        proxy_ssl_verify on;
+        proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+        proxy_set_header Host nikass.ru;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
     }
 
     location /api/ {
