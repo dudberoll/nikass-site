@@ -1,0 +1,10 @@
+services:
+  website-builder:
+    environment:
+      WEBSITE_PUBLIC_URL: https://141.133.198.25
+      ASTRO_TELEMETRY_DISABLED: "1"
+    # Astro renames prerender assets; its cache and output must share a filesystem.
+    command:
+      - sh
+      - -c
+      - mkdir -p /var/www/nikass/.astro; ln -sfn /app/node_modules /var/www/nikass/node_modules; rm -rf /app/website/.astro; ln -s /var/www/nikass/.astro /app/website/.astro; exec bun src/scheduler.ts

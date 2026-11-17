@@ -12,7 +12,16 @@ const stateId = 'nikass'
 const maxBuildMs = 5 * 60_000
 
 export function catalogWebsiteRevision(snapshot: unknown, sourceRevision: string) {
-  return createHash('sha256').update(sourceRevision).update(JSON.stringify(snapshot)).digest('hex')
+  return createHash('sha256').update(sourceRevision).update(JSON.stringify(sortedJson(snapshot))).digest('hex')
+}
+
+// PostgreSQL JSONB changes object-key order; it must not change the catalog revision.
+function sortedJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortedJson)
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value)
+    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+    .map(([key, item]) => [key, sortedJson(item)]))
+  return value
 }
 
 function settings(runtime: BackendRuntime) {

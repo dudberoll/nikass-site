@@ -1,5 +1,45 @@
 # NIKASS: сайт на Beget VPS
 
+## Новый Beget VPS: предварительное развёртывание — 2026-11-17
+
+Friendly Silva: `141.133.198.25`, Ubuntu 26.04 LTS, x86_64, 2 ГБ RAM и 2 ГБ swap.
+Домен `nikass.ru` остаётся на Cloud.ru; DNS, почта и старый WordPress не изменяются.
+Предварительный сайт — `https://141.133.198.25`, под Basic Auth и с `X-Robots-Tag: noindex, nofollow`.
+Данные входа хранятся только в защищённом локальном файле `~/.ssh/nikass-beget-preview-access.txt`.
+SSH: `ssh -F deploy/beget-ssh.conf nikass-beget-vps`. Root-доступ не отключён; основной
+пользователь развёртывания — `deploy`, с существующим ключом Mac и доступом Docker.
+
+Docker CE/Compose установлены из официального репозитория Docker; Nginx и firewall —
+через `server-setup.sh`. HTTPS на IP выпущен через `setup-site.sh` и Certbot Snap 5.10;
+тест продления сертификата прошёл. Открыты 22/80/443, API опубликован только на
+`127.0.0.1:8080`. Данные и релизы имеют ту же структуру, что на Cloud.ru:
+`/srv/nikass`, `/var/www/nikass/releases` и атомарная ссылка `current`.
+
+Это новая база PostgreSQL, без импорта истории Cloud.ru или локальных оплат.
+Перед окончательным переключением домена отдельно сверить незавершённые оплаты
+в прежних базах. Во время развёртывания новые заказы и платежи не создаются.
+Начальная резервная копия — `/srv/nikass/backups/initial-deployment.dump`.
+
+На сервере `beget-preview.compose.yml` хранится как `/srv/nikass/preview.yml`.
+Все Compose-команды этого VPS запускаются из `/srv/nikass` с аргументами:
+`--env-file .env --env-file release.env -f compose.yml -f preview.yml`.
+API, scheduler и website-builder используют один release tag из `release.env`;
+полный SHA исходников и проверенный релиз записываются в `deployment-info.txt`.
+`website.env` и runtime используют HTTPS-origin IP для preview; WooCommerce
+остаётся на `https://nikass.ru/wp-json`. Реквизиты ЮKassa — актуальные боевые,
+проверяются только чтением `/v3/me`, а return URL указывает на IP `/checkout`.
+
+Override размещает Astro cache на том же filesystem, что и результат сборки:
+`/app/website/.astro` указывает на `/var/www/nikass/.astro`; ссылка
+`/var/www/nikass/node_modules` внутри builder ведёт на `/app/node_modules`.
+Это необходимо для `rename` prerender assets без EXDEV и разрешения зависимостей
+сгенерированного SSR-кода. Каталоги находятся выше публичного `current` и не раздаются.
+Публичный `/catalog-revision.txt` освобождён от Basic Auth только для проверки публикации.
+
+Перед переводом на основной домен обновить preview-origin/return URL, проверить
+публичные ключи карт и webhooks, выполнить согласованную миграцию данных. Cloud.ru
+сохраняется рабочим до отдельного решения владельца.
+
 ## Актуальный VPS Cloud.ru — 2026-11-04
 
 Основной домен `https://nikass.ru`, `www` перенаправляется на него. VPS —
