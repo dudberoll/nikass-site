@@ -4,9 +4,9 @@
 > вариантами, корзиной и guest checkout.
 > Запуск сайта вместе с API: `bun run dev:storefront`.
 > Товарные маршруты: `/`, `/catalog`, `/catalog/category/[slug]`, `/catalog/[slug]`, `/cart`, `/checkout`.
-> Текущий VPS: Cloud.ru `194.113.34.112`, домен `https://nikass.ru`. Каталог локальный, WooCommerce и онлайн-оплата отключены; товары заказываются через прямые контакты менеджера.
+> Текущий VPS: Beget `141.133.198.25`, домен `https://nikass.ru`. WooCommerce, автоматическая пересборка и боевой режим ЮKassa включены; полное оформление владелец проверяет самостоятельно. Cloud.ru сохранён, история прежних оплат не импортирована.
 
-Текущий порядок публикации на Cloud.ru и история Beget: [deploy/README.md](deploy/README.md).
+Текущая конфигурация Beget и история Cloud.ru: [deploy/README.md](deploy/README.md).
 
 <p align="center">
   <img src="docs/assets/vibe_tmpl_schema.png" alt="Vibe Coding Template architecture schema" width="100%">

@@ -322,8 +322,11 @@ operations state. Never force-unlock an active holder or a different root.
 For NIKASS on Beget VPS, use [deploy/README.md](../deploy/README.md).
 PostgreSQL 18, the API and scheduler run through Docker Compose; Nginx serves the
 active `website/dist` release on `https://nikass.ru` without a storefront password.
-On 2026-10-07 the owner activated the public domain after the closed IP stage.
-`www` and the old IP redirect to the domain; the old payment webhook is preserved.
+On 2026-11-18 the owner switched the public domain to the new Beget VPS
+`141.133.198.25`. `www` redirects to the domain; the IP preview remains password
+protected. Certbot's timer is enabled and its domain renewal dry-run with the
+Nginx deploy hook passed. Cloud.ru remains available; previous payment history
+has not been imported into the new database. See the runbook before changing releases.
 WooCommerce remains on its existing Beget hosting, reached through a TLS-verified
 Nginx upstream pinned to its original IP. Do not shut down that hosting.
 YooKassa live mode, WooCommerce fulfillment, VAT 5% and Telegram settings are preserved;

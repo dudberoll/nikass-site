@@ -120,8 +120,8 @@ recording it as `removed`. Payments are never half-present and are never reintro
 | -------------------------------------------------------------------------------------------- | ------------ |
 | Is deployment needed now, or local-only for the moment?                                      | Нужны скрипты для публикации тестового сайта; фактическая публикация после настройки VPS, домена и секретов. |
 | Where are your users, and must the data stay in Russia?                                      | _unanswered_ |
-| Hosting, picked by the agent from the answer above: DigitalOcean / Yandex Cloud / own server | Собственный Beget VPS для текущей тестовой версии. |
-| Production domains / URLs for API, webapp, and website; is Yandex CDN needed now?            | 2026-10-07 владелец выбрал публичный `https://nikass.ru` на VPS `93.188.186.9`, API на том же origin; `www` перенаправляется на основной домен. WooCommerce остаётся на прежнем Beget-хостинге `87.236.16.43`, API/админка/ресурсы доступны через Nginx. Webapp отложен, CDN не нужен. |
+| Hosting, picked by the agent from the answer above: DigitalOcean / Yandex Cloud / own server | Собственный Beget VPS, публичный домен переключён владельцем 2026-11-18. |
+| Production domains / URLs for API, webapp, and website; is Yandex CDN needed now?            | С 2026-11-18 публичный `https://nikass.ru` на VPS `141.133.198.25`, API на том же origin; `www` перенаправляется на основной домен. WooCommerce остаётся на прежнем Beget-хостинге `87.236.16.43`, API/админка/ресурсы доступны через Nginx. Webapp отложен, CDN не нужен. |
 | Which surfaces are released first                                                            | `website`, backend API, scheduler, PostgreSQL 18; `webapp` и mobile отложены. |
 
 **Ask the audience question, not the provider question.** A product owner knows where their users
@@ -180,7 +180,7 @@ A capability with no row is `absent` by default. Add the row instead of assuming
 | Static asset precompression     | included | `bun run static:precompress` writes `.br` and `.gz` next to the text assets in `webapp/dist` and `website/dist`, using `node:zlib` and no dependency. It is own-server tooling: hosted releases do not upload those sidecars and use their edge/runtime compression when available.                                                                                                                                  |
 | Storybook component catalogs    | included | Separate local React/Vite catalogs cover every flat shared `webapp/src/components` module and every website-owned React component in `website/src/components`, with official docs/a11y addons and story-only composition examples. They are not deployed; Astro-rendered sections remain outside React Storybook, and the website stays static SSG.                                                                                                                                       |
 | Apple storefront prototype | removed | Старые Apple Store/Shop Mac маршруты удалены из активной website-поверхности; NIKASS использует собственные публичные маршруты. |
-| NIKASS storefront catalog | included | Восстановление от 2026-11-17 возвращает WooCommerce как источник 53 SKU на текущем коде; статьи и сгруппированные URL сохраняются. SP-30/SP-50/SP-100 — через менеджера; SP-450 остаётся под заказ. Публикация на Cloud.ru ожидает отдельного выпуска. |
+| NIKASS storefront catalog | included | Восстановление от 2026-11-17 возвращает WooCommerce как источник 53 SKU на текущем коде; статьи и сгруппированные URL сохраняются. SP-30/SP-50/SP-100 — через менеджера; SP-450 остаётся под заказ. С 2026-11-18 домен обслуживает восстановленную версию на новом Beget VPS. |
 | NIKASS restock requests | available | Для выбранного варианта `onbackorder` покупка заменяется кнопкой «Сообщить о поступлении». Телефон, Telegram, MAX или WhatsApp собираются с согласием; заявки атомарно сохраняются в PostgreSQL и передаются менеджеру через Telegram/outbox. Менеджер пишет покупателям сам. Нужны миграции, работающий scheduler, `ORDER_TELEGRAM_BOT_TOKEN` / `ORDER_TELEGRAM_CHAT_ID` и `PUBLIC_PRIVACY_URL`. Контакт удаляется из базы после доставки; неотправленные заявки остаются для восстановления. |
 | NIKASS manager contact requests | removed | Форма и приём новых заявок удалены 2026-10-30. Прежние записи и обработчик outbox сохраняются для завершения ранее созданных задач и удаления контактов после доставки. |
 | NIKASS manager direct contacts | included | «Заказать у менеджера» открывает четыре прямые ссылки: телефон, Telegram, WhatsApp и MAX. Контакты и логотипы общие с шапкой сайта; сбор контакта, заявка и согласие не нужны. Запрет онлайн-оформления и оплаты таких SKU сохраняется. |
@@ -379,6 +379,12 @@ Cloud.ru и локальных оплат не импортируется до �
 собственный Nginx через `beget-domain.compose.yml`; builder публикует доменную версию,
 IP-preview закреплён отдельно. Сертификат перенесён с Cloud.ru, действителен до
 2027-02-02; независимое продление настроить после DNS. Заказы и платежи не создавались.
+
+Позже 2026-11-18 владелец переключил DNS и подтвердил URL уведомлений ЮKassa.
+Публичные DNS возвращают `141.133.198.25`; независимый сертификат на Beget выпущен
+до 2027-02-16, таймер включён, dry-run продления с deploy hook прошёл.
+Домен открыт без пароля, IP-preview сохраняет Basic Auth. Новых заказов и платежей
+при проверках нет; Cloud.ru и история прежних оплат сохранены без импорта в новую БД.
 
 ### NIKASS Cloud.ru deployment — 2026-11-04
 
