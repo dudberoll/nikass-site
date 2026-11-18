@@ -1,5 +1,53 @@
 # NIKASS: сайт на Beget VPS
 
+## Домен на новом Beget подготовлен — 2026-11-18
+
+На Friendly Silva `141.133.198.25` подготовлены HTTPS для `nikass.ru` и `www`,
+редирект `www` на основной домен, API и WordPress `/wp-admin/`. DNS остаётся
+на Cloud.ru `194.113.34.112`; MX/TXT не менялись. Проверки выполнялись через
+`curl --resolve`, без переключения публичного трафика.
+
+Доменный vhost `/etc/nginx/sites-available/nikass-domain` использует
+`nginx-domain.conf.example`, но сертификат пока читается из
+`/etc/nginx/ssl/nikass.ru/`. Действующий сертификат перенесён с Cloud.ru по SSH,
+покрывает оба имени и истекает **2027-02-02**. После согласованного переключения
+DNS выпустить независимый сертификат на Beget через существующий Certbot:
+
+```bash
+certbot certonly --webroot -w /var/www/html --cert-name nikass.ru -d nikass.ru -d www.nikass.ru --non-interactive --agree-tos
+```
+
+Затем заменить пути сертификата в доменном vhost на
+`/etc/letsencrypt/live/nikass.ru/`, выполнить `nginx -t`, reload и
+`certbot renew --cert-name nikass.ru --dry-run --no-random-sleep-on-renew`.
+Автопродление доменного сертификата на новом VPS пока не подтверждено.
+
+На сервере `beget-domain.compose.yml` сохранён как `/srv/nikass/domain.yml`.
+Все Compose-команды нового VPS теперь требуют трёх файлов:
+`--env-file .env --env-file release.env -f compose.yml -f preview.yml -f domain.yml`.
+Имена домена внутри API, scheduler и builder направлены через `host-gateway`
+на Nginx этого VPS. Это позволяет читать WooCommerce и проверять marker новой
+публикации независимо от публичного DNS; сам WordPress остаётся на `87.236.16.43`.
+
+`PUBLIC_API_URL`, `WEBAPP_ORIGIN`, публичный URL storage и
+`YOO_KASSA_RETURN_URL` используют `https://nikass.ru` (возврат — `/checkout`).
+CORS разрешает основной домен и закрытый IP-preview. Store/REST endpoints
+WooCommerce используют основной домен. Адрес уведомлений ЮKassa —
+`https://nikass.ru/api/orders/payment/webhook`; настройки кабинета провайдера
+не изменялись, доставку уведомлений без платежа не проверяли.
+
+После смены build-origin выполнена новая сборка из приложения `1bb2973`.
+`current` обслуживает доменную версию, автоматическая публикация включена.
+IP-preview закреплён в `/var/www/nikass/preview-site`, остаётся под Basic Auth
+и не обновляется publisher. При будущих публикациях сохранять оба vhost и
+три Compose-файла; старый `deploy.sh` не учитывает эту конфигурацию.
+
+Проверено на новом VPS: TLS, 61 страница, 20 статей, 176 изображений, origin API
+в HTML, API наличия, CORS preflight и форма WordPress. Магазин ЮKassa отвечает
+`enabled`, `test=false` на чтение `/v3/me`; в новой БД нет checkout attempts.
+Заказы и платежи не создавались. Перед DNS остаются сверка прежних оплат/данных,
+проверка URL уведомлений в кабинете ЮKassa и решение владельца о переключении.
+
 ## Новый Beget VPS: предварительное развёртывание — 2026-11-17
 
 Friendly Silva: `141.133.198.25`, Ubuntu 26.04 LTS, x86_64, 2 ГБ RAM и 2 ГБ swap.
@@ -21,13 +69,13 @@ Docker CE/Compose установлены из официального репо�
 Начальная резервная копия — `/srv/nikass/backups/initial-deployment.dump`.
 
 На сервере `beget-preview.compose.yml` хранится как `/srv/nikass/preview.yml`.
-Все Compose-команды этого VPS запускаются из `/srv/nikass` с аргументами:
+На этапе IP-preview Compose-команды запускались из `/srv/nikass` с аргументами:
 `--env-file .env --env-file release.env -f compose.yml -f preview.yml`.
 API, scheduler и website-builder используют один release tag из `release.env`;
 полный SHA исходников и проверенный релиз записываются в `deployment-info.txt`.
-`website.env` и runtime используют HTTPS-origin IP для preview; WooCommerce
+Первоначально `website.env` и runtime использовали HTTPS-origin IP для preview; WooCommerce
 остаётся на `https://nikass.ru/wp-json`. Реквизиты ЮKassa — актуальные боевые,
-проверяются только чтением `/v3/me`, а return URL указывает на IP `/checkout`.
+проверялись только чтением `/v3/me`, а return URL указывал на IP `/checkout`.
 
 Override размещает Astro cache на том же filesystem, что и результат сборки:
 `/app/website/.astro` указывает на `/var/www/nikass/.astro`; ссылка
@@ -36,9 +84,8 @@ Override размещает Astro cache на том же filesystem, что и �
 сгенерированного SSR-кода. Каталоги находятся выше публичного `current` и не раздаются.
 Публичный `/catalog-revision.txt` освобождён от Basic Auth только для проверки публикации.
 
-Перед переводом на основной домен обновить preview-origin/return URL, проверить
-публичные ключи карт и webhooks, выполнить согласованную миграцию данных. Cloud.ru
-сохраняется рабочим до отдельного решения владельца.
+Подготовка доменных URL описана выше; согласованная сверка данных и переключение
+DNS ещё не выполнены. Cloud.ru сохраняется рабочим до отдельного решения владельца.
 
 ## Актуальный VPS Cloud.ru — 2026-11-04
 
@@ -121,7 +168,7 @@ HTTP-01 на обоих доменах доступен извне. `certbot ren
 
 ## Восстановление WooCommerce — подготовлено 2026-11-17
 
-Этот раздел описывает новый выпуск; текущий опубликованный manager-only релиз не переключается автоматически при изменении репозитория. Новый Beget VPS пока не создаётся. Заказы, платежи, заявки и уведомления для проверки не отправлять: проверены только каталог, статьи, изображения, добавление в корзину и изменение количества.
+Этот раздел описывает восстановленный выпуск; текущий опубликованный на Cloud.ru manager-only релиз не переключается автоматически при изменении репозитория. Новый Beget VPS развёрнут отдельно, как описано выше. Заказы, платежи, заявки и уведомления для проверки не отправлять: проверены только каталог, статьи, изображения, добавление в корзину и изменение количества.
 
 Перед выпуском сверить чистую `main`, `origin/main` и действующий релиз. Применить миграцию `website_publication` штатным `migrate`-сервисом до старта обновлённых процессов. Настройки API и scheduler: `CATALOG_PROVIDER=woocommerce`, HTTPS `WOOCOMMERCE_PRODUCTS_ENDPOINT=https://nikass.ru/wp-json/wc/v3/products`, существующие ключи, `WOOCOMMERCE_STORE_ENDPOINT=https://nikass.ru/wp-json/wc/store/v1`. Включение существующего checkout требует `ORDERS_ENABLED=true`, `YOO_KASSA_ENABLED=true`, `YOO_KASSA_FULFILLMENT_MODE=woocommerce` и проверенных реквизитов/настроек чеков из `docs/ORDERS.md`. Их наличие не означает успешной контрольной покупки — её проводит владелец.
 

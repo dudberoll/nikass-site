@@ -1,0 +1,15 @@
+services:
+  api:
+    extra_hosts:
+      - "nikass.ru:host-gateway"
+      - "www.nikass.ru:host-gateway"
+  scheduler:
+    extra_hosts:
+      - "nikass.ru:host-gateway"
+      - "www.nikass.ru:host-gateway"
+  website-builder:
+    environment:
+      WEBSITE_PUBLIC_URL: https://nikass.ru
+    extra_hosts:
+      - "nikass.ru:host-gateway"
+      - "www.nikass.ru:host-gateway"
