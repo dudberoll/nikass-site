@@ -90,8 +90,12 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 .orbea-hero-featured .orbea-hero-copy { position: relative; right: auto; bottom: auto; left: auto; z-index: 1; max-width: 560px; }
 .orbea-hero-featured .orbea-hero-copy h1 { font-family: "Oswald", "Arial Narrow", sans-serif; font-size: clamp(40px, 5.2vw, 72px); font-weight: 700; line-height: .988; letter-spacing: -.0285em; text-transform: uppercase; }
 .orbea-hero-featured .orbea-hero-copy p { max-width: 500px; }
-.orbea-hero-featured .orbea-button.orbea-button-dark { background: #bc1c28; color: #fff; }
-.orbea-hero-featured .orbea-button.orbea-button-dark:hover { background: #9f1721; }
+.orbea-hero-featured .orbea-hero-actions { grid-template-columns: minmax(0, 1fr); width: 270px; max-width: 100%; }
+.orbea-hero-featured .orbea-hero-actions .orbea-button { font-size: 16px; }
+.orbea-hero-featured .orbea-hero-actions a:first-child { background: #bc1c28; color: #fff; }
+.orbea-hero-featured .orbea-hero-actions a:first-child:hover { background: #9f1721; }
+.orbea-hero-featured .orbea-hero-actions a:last-child { background: #fff; color: #111; }
+.orbea-hero-featured .orbea-hero-actions a:last-child:hover { background: #eee; }
 .orbea-hero-products { position: relative; min-width: 0; }
 .orbea-hero-current-category { display: none; }
 .orbea-hero-products-viewport { position: relative; height: min(60vh, 600px); overflow-x: clip; overflow-y: visible; touch-action: pan-y; user-select: none; }
@@ -311,10 +315,6 @@ img { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
   .orbea-hero-featured .orbea-hero-actions .orbea-button { font-size: 15px; }
   .orbea-hero-featured .hero-desktop-label { display: none; }
   .orbea-hero-featured .hero-mobile-label { display: inline; }
-  .orbea-hero-featured .orbea-hero-actions a:first-child { background: #bc1c28; color: #fff; }
-  .orbea-hero-featured .orbea-hero-actions a:first-child:hover { background: #9f1721; }
-  .orbea-hero-featured .orbea-hero-actions a:last-child { background: #fff; color: #111; }
-  .orbea-hero-featured .orbea-hero-actions a:last-child:hover { background: #eee; }
   .orbea-hero-products { order: 1; width: 100%; padding-top: 32px; }
   .orbea-hero-current-category { display: block; margin: 0 38px 12px; color: #111; font-size: clamp(24px, 2.6vw, 34px); font-weight: 400; line-height: 1.1; text-align: center; text-transform: uppercase; }
   .orbea-hero-products-viewport { height: 164px; }
