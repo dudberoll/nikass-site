@@ -14,6 +14,8 @@ const product: Product = {
   description: "Станция для дома и поездок.",
   packageContents: "",
   characteristics: "",
+  variantCharacteristics: { "NS-63-800": "Номинальная мощность: 800 Вт" },
+  variantPackageContents: { "NS-63-800": "Зарядная станция\nСетевой кабель" },
   image: "/assets/images/ns-63.webp",
   variants: [
     { sku: "NS-63-600", label: "600 Вт · 168 Вт·ч", price: 45000, availability: "in-stock", image: "/assets/images/ns-63-600.webp" },
@@ -66,12 +68,17 @@ test("product variant markup keeps each SKU, offer, availability, and selected-v
   assert.equal(schema.hasVariant.length, 3);
   assert.equal(schema.hasVariant[0]?.sku, "NS-63-600");
   assert.equal(schema.hasVariant[0]?.image, "https://nikass.ru/assets/images/ns-63-600.webp");
-  assert.equal(schema.hasVariant[0]?.url, "https://nikass.ru/catalog/station-ns-63?variant=NS-63-600");
+  assert.equal(schema.hasVariant[0]?.url, "https://nikass.ru/catalog/station-ns-63/sku-NS-63-600");
   assert.equal(schema.hasVariant[0]?.offers?.price, 45000);
   assert.equal(schema.hasVariant[0]?.offers?.priceCurrency, "RUB");
   assert.equal(schema.hasVariant[0]?.offers?.availability, "https://schema.org/InStock");
-  assert.equal(schema.hasVariant[0]?.offers?.url, "https://nikass.ru/catalog/station-ns-63?variant=NS-63-600");
+  assert.equal(schema.hasVariant[0]?.offers?.url, "https://nikass.ru/catalog/station-ns-63/sku-NS-63-600");
   assert.equal(schema.hasVariant[1]?.offers?.availability, "https://schema.org/OutOfStock");
+  assert.deepEqual(schema.hasVariant[1]?.additionalProperty, [
+    { "@type": "PropertyValue", name: "Вариант модели", value: "800 Вт · 240 Вт·ч" },
+    { "@type": "PropertyValue", name: "Номинальная мощность", value: "800 Вт" },
+    { "@type": "PropertyValue", name: "Комплектация", value: "Зарядная станция; Сетевой кабель" },
+  ]);
   assert.equal("offers" in (schema.hasVariant[2] ?? {}), false);
   assert.deepEqual(schema.hasVariant[2]?.additionalProperty?.[1], { "@type": "PropertyValue", name: "Наличие", value: "Предзаказ" });
 });
@@ -80,6 +87,7 @@ test("a product without variants uses Product markup and JSON-LD cannot close it
   const singleVariant = { ...product, variants: [product.variants[0]!] };
   const schema = productStructuredData(singleVariant) as Record<string, unknown>;
   assert.equal(schema["@type"], "Product");
+  assert.equal(schema.url, "https://nikass.ru/catalog/station-ns-63");
 
   const serialized = serializeJsonLd({ name: "</script><script>alert(1)</script>" });
   assert.equal(serialized.includes("</script>"), false);

@@ -1065,8 +1065,8 @@ body:has(.restock-dialog[open]) { overflow: hidden; }
 .product-variant-selector { margin-top: 28px; }
 .product-variant-selector > h2 { margin: 0 0 14px; font-size: 16px; font-weight: 500; }
 .product-variant-options { display: grid; gap: 8px; }
-.product-variant-options button { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 14px; border: 1px solid #d4d4ce; border-radius: 20px; background: #fff; color: #111; text-align: left; }
-.product-variant-options button.is-selected { border-color: #111; }
+.product-variant-options a { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 14px; border: 1px solid #d4d4ce; border-radius: 20px; background: #fff; color: #111; text-align: left; text-decoration: none; }
+.product-variant-options a.is-selected { border-color: #111; }
 .product-variant-options small { color: #666; }
 .product-variant-tax { font-weight: 400; }
 .product-variant-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; padding: 16px 0; border-bottom: 1px solid #d4d4ce; }

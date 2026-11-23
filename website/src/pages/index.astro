@@ -12,6 +12,7 @@ import { getCatalogCategoryPath, HERO_CATEGORIES, loadCatalogProducts } from "..
 import { optimizeCatalogImages } from "../data/catalog-images";
 import { storyEntries } from "../data/blog";
 import { CONTACT_DETAILS } from "../data/contacts";
+import { absoluteUrl, serializeJsonLd } from "../lib/seo";
 
 const products = await optimizeCatalogImages(await loadCatalogProducts());
 
@@ -55,7 +56,16 @@ const heroPosition = (index: number) => {
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="NIKASS — автономная энергия для дома, дороги и работы." />
     <OpenGraphMeta title="NIKASS | Автономная энергия" description="NIKASS — автономная энергия для дома, дороги и работы." image={heroCategories[0].image} imageAlt="Портативные зарядные станции NIKASS" />
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"NIKASS","url":"https://nikass.ru","logo":"https://nikass.ru/assets/images/nikass-smart-selection-logo.webp"}</script>
+    <script is:inline type="application/ld+json" set:html={serializeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": absoluteUrl("/#organization"),
+      name: "NIKASS",
+      url: absoluteUrl("/"),
+      logo: absoluteUrl("/assets/images/nikass-smart-selection-logo.webp"),
+      email: CONTACT_DETAILS.email.label,
+      telephone: CONTACT_DETAILS.phone.href.replace("tel:", ""),
+    })}></script>
     <link rel="icon" href="/favicon.png" type="image/png" sizes="120x120" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <title>NIKASS | Автономная энергия</title>

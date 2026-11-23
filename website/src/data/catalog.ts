@@ -18,6 +18,7 @@ export type Product = {
   warranty?: string;
   characteristics: string;
   variantCharacteristics?: Record<string, string>;
+  variantDescriptions?: Record<string, string>;
   variantPackageContents?: Record<string, string>;
   variantWarranties?: Record<string, string>;
   image: string;
@@ -354,7 +355,7 @@ export function createDemoDiscountedProducts(products: readonly Product[]): Prod
       packageContents: product.variantPackageContents?.[variant.sku] ?? product.packageContents,
       warranty: product.variantWarranties?.[variant.sku] ?? product.warranty,
       image: variant.image ?? product.image,
-      variantCharacteristics: undefined, variantPackageContents: undefined, variantWarranties: undefined, images: [variant.image ?? product.image],
+      variantCharacteristics: undefined, variantDescriptions: undefined, variantPackageContents: undefined, variantWarranties: undefined, images: [variant.image ?? product.image],
       variants: [{ ...variant, sku, sourceSlug: slug, price, oldPrice: variant.price, availability: "in-stock" }],
     };
   });
@@ -495,6 +496,7 @@ function mergeModelGroup(group: CatalogModelGroup, products: Product[]): Product
     oldPrice: undefined,
     characteristics: [articlesLine, ...sourceCharacteristics].filter(Boolean).join("\n"),
     variantCharacteristics,
+    variantDescriptions: Object.fromEntries(products.flatMap((product) => product.variants.map((variant) => [variant.sku, product.description]))),
     variantPackageContents: Object.fromEntries(products.flatMap((product) => product.variants.map((variant) => [variant.sku, product.packageContents]))),
     variantWarranties: Object.fromEntries(products.flatMap((product) => product.variants.map((variant) => [variant.sku, product.warranty ?? ""]))),
     variants,
@@ -507,13 +509,19 @@ function modelVariantLabel(product: Product, variant: ProductVariant) {
   if (product.category === "Системы хранения энергии") {
     return product.name.replace(/^.*?\b(?:ESS|UPS)\s+/i, "").replace(/(Вт[·.]ч)\s+(?=\d)/i, "$1 · ");
   }
-  const power = readSpec(specText, /(\d[\d\s.,]*)\s*(?:W|Вт)(?!\w)/i)
-    || (product.category === VOLTAGE_INVERTER_CATEGORY ? readSpec(product.name, /(\d[\d\s.,]*)$/) : "");
+  const powerPattern = /(\d[\d\s.,]*)\s*(?:W|Вт)(?!\w)/i;
+  if (product.category === VOLTAGE_INVERTER_CATEGORY) {
+    const nominalPower = detailRows(product.characteristics).find(([label]) => label === "Номинальная выходная мощность")?.[1] ?? "";
+    const power = readSpec(nominalPower, powerPattern)
+      || readSpec(product.name, powerPattern)
+      || readSpec(product.name, /(\d[\d\s.,]*)$/);
+    if (power) return `${power} Вт`;
+  }
+  const power = readSpec(specText, powerPattern);
   const hybridPower = readSpec(specText, /(\d[\d\s.,]*)\s*(?:kW|кВт)(?!\w)/i);
   const capacity = readSpec(specText, /(\d[\d\s.,]*)\s*(?:mAh|мА(?:·)?ч|Ah|А(?:·)?ч)(?!\w)/i);
   const energy = readSpec(specText, /(\d[\d\s.,]*)\s*(?:Wh|Втч|Вт[·.]?ч)(?!\w)/i);
 
-  if (product.category === VOLTAGE_INVERTER_CATEGORY && power) return `${power} Вт`;
   if (product.category === "Гибридные инверторы" && hybridPower) return `${hybridPower} кВт`;
   if ((product.category === "AGM аккумуляторы" || product.category === LIFEPO4_CATEGORY) && capacity) return `${capacity} А·ч`;
   if (product.category === "Солнечные панели" && power) return `${power} Вт`;

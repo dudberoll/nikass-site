@@ -1,4 +1,5 @@
-import type { Product, ProductVariant } from "../data/catalog";
+import { AVAILABILITY_LABELS, detailLines, detailRows, type Product, type ProductVariant } from "../data/catalog";
+import { productVariantPath } from "./product-variant-url";
 
 const SITE_URL = "https://nikass.ru";
 
@@ -13,12 +14,6 @@ const availabilityUrls = {
   "in-stock": "https://schema.org/InStock",
   preorder: "https://schema.org/PreOrder",
   unavailable: "https://schema.org/OutOfStock",
-} as const;
-
-const availabilityLabels = {
-  "in-stock": "В наличии",
-  preorder: "Предзаказ",
-  unavailable: "Недоступен",
 } as const;
 
 export function absoluteUrl(path: string) {
@@ -38,26 +33,26 @@ export function breadcrumbStructuredData(items: BreadcrumbItem[]) {
   };
 }
 
-function variantUrl(productPath: string, sku: string) {
-  const url = new URL(productPath, SITE_URL);
-  url.searchParams.set("variant", sku);
-  return url.href;
-}
-
-function variantProduct(product: Product, variant: ProductVariant, productPath: string) {
-  const url = variantUrl(productPath, variant.sku);
+function variantProduct(product: Product, variant: ProductVariant) {
+  const url = absoluteUrl(productVariantPath(product, variant.sku));
+  const description = product.variantDescriptions?.[variant.sku] || product.description;
+  const characteristics = detailRows(product.variantCharacteristics?.[variant.sku] ?? product.characteristics);
+  const kit = detailLines(product.variantPackageContents?.[variant.sku] ?? product.packageContents);
   return {
     "@type": "Product",
     name: `${product.name} — ${variant.label}`,
     sku: variant.sku,
     url,
     image: absoluteUrl(variant.image ?? product.image),
-    ...(product.description ? { description: product.description } : {}),
+    ...(description ? { description } : {}),
     additionalProperty: [
       { "@type": "PropertyValue", name: "Вариант модели", value: variant.label },
       ...(variant.availability === "preorder"
-        ? [{ "@type": "PropertyValue", name: "Наличие", value: availabilityLabels[variant.availability] }]
+        ? [{ "@type": "PropertyValue", name: "Наличие", value: AVAILABILITY_LABELS[variant.availability] }]
         : []),
+      ...characteristics.filter(([name, value]) => name !== "Артикул" && name !== "Дополнительные артикулы" && value)
+        .map(([name, value]) => ({ "@type": "PropertyValue", name, value })),
+      ...(kit.length ? [{ "@type": "PropertyValue", name: "Комплектация", value: kit.join("; ") }] : []),
     ],
     ...(variant.availability !== "preorder"
       ? {
@@ -75,7 +70,7 @@ function variantProduct(product: Product, variant: ProductVariant, productPath: 
 
 export function productStructuredData(product: Product) {
   const productPath = `/catalog/${product.slug}`;
-  const variants = product.variants.map((variant) => variantProduct(product, variant, productPath));
+  const variants = product.variants.map((variant) => variantProduct(product, variant));
   const brand = { "@type": "Brand", name: "NIKASS" };
 
   if (variants.length > 1) {
@@ -89,11 +84,7 @@ export function productStructuredData(product: Product) {
       image: absoluteUrl(product.image),
       brand,
       productGroupID: product.slug,
-      variesBy: [{
-        "@type": "PropertyValue",
-        name: "Вариант модели",
-        value: product.variants.map((variant) => variant.label),
-      }],
+      variesBy: "Вариант модели",
       hasVariant: variants,
     };
   }

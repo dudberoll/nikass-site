@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { AVAILABILITY_LABELS, isVariantManagerOnly, formatVariantPrice, getProductPrice, getSelectedVariant, productAvailability, type Product } from "../data/catalog";
 import RestockRequest from "./RestockRequest";
 import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
+import { productVariantPath } from "../lib/product-variant-url";
 
 export default function ProductCard({ product: cachedProduct, appearance = "catalog" }: { product: Product; appearance?: "catalog" | "bestseller" }) {
   const { stock } = useCatalogAvailability();
@@ -14,7 +15,7 @@ export default function ProductCard({ product: cachedProduct, appearance = "cata
   const availability = selectedSku ? variant?.availability ?? productAvailability(product) : productAvailability(product);
   const price = getProductPrice(product, selectedSku);
   const description = product.cardDescription ?? "";
-  const productHref = `/catalog/${product.slug}${selectedSku ? `?variant=${encodeURIComponent(selectedSku)}` : ""}`;
+  const productHref = productVariantPath(product, selectedSku);
   const moreVariantsOnDesktop = product.variants.length > 4;
   const moreVariantsOnPhone = product.variants.length > 2;
   const restock = variant && !isVariantManagerOnly(variant) && variant.availability === "preorder" && (product.variants.length === 1 || Boolean(selectedSku));

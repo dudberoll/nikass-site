@@ -5,6 +5,7 @@ import { AVAILABILITY_LABELS, isVariantManagerOnly, displayProductSku, formatPri
 import { getCartCount, readCart, removeCartItem, saveCart, setCartItemQuantity, subscribeToCart, type CartLine, type CartStorageError } from "../lib/cart";
 import { clearActivePayment, readActiveSavedPayment, requestCheckout, saveCheckoutSnapshot, setActivePayment, type SavedPayment } from "../lib/checkout-session";
 import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog-availability";
+import { productVariantPath } from "../lib/product-variant-url";
 
 function resolve(lines: CartLine[], products: Product[]) {
   return lines.flatMap((line) => {
@@ -121,12 +122,12 @@ export default function CartView({ products: cachedProducts, apiBase }: { produc
     {paymentError && <p className="cart-checkout-note" role="status">{paymentError}</p>}
     <div className="cart-layout">
     <div className="cart-lines" aria-label="Товары в корзине">{lines.map(({ line, product, variant }) => <article className="cart-line" key={`${line.productSlug}:${line.variantSku}`}>
-      <a className="cart-line-image" href={`/catalog/${product.slug}?variant=${encodeURIComponent(variant.sku)}`}><img src={variant.image ?? product.image} srcSet={variant.imageSrcSet ?? product.imageSrcSet} sizes="80px" alt={`${product.name} — ${variant.label}`} /></a>
+      <a className="cart-line-image" href={productVariantPath(product, variant.sku)}><img src={variant.image ?? product.image} srcSet={variant.imageSrcSet ?? product.imageSrcSet} sizes="80px" alt={`${product.name} — ${variant.label}`} /></a>
       <div className="cart-line-info">
         <p className="store-product-category">{product.category}</p><h2><a href={`/catalog/${product.slug}`}>{product.name}</a></h2>
         {product.demo && <p className="store-product-card-description">Тестовый экземпляр — не продаётся</p>}
         <p>SKU: {displayProductSku(product, variant.sku)} · {AVAILABILITY_LABELS[variant.availability]}</p><strong>{formatVariantPrice(variant)}</strong>
-        {isVariantManagerOnly(variant) && <p className="cart-checkout-note">Этот товар оформляется через менеджера. <a href={`/catalog/${product.slug}?variant=${encodeURIComponent(variant.sku)}`}>Связаться с менеджером</a></p>}
+        {isVariantManagerOnly(variant) && <p className="cart-checkout-note">Этот товар оформляется через менеджера. <a href={productVariantPath(product, variant.sku)}>Связаться с менеджером</a></p>}
         {variant.availability === "preorder" && <p className="cart-checkout-note">Этот вариант нельзя купить сейчас. Удалите его из корзины и оставьте заявку на странице товара.</p>}
         {variant.availability === "unavailable" && <p className="cart-checkout-note">Этот вариант больше недоступен. Удалите его перед оформлением.</p>}
         <div className="cart-quantity" role="group" aria-label={`Количество ${product.name}`}>

@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent } from "
 
 import { AVAILABILITY_LABELS, isVariantManagerOnly, displayProductSku, formatPrice, formatVariantPrice, getSelectedVariant, isVariantAddable, type Product } from "../data/catalog";
 import { addCartItem, readCart, saveCart } from "../lib/cart";
-import { productVariantUrl, selectedVariantSku } from "../lib/product-variant-url";
+import { productVariantPath, selectedVariantSku } from "../lib/product-variant-url";
 import { productStructuredData, serializeJsonLd } from "../lib/seo";
 import RestockRequest from "./RestockRequest";
 import ManagerContactDialog from "./ManagerContactDialog";
@@ -11,16 +11,16 @@ import { applyProductAvailability, useCatalogAvailability } from "../lib/catalog
 const MAX_QUANTITY = 99;
 const useBrowserLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-export default function ProductVariantSelector({ product: cachedProduct }: { product: Product }) {
+export default function ProductVariantSelector({ product: cachedProduct, initialVariantSku }: { product: Product; initialVariantSku?: string }) {
   const { stock } = useCatalogAvailability();
   const product = useMemo(() => applyProductAvailability(cachedProduct, stock), [cachedProduct, stock]);
-  const [sku, setSku] = useState(product.variants[0]?.sku);
+  const [sku, setSku] = useState(initialVariantSku ?? product.variants[0]?.sku);
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
   const variant = getSelectedVariant(product, sku);
   useBrowserLayoutEffect(() => {
     const syncVariantFromUrl = () => {
-      setSku(selectedVariantSku(window.location.search, cachedProduct.variants));
+      setSku(selectedVariantSku(window.location, cachedProduct));
       setQuantity(1);
       setMessage("");
     };
@@ -29,9 +29,31 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
     return () => window.removeEventListener("popstate", syncVariantFromUrl);
   }, [cachedProduct]);
   useEffect(() => {
-    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: { label: variant.label, sku: variant.sku, displaySku: displayProductSku(product, variant.sku), image: variant.image ?? product.image, imageSrcSet: variant.imageSrcSet ?? product.imageSrcSet, structuredData: serializeJsonLd(productStructuredData(product)) } }));
+    if (variant) window.dispatchEvent(new CustomEvent("nikass:product-variant-change", { detail: {
+      sku: variant.sku,
+      displaySku: displayProductSku(product, variant.sku),
+      description: product.variantDescriptions?.[variant.sku] || product.description,
+      image: variant.image ?? product.image,
+      imageSrcSet: variant.imageSrcSet ?? product.imageSrcSet,
+      structuredData: serializeJsonLd(productStructuredData(product)),
+    } }));
   }, [product, variant?.sku]);
   if (!variant) return <p>Варианты пока не добавлены.</p>;
+
+  function selectVariant(event: MouseEvent<HTMLAnchorElement>, selectedSku: string) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    const url = new URL(window.location.href);
+    const path = productVariantPath(product, selectedSku);
+    if (url.pathname !== path) {
+      url.pathname = path;
+      url.searchParams.delete("variant");
+      window.history.pushState(window.history.state, "", url);
+    }
+    setSku(selectedSku);
+    setQuantity(1);
+    setMessage("");
+  }
 
   function add(event: MouseEvent<HTMLButtonElement>) {
     const stored = readCart();
@@ -47,7 +69,7 @@ export default function ProductVariantSelector({ product: cachedProduct }: { pro
       <p className="manager-order-notice-copy"><strong>Заказ через менеджера</strong></p>
     </div>}
     <h2 id="variant-title">Вариант</h2>
-    {product.variants.length > 1 && <div className="product-variant-options">{product.variants.map((item) => <button type="button" className={item.sku === variant.sku ? "is-selected" : ""} aria-pressed={item.sku === variant.sku} onClick={() => { if (item.sku !== sku) window.history.pushState(window.history.state, "", productVariantUrl(window.location.href, item.sku)); setSku(item.sku); setQuantity(1); setMessage(""); }} key={item.sku}><span>{item.label}</span><small>{displayProductSku(product, item.sku)}</small><strong>{formatVariantPrice(item)}{item.salesMode === "manager" && item.availability !== "preorder" && <span className="product-variant-tax"> — включая НДС 22%</span>}</strong></button>)}</div>}
+    {product.variants.length > 1 && <div className="product-variant-options">{product.variants.map((item) => <a href={productVariantPath(product, item.sku)} className={item.sku === variant.sku ? "is-selected" : ""} aria-current={item.sku === variant.sku ? "true" : undefined} onClick={(event) => selectVariant(event, item.sku)} key={item.sku}><span>{item.label}</span><small>{displayProductSku(product, item.sku)}</small><strong>{formatVariantPrice(item)}{item.salesMode === "manager" && item.availability !== "preorder" && <span className="product-variant-tax"> — включая НДС 22%</span>}</strong></a>)}</div>}
     <div className="product-variant-summary">
       <span>{variant.label} · SKU {displayProductSku(product, variant.sku)}</span>
       <strong>{formatVariantPrice(variant)}</strong>

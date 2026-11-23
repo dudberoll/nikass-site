@@ -168,19 +168,19 @@ test("NS-31 characteristics follow the selected variant", async ({ page }) => {
   await expect(visibleSpecs).not.toContainText("Гарантия");
   await expect(visibleSpecs).not.toContainText("Комплектация");
 
-  await page.getByRole("button", { name: /300 Вт/ }).click();
-  await expect(page).toHaveURL(/variant=NS-31-300/);
+  await page.getByRole("link", { name: /300 Вт/ }).click();
+  await expect(page).toHaveURL(/sku-NS-31-300$/);
   await expect(visibleSpecs).toContainText("300 Вт");
   await expect(visibleSpecs).toContainText("23 × 13 × 22 см");
   await expect(visibleSpecs).toContainText("307,2 Вт·ч");
   await expect(visibleSpecs).not.toContainText("153,6 Вт·ч");
-  await expect(page.getByRole("button", { name: "Заказать у менеджера" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Добавить в корзину" })).toBeEnabled();
 
   await page.goBack();
   await expect(page).toHaveURL(/\/catalog\/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2$/);
   await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-31-150");
   await page.goForward();
-  await expect(page).toHaveURL(/variant=NS-31-300/);
+  await expect(page).toHaveURL(/sku-NS-31-300$/);
   await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-31-300");
 
   const kit = page.locator("details").filter({ has: page.locator("summary", { hasText: /^Комплектация$/ }) });
@@ -191,6 +191,24 @@ test("NS-31 characteristics follow the selected variant", async ({ page }) => {
   const warranty = page.locator("details").filter({ has: page.locator("summary", { hasText: /^Гарантия$/ }) });
   await warranty.locator("summary").click();
   await expect(warranty.locator('[data-product-detail-sku="NS-31-300"]')).toHaveText("1 год со дня продажи");
+});
+
+test("a variant link selects its SKU without JavaScript", async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ baseURL, javaScriptEnabled: false });
+  try {
+    const page = await context.newPage();
+    const groupPath = "/catalog/portativnaya-zaryadnaya-stantsiya-150-vt-48000-mah-2";
+    await page.goto(groupPath);
+    await page.getByRole("link", { name: /300 Вт/ }).click();
+    await expect(page).toHaveURL(/\/sku-NS-31-300$/);
+    await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-31-300");
+    await expect(page.locator("link[rel=canonical]")).toHaveAttribute("href", `https://nikass.ru${groupPath}`);
+    const characteristics = page.locator(".product-characteristics-disclosure");
+    await characteristics.locator("summary").click();
+    await expect(characteristics.locator(".product-specs:visible")).toContainText("307,2 Вт·ч");
+  } finally {
+    await context.close();
+  }
 });
 
 test("catalog photos follow the selected variant in catalog, product page and cart", async ({ page }) => {
@@ -210,17 +228,17 @@ test("catalog photos follow the selected variant in catalog, product page and ca
   await choice50.click();
   await expect(card.locator(".store-product-image img")).toHaveAttribute("src", images[1]);
   await card.getByRole("link", { name: "Выбрать вариант" }).click();
-  await expect(page).toHaveURL(/variant=PB-50/);
+  await expect(page).toHaveURL(/sku-PB-50$/);
   await expect(page.locator(".product-gallery img")).toHaveAttribute("src", images[1]);
   await page.reload();
   await expect(page.locator(".product-gallery img")).toHaveAttribute("src", images[1]);
-  await page.getByRole("button", { name: /60\s*000 мАч/ }).click();
+  await page.getByRole("link", { name: /60\s*000 мАч/ }).click();
   await expect(page.locator(".product-gallery img")).toHaveAttribute("src", images[2]);
   await expect.poll(() => page.locator(".product-gallery img").evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
   await page.getByLabel("Корзина").click();
   await expect(page.locator(".cart-line-image img")).toHaveAttribute("src", images[2]);
   await page.locator(".cart-line-image").click();
-  await expect(page).toHaveURL(/variant=PB-60/);
+  await expect(page).toHaveURL(/sku-PB-60$/);
   await expect(page.locator(".product-gallery img")).toHaveAttribute("src", images[2]);
 });
 
@@ -346,13 +364,13 @@ test("homepage variants persist into the product page and preorder displays pend
   const card = page.locator("#bestsellers [data-product-card]").first();
   await expect(card.locator("xpath=..")).not.toHaveAttribute("ssr", "");
   const choice = card.getByRole("button", { name: /500 Вт,/ });
-  if (!(await choice.isVisible())) await card.getByRole("button", { name: /Ещё/ }).click();
+  if (!(await choice.isVisible())) await card.getByRole("button", { name: "Показать ещё варианты" }).click();
   await choice.click();
   await expect(choice).toHaveAttribute("aria-pressed", "true");
   await expect(card.locator(".orbea-bestseller-price strong")).toHaveText(`${new Intl.NumberFormat("ru-RU").format(variant.price)} ₽`);
   await expect(card.locator(".orbea-bestseller-image img")).toHaveAttribute("src", variant.image!);
   await card.getByRole("link", { name: "Выбрать вариант", exact: true }).click();
-  await expect(page).toHaveURL(/variant=NS-69-500/);
+  await expect(page).toHaveURL(/sku-NS-69-500$/);
   await expect(page.locator(".product-variant-summary")).toContainText("SKU NS-69-500");
 
   await page.goto("/catalog");
@@ -361,7 +379,7 @@ test("homepage variants persist into the product page and preorder displays pend
   const { variant: panelVariant } = catalogItemBySku("SP-30");
   await expect(solar.locator(".store-product-bottom strong")).toHaveText(`от ${new Intl.NumberFormat("ru-RU").format(panelVariant.price)} ₽`);
   const preorderPanel = solar.getByRole("button", { name: /450 Вт.*Цена уточняется/ });
-  if (!(await preorderPanel.isVisible())) await solar.getByRole("button", { name: /Ещё/ }).click();
+  if (!(await preorderPanel.isVisible())) await solar.getByRole("button", { name: "Показать ещё варианты" }).click();
   await preorderPanel.click();
   await expect(preorderPanel).toHaveAttribute("aria-pressed", "true");
   await expect(solar.locator(".store-product-bottom strong")).toHaveText("Цена уточняется");

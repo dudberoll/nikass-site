@@ -1,4 +1,7 @@
 User-agent: *
 Disallow:
 
+User-agent: OAI-SearchBot
+Allow: /
+
 Sitemap: https://nikass.ru/sitemap.xml

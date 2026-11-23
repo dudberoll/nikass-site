@@ -137,6 +137,7 @@ const knownCategoryPaths = [...new Set(Object.values(catalogCategoryPaths))];
           }
           const normalizedPath = url.pathname.replace(/\/$/, "");
           if (knownCategoryPaths.has(normalizedPath)) return normalizedPath;
+          if (/^\/catalog\/[a-z0-9-]+\/sku-[A-Za-z0-9._!~*'()-]+$/.test(normalizedPath)) return normalizedPath;
           const product = url.pathname.match(/^\/catalog\/([a-z0-9-]+)\/?$/);
           if (!product) return undefined;
           const variant = url.searchParams.get("variant");
